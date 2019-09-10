@@ -1,4 +1,3 @@
-
 import pygame
 import tcod as libtcod
 import random
@@ -23,38 +22,45 @@ class objSpriteSheet:
         self.imageUnitX = imageUnitX
         self.imageUnitY = imageUnitY
         
-    def getImage(self, colIdx, rowIdx, spanX=1, spanY=1, scale=None):
+    #def getImage(self, colIdx, rowIdx, **kwargs):
+    #    #TODO:  get rid of this function.
+    #    return self.getAnimation(colIdx, rowIdx, 1, **kwargs)
+
+    def getAnimation(self, colIdx=0, rowIdx=0, numSprites=1, spanX=1, spanY=1, scale=None):
         ''' 
         spanX and spanY define size of image on the spriteSheet, in units of imageUnitX/Y
         
         scale is a tuple of scale factors, applied later
         '''
+        startX, startY = colIdx * self.imageUnitX, rowIdx * self.imageUnitY
+        width, height = spanX * self.imageUnitX, spanY * self.imageUnitY
 
-        startX = colIdx*self.imageUnitX
-        startY = rowIdx*self.imageUnitY
+        imageList = []
+        for idx in range(numSprites):
+            
+            image = pygame.Surface([width, height]).convert()
+            image.blit(self.spriteSheet, (0,0), (startX+idx*width, startY, width, height))
+            image.set_colorkey(constants.COLOR_BLACK)
 
-        width = spanX * self.imageUnitX
-        height = spanY * self.imageUnitY
-        image = pygame.Surface([width, height]).convert()
-        image.blit(self.spriteSheet, (0,0), (startX, startY, 
-                                             self.imageUnitX*spanX, self.imageUnitY*spanY))
-        image.set_colorkey(constants.COLOR_BLACK)
-
-        if scale:
-            newWidth = self.imageUnitX*spanX*scale[0]
-            newHeight = self.imageUnitY*spanY*scale[1]
-            image = pygame.transform.scale(image, (newWidth, newHeight))
-
-        return image
-
-       
+            if scale:
+                newWidth = self.imageUnitX*spanX*scale[0]
+                newHeight = self.imageUnitY*spanY*scale[1]
+                image = pygame.transform.scale(image, (newWidth, newHeight))
+            imageList.append(image)
+        return imageList
+    
 class objActor:
-    def __init__(self, x, y, name, sprite, creature=None, ai=None):
+    def __init__(self, x, y, name, animation, creature=None, ai=None):
 
         self.x, self.y = x, y
         self.name = name
-        self.sprite = sprite
- 
+        self.animation = animation
+        self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
+
+        self.flickerSpeed = self.animationSpeed / len(self.animation)
+        self.flickerTimer = 0
+        self.spriteImageNum = 0
+
         self.creature = creature
         if self.creature:
             self.creature.owner = self
@@ -65,10 +71,28 @@ class objActor:
 
     def draw(self):
         global FOV_MAP
-        is_visible = FOV_MAP.fov[self.y, self.x]
-        if (is_visible):
-            SURFACE_MAIN.blit(self.sprite, (self.x * constants.CELL_WIDTH,
-                                                 self.y * constants.CELL_HEIGHT))
+        isVisible = FOV_MAP.fov[self.y, self.x]
+        if not isVisible:
+            return
+
+        if len(self.animation) == 1:
+            SURFACE_MAIN.blit(self.animation[0], (self.x * constants.CELL_WIDTH,
+                                                  self.y * constants.CELL_HEIGHT))
+        else:
+            if CLOCK.get_fps() > 0.0:
+                '''update the animation's timer.  Note draw() is called once per frame.'''
+                self.flickerTimer += 1/CLOCK.get_fps() 
+
+            if self.flickerTimer > self.flickerSpeed:
+                self.flickerTimer = 0
+                self.spriteImageNum += 1
+                    
+                #TODO, use remainder division
+                if self.spriteImageNum >= len(self.animation):
+                    self.spriteImageNum = 0
+
+            SURFACE_MAIN.blit(self.animation[self.spriteImageNum], (self.x * constants.CELL_WIDTH,
+                                                                    self.y * constants.CELL_HEIGHT))
 
 class comCreature:
     def __init__(self, name, hp=10, deathFunction=None):
@@ -103,9 +127,6 @@ class comCreature:
             self.owner.y += dy
 
 class aiTest:
-    #def __init__(self):
-    #    pass
-
     def takeTurn(self):
         dx = random.randint(-1,1)
         dy = random.randint(-1,1)
@@ -329,15 +350,16 @@ def gameInitialize():
     FOV_CALCULATE = True
     
     creatureCom1 = comCreature("our_hero")
-    PLAYER = objActor(2, 2, "python", constants.S_PLAYER, creature = creatureCom1)
+    characterSpriteSheet = objSpriteSheet('dawnlike/Characters/humanoid0.png')
+    A_player = characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)
+    PLAYER = objActor(1,1, "python", A_player, creature = creatureCom1)
     GAME.currentObjects.append(PLAYER)
-
-    spriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
-    S_ENEMY = spriteSheet.getImage(1,0)
 
     creatureCom2 = comCreature("evil_jelly", deathFunction=deathMonster)
     aiCom = aiTest()
-    enemy = objActor(5, 6, "crab", S_ENEMY, creature=creatureCom2, ai=aiCom)
+    enemySpriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
+    A_ENEMY = enemySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
+    enemy = objActor(5, 7, "crab", A_ENEMY, creature=creatureCom2, ai=aiCom)
 
     #enemy = objActor(5, 6, "crab", constants.S_ENEMY, creature=creatureCom2, ai=aiCom)
     GAME.currentObjects.append(enemy)
