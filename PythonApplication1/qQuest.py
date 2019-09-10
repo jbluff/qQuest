@@ -2,15 +2,16 @@
 import pygame
 import tcod as libtcod
 import random
-import numpy as np
 
 import constants
 
-class struc_Tile:
-    def __init__(self, block_path):
-        self.block_path = block_path
+### STRUCTS ###
+class structTile:
+    def __init__(self, blockPath):
+        self.blockPath = blockPath
+        self.explored = False
 
-class obj_Actor:
+class objActor:
     def __init__(self, x, y, name, sprite, creature=None, ai=None):
 
         self.x, self.y = x, y
@@ -32,48 +33,48 @@ class obj_Actor:
             SURFACE_MAIN.blit(self.sprite, (self.x * constants.CELL_WIDTH,
                                                  self.y * constants.CELL_HEIGHT))
 
-class com_Creature:
-    def __init__(self, name, hp=10, death_function=None):
+class comCreature:
+    def __init__(self, name, hp=10, deathFunction=None):
 
         self.name = name
         self.hp = hp  
-        self.max_hp = hp
-        self.death_function = death_function
+        self.maxHp = hp
+        self.deathFunction = deathFunction
 
-    def take_damage(self, damage):
+    def takeDamage(self, damage):
         self.hp -= damage
-        print(self.name + "'s health is " + str(self.hp) + "/" + str(self.max_hp))
+        print(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
 
         if self.hp <= 0:
-            if self.death_function:
-                self.death_function(self.owner)
+            if self.deathFunction:
+                self.deathFunction(self.owner)
 
     def move(self, dx, dy):
-        tile_is_wall = (GAME.current_map[self.owner.x + dx]
-                        [self.owner.y + dy].block_path == True)
+        tileIsWall = (GAME.currentMap[self.owner.x + dx]
+                        [self.owner.y + dy].blockPath == True)
 
-        target = map_check_for_creature(self.owner.x + dx,
+        target = mapCheckForCreature(self.owner.x + dx,
                                         self.owner.y + dy,
                                         exclude_object=self.owner)
 
         if target:
             print(self.name + " attacks " + target.name)
-            target.take_damage(3)
+            target.takeDamage(3)
 
-        if not tile_is_wall and target is None:
+        if not tileIsWall and target is None:
             self.owner.x += dx
             self.owner.y += dy
 
-class ai_Test:
+class aiTest:
     #def __init__(self):
     #    pass
 
-    def take_turn(self):
+    def takeTurn(self):
         dx = random.randint(-1,1)
         dy = random.randint(-1,1)
         self.owner.creature.move(dx,dy)
 
-def death_monster(monster):
+def deathMonster(monster):
     '''
     Monster is actor class instance
     '''
@@ -81,36 +82,37 @@ def death_monster(monster):
     monster.creature = None
     monster.ai = None
 
-class obj_Game:
+class objGame:
     def __init__(self):
-        self.current_objects = []
+        self.correntObjects = []
         self.message_history = []
-        self.current_map = map_create()
+        self.currentMap = mapCreate()
 
-def map_create():
-    new_map = [[struc_Tile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
+### MAP FUNCTIONS ###
+def mapCreate():
+    new_map = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
 
     for i in range(constants.MAP_HEIGHT):
-        new_map[0][i].block_path = True
-        new_map[constants.MAP_WIDTH-1][i].block_path = True
+        new_map[0][i].blockPath = True
+        new_map[constants.MAP_WIDTH-1][i].blockPath = True
     for i in range(constants.MAP_WIDTH):
-        new_map[i][0].block_path = True
-        new_map[i][constants.MAP_HEIGHT-1].block_path = True
+        new_map[i][0].blockPath = True
+        new_map[i][constants.MAP_HEIGHT-1].blockPath = True
 
-    new_map[3][3].block_path = True
-    new_map[5][6].block_path = True
+    new_map[3][3].blockPath = True
+    new_map[5][6].blockPath = True
 
     map_make_fov(new_map)
 
     return new_map
 
-def map_check_for_creature(x, y, exclude_object = None):
+def mapCheckForCreature(x, y, exclude_object = None):
     '''
     Returns target creature instance if target location contains creature
     '''
     global GAME
     target = None
-    for object in GAME.current_objects:
+    for object in GAME.correntObjects:
         if (object is not exclude_object and
             object.x == x and
             object.y == y and
@@ -124,10 +126,10 @@ def map_make_fov(map_in):
     FOV_MAP = libtcod.map.Map(width=constants.MAP_WIDTH, height=constants.MAP_HEIGHT)
     for y in range(constants.MAP_HEIGHT):
         for x in range(constants.MAP_WIDTH):
-            val = map_in[x][y].block_path
+            val = map_in[x][y].blockPath
             FOV_MAP.transparent[y][x] = not val
 
-def map_calculate_fov():
+def mapCalculateFov():
     ''' the index order gets hosed here.  tcod is weird.'''
     global FOV_CALCULATE, FOV_MAP, PLAYER
     if FOV_CALCULATE:
@@ -137,35 +139,57 @@ def map_calculate_fov():
                             light_walls = constants.FOV_LIGHT_WALLS,
                             algorithm = constants.FOV_ALGO)
 
-def draw_map(map_to_draw):
+### DRAWING FUNCTIONS ###
+def drawMap(map_to_draw):
     global SURFACE_MAIN, FOV_MAP
     for x in range(0, constants.MAP_WIDTH):
         for y in range(0, constants.MAP_HEIGHT):
 
             is_visible = FOV_MAP.fov[y, x]
             if is_visible:
-                if map_to_draw[x][y].block_path == True: 
+                map_to_draw[x][y].explored = True
+                if map_to_draw[x][y].blockPath == True: 
                     SURFACE_MAIN.blit(constants.S_WALL, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
                 else:
                     SURFACE_MAIN.blit(constants.S_FLOOR, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
-            else:
-                if map_to_draw[x][y].block_path == True: 
+            elif map_to_draw[x][y].explored == True:
+                if map_to_draw[x][y].blockPath == True: 
                     SURFACE_MAIN.blit(constants.S_WALL_DARK, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
                 else:
                     SURFACE_MAIN.blit(constants.S_FLOOR_DARK, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
-def draw_game():
+def drawGame():
     global SURFACE_MAIN, GAME
 
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
-    draw_map(GAME.current_map)
+    drawMap(GAME.currentMap)
 
-    for game_obj in GAME.current_objects:
-        game_obj.draw()
+    for gameObj in GAME.correntObjects:
+        gameObj.draw()
+
+    drawDebug()
 
     pygame.display.flip()
 
-def game_handle_keys():
+def drawDebug():
+    drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_BLACK)
+
+    #drawText(SURFACE_MAIN, "fps:", (0,0), constants.COLOR_BLACK)
+    
+def drawText(displaySurface, text, coords, textColor):
+    textSurf, textRect = helperTextObjects(text, textColor)
+    textRect.topleft = coords
+    displaySurface.blit(textSurf, textRect)
+ 
+
+def helperTextObjects(text, textColor):
+    ''' Render text, return surface and bounding geometry '''
+    background=None
+    textSurface = constants.FONT_DEBUG.render(text, True, textColor, background)
+    return textSurface, textSurface.get_rect()
+
+### MAIN GAME FUNCTIONS ### 
+def gameHandleKeys():
 
     global FOV_CALCULATE, PLAYER
     # get player input
@@ -204,57 +228,62 @@ def game_handle_keys():
 
     return "no-action"
 
-def game_exit():
+def gameExit():
     pygame.quit()
     quit()
-    #sys.exit()
 
-def game_main_loop():
-    global GAME
+def gameMainLoop():
+    global GAME, CLOCK
     quit = False
     
-    player_action = "no-action"
+    playerAction = "no-action"
 
     while not quit:
        
-        player_action = game_handle_keys()
+        playerAction = gameHandleKeys()
 
-        map_calculate_fov()
+        mapCalculateFov()
 
-        if player_action == "QUIT":
+        if playerAction == "QUIT":
             quit = True
 
-        elif player_action == "player-moved":
-            for game_obj in GAME.current_objects:
-                if game_obj.ai:
-                    game_obj.ai.take_turn()
+        elif playerAction == "player-moved":
+            for gameObj in GAME.correntObjects:
+                if gameObj.ai:
+                    gameObj.ai.takeTurn()
 
-        draw_game()
-    game_exit()
+        drawGame()
 
-def game_initialize():
-    global SURFACE_MAIN, GAME, PLAYER, FOV_CALCULATE
+        CLOCK.tick(60)
+
+    gameExit()
+
+def gameInitialize():
+    global CLOCK, SURFACE_MAIN, GAME, PLAYER, FOV_CALCULATE
     pygame.init()
+
+    CLOCK = pygame.time.Clock()
 
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
                                             constants.MAP_HEIGHT*constants.CELL_HEIGHT))
 
-    GAME = obj_Game()
-    GAME.current_map = map_create()
+    GAME = objGame()
+    GAME.currentMap = mapCreate()
     FOV_CALCULATE = True
+    
+    creature_com1 = comCreature("our_hero")
+    PLAYER = objActor(2, 2, "python", constants.S_PLAYER, creature = creature_com1)
+    GAME.correntObjects.append(PLAYER)
 
-    creature_com1 = com_Creature("our_hero")
-    PLAYER = obj_Actor(2, 2, "python", constants.S_PLAYER, creature = creature_com1)
-    GAME.current_objects.append(PLAYER)
+    creature_com2 = comCreature("evil_jelly", deathFunction=deathMonster)
+    ai_com = aiTest()
+    enemy = objActor(5, 6, "crab", constants.S_ENEMY, creature = creature_com2, ai=ai_com)
+    GAME.correntObjects.append(enemy)
 
-    creature_com2 = com_Creature("evil_jelly", death_function=death_monster)
-    ai_com = ai_Test()
-    enemy = obj_Actor(5, 6, "crab", constants.S_ENEMY, creature = creature_com2, ai=ai_com)
-    GAME.current_objects.append(enemy)
-
+''' WHERE THE MAGIC HAPPENS ''' 
 if __name__ == "__main__":
-    game_initialize()
-    game_main_loop()
+    gameInitialize()
+    gameMainLoop()
 
     
 
