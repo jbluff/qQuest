@@ -5,12 +5,49 @@ import random
 
 import constants
 
-### STRUCTS ###
 class structTile:
     def __init__(self, blockPath):
         self.blockPath = blockPath
         self.explored = False
 
+class objSpriteSheet:
+    ''' grab images from sprite sheet'''
+    def __init__(self, fileName, imageUnitX=constants.CELL_WIDTH, imageUnitY=constants.CELL_HEIGHT):
+        ''' 
+        imageUnitX/Y define the atomic size of an image on the sprite sheet, in pixels.
+            images from the sprite sheet can be selected to take up e.g. several atomic units.
+            images can also be scaled from their sprite sheet sizes
+        
+        '''
+        self.spriteSheet = pygame.image.load(fileName).convert()
+        self.imageUnitX = imageUnitX
+        self.imageUnitY = imageUnitY
+        
+    def getImage(self, colIdx, rowIdx, spanX=1, spanY=1, scale=None):
+        ''' 
+        spanX and spanY define size of image on the spriteSheet, in units of imageUnitX/Y
+        
+        scale is a tuple of scale factors, applied later
+        '''
+
+        startX = colIdx*self.imageUnitX
+        startY = rowIdx*self.imageUnitY
+
+        width = spanX * self.imageUnitX
+        height = spanY * self.imageUnitY
+        image = pygame.Surface([width, height]).convert()
+        image.blit(self.spriteSheet, (0,0), (startX, startY, 
+                                             self.imageUnitX*spanX, self.imageUnitY*spanY))
+        image.set_colorkey(constants.COLOR_BLACK)
+
+        if scale:
+            newWidth = self.imageUnitX*spanX*scale[0]
+            newHeight = self.imageUnitY*spanY*scale[1]
+            image = pygame.transform.scale(image, (newWidth, newHeight))
+
+        return image
+
+       
 class objActor:
     def __init__(self, x, y, name, sprite, creature=None, ai=None):
 
@@ -86,9 +123,8 @@ class objGame:
     def __init__(self):
         self.currentObjects = []
         self.messageHistory = []
-        self.currentMap = mapCreate()
 
-    def addMessage(self,messageText, color=constants.COLOR_WHITE):
+    def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color))
 
 ### MAP FUNCTIONS ###
@@ -292,13 +328,18 @@ def gameInitialize():
     GAME.currentMap = mapCreate()
     FOV_CALCULATE = True
     
-    creature_com1 = comCreature("our_hero")
-    PLAYER = objActor(2, 2, "python", constants.S_PLAYER, creature = creature_com1)
+    creatureCom1 = comCreature("our_hero")
+    PLAYER = objActor(2, 2, "python", constants.S_PLAYER, creature = creatureCom1)
     GAME.currentObjects.append(PLAYER)
 
-    creature_com2 = comCreature("evil_jelly", deathFunction=deathMonster)
-    ai_com = aiTest()
-    enemy = objActor(5, 6, "crab", constants.S_ENEMY, creature = creature_com2, ai=ai_com)
+    spriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
+    S_ENEMY = spriteSheet.getImage(1,0)
+
+    creatureCom2 = comCreature("evil_jelly", deathFunction=deathMonster)
+    aiCom = aiTest()
+    enemy = objActor(5, 6, "crab", S_ENEMY, creature=creatureCom2, ai=aiCom)
+
+    #enemy = objActor(5, 6, "crab", constants.S_ENEMY, creature=creatureCom2, ai=aiCom)
     GAME.currentObjects.append(enemy)
 
 ''' WHERE THE MAGIC HAPPENS ''' 
