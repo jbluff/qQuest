@@ -9,6 +9,22 @@ class structTile:
         self.blockPath = blockPath
         self.explored = False
 
+class structAssets:
+    '''
+    Container class for spriteSheets, sprites, animations
+    '''
+    def __init__(self):
+        self.characterSpriteSheet = objSpriteSheet('dawnlike/Characters/humanoid0.png')
+        self.jellySpriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
+
+        self.s_wall = pygame.image.load('16x16figs/wall.png')
+        self.s_wall_dark = pygame.image.load('16x16figs/wall_dark.png')
+        self.s_floor = pygame.image.load('16x16figs/floor.png')
+        self.s_floor_dark = pygame.image.load('16x16figs/floor_dark.png')
+
+        self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
+        self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
+
 class objSpriteSheet:
     ''' grab images from sprite sheet'''
     def __init__(self, fileName, imageUnitX=constants.CELL_WIDTH, imageUnitY=constants.CELL_HEIGHT):
@@ -49,8 +65,10 @@ class objSpriteSheet:
             imageList.append(image)
         return imageList
     
+
+### things that do things ###
 class objActor:
-    def __init__(self, x, y, name, animation, creature=None, ai=None):
+    def __init__(self, x, y, name, animation, creature=None, ai=None, container=None, item=None):
 
         self.x, self.y = x, y
         self.name = name
@@ -68,6 +86,14 @@ class objActor:
         self.ai = ai
         if self.ai:
             self.ai.owner = self
+
+        self.container = container
+        if self.container:
+            self.container.owner = self
+
+        self.item = item
+        if self.item:
+            self.item.owner = self
 
     def draw(self):
         global FOV_MAP
@@ -126,6 +152,44 @@ class comCreature:
             self.owner.x += dx
             self.owner.y += dy
 
+class comContainer:
+    def __init__(self, volume=10.0, inventory=[]):
+        self.max_volume = volume
+        self.inventory = inventory
+        #todo:   subtract volume of initialy added items
+
+    @property
+    def volume(self):
+        ''' free volume '''
+        #todo:  subtract stufff
+        return self.max_volume 
+    ## TODO: get names of things in inventory
+    ## TODO: get weight?
+
+class comItem:
+    def __init__(self, weight=0.0, volume=0.0, name="itemblaggg"):
+        self.weight = weight
+        self.volume = volume 
+        self.name = name
+
+    def pickup(self, actor):
+        if actor.container:
+            if actor.container.volume + self.volume > actor.container.max_volume:
+                GAME.addMessage(actor.creature.name_instance + "doesn't have enough room")
+            else:
+                GAME.addMessage(actor.creature.name + " picked up " + self.name)
+                actor.container.inventory.append(self.owner)
+                GAME.currentObjects.remove(self.owner)
+                self.currentContainer = actor.container
+
+    def drop(self, actor):
+        GAME.currentObjects.append(self.owner)
+        self.currentContainer.inventory.remove(self.owner)
+        self.owner.x = actor.x #self.currentContainer.owner.x #why doesn't this work.  hrm. 
+        self.owner.y = actor.y #self.currentContainer.owner.y
+        GAME.addMessage("item " + self.name + " dropped!")
+
+### NPC behavior things ###
 class aiTest:
     def takeTurn(self):
         dx = random.randint(-1,1)
@@ -134,7 +198,8 @@ class aiTest:
 
 def deathMonster(monster):
     '''
-    Monster is actor class instance
+    What happens when a non-player character dies?
+    Monster is actor class instance.
     '''
     GAME.addMessage(monster.creature.name + " has been slain!")
     monster.creature = None
@@ -170,7 +235,6 @@ def mapCheckForCreature(x, y, exclude_object = None):
     '''
     Returns target creature instance if target location contains creature
     '''
-    global GAME
     target = None
     for object in GAME.currentObjects:
         if (object is not exclude_object and
@@ -199,6 +263,10 @@ def mapCalculateFov():
                             light_walls = constants.FOV_LIGHT_WALLS,
                             algorithm = constants.FOV_ALGO)
 
+def mapObjectsAtCoords(x,y):
+    return [obj for obj in GAME.currentObjects if obj.x == x and obj.y == y]
+    
+
 ### DRAWING FUNCTIONS ###
 def drawMap(map_to_draw):
     global SURFACE_MAIN, FOV_MAP
@@ -209,14 +277,14 @@ def drawMap(map_to_draw):
             if is_visible:
                 map_to_draw[x][y].explored = True
                 if map_to_draw[x][y].blockPath == True: 
-                    SURFACE_MAIN.blit(constants.S_WALL, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+                    SURFACE_MAIN.blit(ASSETS.s_wall, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
                 else:
-                    SURFACE_MAIN.blit(constants.S_FLOOR, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+                    SURFACE_MAIN.blit(ASSETS.s_floor, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
             elif map_to_draw[x][y].explored == True:
                 if map_to_draw[x][y].blockPath == True: 
-                    SURFACE_MAIN.blit(constants.S_WALL_DARK, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+                    SURFACE_MAIN.blit(ASSETS.s_wall_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
                 else:
-                    SURFACE_MAIN.blit(constants.S_FLOOR_DARK, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+                    SURFACE_MAIN.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
 def drawGame():
     global SURFACE_MAIN, GAME
@@ -265,6 +333,7 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
+
 ### MAIN GAME FUNCTIONS ### 
 
 def gameHandleKeys():
@@ -303,6 +372,18 @@ def gameHandleKeys():
                 FOV_CALCULATE = True
                 return "player-moved"
 
+            # pickup objects
+            # TODO:  break this into a subroutine
+            if event.key == pygame.K_g:
+                objs = mapObjectsAtCoords(PLAYER.x, PLAYER.y)
+                for obj in objs:
+                    if obj.item:
+                        obj.item.pickup(PLAYER)
+
+            if event.key == pygame.K_d:
+                if len(PLAYER.container.inventory) > 0:
+                    PLAYER.container.inventory[-1].item.drop(PLAYER)
+                        
     return "no-action"
 
 def gameExit():
@@ -313,33 +394,30 @@ def gameMainLoop():
     global GAME, CLOCK
     quit = False
     
-    GAME.addMessage("test1", constants.COLOR_WHITE)
-    GAME.addMessage("test2", constants.COLOR_GREEN)
+    GAME.addMessage("oh heyy", constants.COLOR_WHITE)
     playerAction = "no-action"
 
-    while not quit:
+    while playerAction != "QUIT":
        
         playerAction = gameHandleKeys()
 
         mapCalculateFov()
 
-        if playerAction == "QUIT":
-            quit = True
-
-        elif playerAction == "player-moved":
+        if playerAction == "player-moved":
             for gameObj in GAME.currentObjects:
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
         drawGame()
+
         CLOCK.tick(60)
 
     gameExit()
 
 def gameInitialize():
-    global CLOCK, SURFACE_MAIN, GAME, PLAYER, FOV_CALCULATE
-    pygame.init()
+    global CLOCK, SURFACE_MAIN, GAME, FOV_CALCULATE, ASSETS, PLAYER
 
+    pygame.init()
     CLOCK = pygame.time.Clock()
 
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
@@ -349,22 +427,30 @@ def gameInitialize():
     GAME.currentMap = mapCreate()
     FOV_CALCULATE = True
     
-    creatureCom1 = comCreature("our_hero")
-    characterSpriteSheet = objSpriteSheet('dawnlike/Characters/humanoid0.png')
-    A_player = characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)
-    PLAYER = objActor(1,1, "python", A_player, creature = creatureCom1)
+    ASSETS = structAssets()
+
+    # init hero
+    container1 = comContainer()
+    creatureCom1 = comCreature("jenny")
+    PLAYER = objActor(1,1, "hero", ASSETS.a_player, 
+                      creature=creatureCom1, 
+                      container=container1)
     GAME.currentObjects.append(PLAYER)
 
-    creatureCom2 = comCreature("evil_jelly", deathFunction=deathMonster)
+    # init the enemy
+    item1 = comItem(name="franks's corpse")
+    creatureCom2 = comCreature("frank", deathFunction=deathMonster)
     aiCom = aiTest()
-    enemySpriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
-    A_ENEMY = enemySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
-    enemy = objActor(5, 7, "crab", A_ENEMY, creature=creatureCom2, ai=aiCom)
-
-    #enemy = objActor(5, 6, "crab", constants.S_ENEMY, creature=creatureCom2, ai=aiCom)
+    enemy = objActor(5, 7, "evil jelly", ASSETS.a_jelly, 
+                     creature=creatureCom2, 
+                     ai=aiCom,
+                     container=container1,
+                     item=item1)
     GAME.currentObjects.append(enemy)
 
-''' WHERE THE MAGIC HAPPENS ''' 
+    
+
+
 if __name__ == "__main__":
     gameInitialize()
     gameMainLoop()

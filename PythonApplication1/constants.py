@@ -27,10 +27,10 @@ FONT_DEBUG = FONT_CONSOLA
 ''' Sprites '''
 #S_PLAYER = pygame.image.load('16x16figs/player.png')
 #S_ENEMY = pygame.image.load('16x16figs/jelly.png')
-S_WALL = pygame.image.load('16x16figs/wall.png')
-S_FLOOR = pygame.image.load('16x16figs/floor.png')
-S_WALL_DARK = pygame.image.load('16x16figs/wall_dark.png')
-S_FLOOR_DARK = pygame.image.load('16x16figs/floor_dark.png')
+#S_WALL = pygame.image.load('16x16figs/wall.png')
+#S_FLOOR = pygame.image.load('16x16figs/floor.png')
+#S_WALL_DARK = pygame.image.load('16x16figs/wall_dark.png')
+#S_FLOOR_DARK = pygame.image.load('16x16figs/floor_dark.png')
 
 ''' FOV stuff '''
 import tcod as libtcod
