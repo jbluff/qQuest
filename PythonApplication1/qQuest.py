@@ -26,7 +26,7 @@ class structAssets:
         self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
 
 class objSpriteSheet:
-    ''' grab images from sprite sheet'''
+    ''' loads a sprite sheet, allows pulling out animations '''
     def __init__(self, fileName, imageUnitX=constants.CELL_WIDTH, imageUnitY=constants.CELL_HEIGHT):
         ''' 
         imageUnitX/Y define the atomic size of an image on the sprite sheet, in pixels.
@@ -189,6 +189,7 @@ class comItem:
         self.owner.y = actor.y #self.currentContainer.owner.y
         GAME.addMessage("item " + self.name + " dropped!")
 
+
 ### NPC behavior things ###
 class aiTest:
     def takeTurn(self):
@@ -204,14 +205,6 @@ def deathMonster(monster):
     GAME.addMessage(monster.creature.name + " has been slain!")
     monster.creature = None
     monster.ai = None
-
-class objGame:
-    def __init__(self):
-        self.currentObjects = []
-        self.messageHistory = []
-
-    def addMessage(self, messageText, color=constants.COLOR_WHITE):
-        self.messageHistory.append((messageText, color))
 
 ### MAP FUNCTIONS ###
 def mapCreate():
@@ -267,6 +260,71 @@ def mapObjectsAtCoords(x,y):
     return [obj for obj in GAME.currentObjects if obj.x == x and obj.y == y]
     
 
+### MENU FUNCTIONS ###
+def menuPause():
+    ''' dummy function, sort of dumb '''
+    GAME.addMessage("paused!")
+
+    menuText = "paused"
+    #TODO:  font flexibility
+    windowWidth = constants.CELL_WIDTH*constants.MAP_WIDTH
+    windowHeight = constants.CELL_HEIGHT*constants.MAP_HEIGHT
+
+    textWidth, textHeight = helperTextDims(text="menuText") # font=
+
+    coordY = (windowHeight-textHeight)/2
+    coordX = (windowWidth-textWidth)/2
+
+    breakMenuLoop = False
+    while not breakMenuLoop:
+        eventsList = pygame.event.get()
+        for event in eventsList:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    breakMenuLoop = 1
+
+
+        drawText(SURFACE_MAIN, menuText, (coordX, coordY), constants.COLOR_WHITE, bgColor=constants.COLOR_BLACK)
+        pygame.display.flip()
+
+def menuInventory():
+    owner = PLAYER #alternately, pass an an inventory..
+    parentSurface = SURFACE_MAIN
+    menuWidth = 200
+    menuHeight = 300
+    #Font..
+
+    windowWidth = parentSurface.get_width()
+    windowHeight = parentSurface.get_height()
+
+    coordY = (windowHeight-menuHeight)/2
+    coordX = (windowWidth-menuWidth)/2
+
+    inventorySurface = pygame.Surface((menuWidth, menuHeight))
+
+    printList = [("Inventory:", constants.COLOR_WHITE)]
+    printList.extend([(obj.name,constants.COLOR_GREY) for obj in owner.container.inventory])
+
+    breakMenuLoop = False
+    while not breakMenuLoop:
+        # Clear
+        inventorySurface.fill(constants.COLOR_BLACK)
+
+        # Register changes
+        eventsList = pygame.event.get()
+        for event in eventsList:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_i:
+                    breakMenuLoop = 1
+
+        # Draw
+        drawTextList(inventorySurface, printList)
+
+        # Display
+        parentSurface.blit(inventorySurface, (coordX, coordY))
+        pygame.display.flip()
+
+
 ### DRAWING FUNCTIONS ###
 def drawMap(map_to_draw):
     global SURFACE_MAIN, FOV_MAP
@@ -295,7 +353,7 @@ def drawGame():
     for gameObj in GAME.currentObjects:
         gameObj.draw()
 
-    drawMessages()
+    drawGameMessages()
     drawDebug()
 
     pygame.display.flip()
@@ -307,26 +365,35 @@ def drawFPS():
 def drawDebug():
     drawFPS()
 
-def drawMessages():
-    height = helperTextHeight()
+def drawTextList(surface, messages, startX=0, startY=0):
+    '''
+    Draw a list of text.  
+    StartX and startY show upper left coordinate of textList on surface.
+    '''
+    _, height = helperTextDims()
+    for idx, (message, color) in enumerate(messages):
+        drawText(surface,message, (startX, startY+idx*height),color,constants.COLOR_BLACK)  
+
+def drawGameMessages():
     numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
-    startY = constants.MAP_HEIGHT * constants.CELL_HEIGHT - numMessages * height
-    
     if(numMessages==0):
         return 0
     messages = GAME.messageHistory[-numMessages:]
-    for idx, (message, color) in enumerate(messages):
-        drawText(SURFACE_MAIN,message, (0, startY+idx*height),color,constants.COLOR_BLACK)  
+
+    _, height = helperTextDims()
+    startY = SURFACE_MAIN.get_height() - numMessages*height
+
+    drawTextList(SURFACE_MAIN, messages, startX=0, startY=startY)
     
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
     textRect.topleft = coords
     displaySurface.blit(textSurf, textRect)
  
-def helperTextHeight(font=constants.FONT_DEBUG):
-    fontObject = font.render('a', False, (0,0,0))
+def helperTextDims(text='a',font=constants.FONT_DEBUG):
+    fontObject = font.render(text, False, (0,0,0))
     fontRect = fontObject.get_rect()
-    return fontRect.height
+    return fontRect.width, fontRect.height
 
 def helperTextObjects(text, textColor, bgColor=None):
     ''' Render text, return surface and bounding geometry '''
@@ -335,6 +402,14 @@ def helperTextObjects(text, textColor, bgColor=None):
 
 
 ### MAIN GAME FUNCTIONS ### 
+
+class objGame:
+    def __init__(self):
+        self.currentObjects = []
+        self.messageHistory = []
+
+    def addMessage(self, messageText, color=constants.COLOR_WHITE):
+        self.messageHistory.append((messageText, color))
 
 def gameHandleKeys():
 
@@ -380,10 +455,21 @@ def gameHandleKeys():
                     if obj.item:
                         obj.item.pickup(PLAYER)
 
+            #drop objects
             if event.key == pygame.K_d:
                 if len(PLAYER.container.inventory) > 0:
                     PLAYER.container.inventory[-1].item.drop(PLAYER)
-                        
+
+            # pause menu
+            if event.key == pygame.K_p:
+                menuPause()
+
+            # inventory menu
+            if event.key == pygame.K_i:
+                menuInventory()
+
+            if event.key == pygame.K_q:
+                return "QUIT"
     return "no-action"
 
 def gameExit():
