@@ -3,11 +3,8 @@ import tcod as libtcod
 import random
 
 import constants
+import map_util
 
-class structTile:
-    def __init__(self, blockPath):
-        self.blockPath = blockPath
-        self.explored = False
 
 class structAssets:
     '''
@@ -140,9 +137,7 @@ class comCreature:
         tileIsWall = (GAME.currentMap[self.owner.x + dx]
                         [self.owner.y + dy].blockPath == True)
 
-        target = mapCheckForCreature(self.owner.x + dx,
-                                        self.owner.y + dy,
-                                        exclude_object=self.owner)
+        target = GAME.checkForCreature(self.owner.x + dx, self.owner.y + dy, exclude_object=self.owner)
 
         if target:
             GAME.addMessage(self.name + " attacks " + target.name)
@@ -206,59 +201,6 @@ def deathMonster(monster):
     monster.creature = None
     monster.ai = None
 
-### MAP FUNCTIONS ###
-def mapCreate():
-    newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
-
-    for i in range(constants.MAP_HEIGHT):
-        newMap[0][i].blockPath = True
-        newMap[constants.MAP_WIDTH-1][i].blockPath = True
-    for i in range(constants.MAP_WIDTH):
-        newMap[i][0].blockPath = True
-        newMap[i][constants.MAP_HEIGHT-1].blockPath = True
-
-    newMap[3][3].blockPath = True
-    newMap[5][6].blockPath = True
-
-    mapMakeFov(newMap)
-
-    return newMap
-
-def mapCheckForCreature(x, y, exclude_object = None):
-    '''
-    Returns target creature instance if target location contains creature
-    '''
-    target = None
-    for object in GAME.currentObjects:
-        if (object is not exclude_object and
-            object.x == x and
-            object.y == y and
-            object.creature):
-            return object.creature
-    return None
-
-def mapMakeFov(map_in):
-    ''' the index order gets hosed here.  tcod is weird.'''
-    global FOV_MAP
-    FOV_MAP = libtcod.map.Map(width=constants.MAP_WIDTH, height=constants.MAP_HEIGHT)
-    for y in range(constants.MAP_HEIGHT):
-        for x in range(constants.MAP_WIDTH):
-            val = map_in[x][y].blockPath
-            FOV_MAP.transparent[y][x] = not val
-
-def mapCalculateFov():
-    ''' the index order gets hosed here.  tcod is weird.'''
-    global FOV_CALCULATE, FOV_MAP, PLAYER
-    if FOV_CALCULATE:
-        FOV_CALCULATE = False
-        FOV_MAP.compute_fov(PLAYER.x,PLAYER.y,
-                            radius = constants.FOV_RADIUS,
-                            light_walls = constants.FOV_LIGHT_WALLS,
-                            algorithm = constants.FOV_ALGO)
-
-def mapObjectsAtCoords(x,y):
-    return [obj for obj in GAME.currentObjects if obj.x == x and obj.y == y]
-    
 
 ### MENU FUNCTIONS ###
 def menuPause():
@@ -443,6 +385,22 @@ class objGame:
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color))
 
+    def checkForCreature(self, x, y, exclude_object = None):
+        '''
+        Returns target creature instance if target location contains creature
+        '''
+        target = None
+        for object in self.currentObjects:
+            if (object is not exclude_object and
+                object.x == x and
+                object.y == y and
+                object.creature):
+                return object.creature
+        return None
+
+    def objectsAtCoords(self,x,y):
+        return [obj for obj in self.currentObjects if obj.x == x and obj.y == y]
+
 def gameHandleKeys():
 
     global FOV_CALCULATE
@@ -482,7 +440,7 @@ def gameHandleKeys():
             # pickup objects
             # TODO:  break this into a subroutine
             if event.key == pygame.K_g:
-                objs = mapObjectsAtCoords(PLAYER.x, PLAYER.y)
+                objs = GAME.objectsAtCoords(PLAYER.x, PLAYER.y)
                 for obj in objs:
                     if obj.item:
                         obj.item.pickup(PLAYER)
@@ -504,7 +462,7 @@ def gameExit():
     quit()
 
 def gameMainLoop():
-    global GAME, CLOCK
+    global GAME, CLOCK, FOV_CALCULATE, FOV_MAP
     quit = False
     
     GAME.addMessage("oh heyy", constants.COLOR_WHITE)
@@ -514,7 +472,8 @@ def gameMainLoop():
        
         playerAction = gameHandleKeys()
 
-        mapCalculateFov()
+        map_util.mapCalculateFov(doCalculate=FOV_CALCULATE, player=PLAYER, fovMap=FOV_MAP)
+        FOV_CALCULATE = False
 
         if playerAction == "player-moved":
             for gameObj in GAME.currentObjects:
@@ -538,7 +497,7 @@ def gameAddEnemy(coordX, coordY, name):
     GAME.currentObjects.append(enemy)
 
 def gameInitialize():
-    global CLOCK, SURFACE_MAIN, GAME, FOV_CALCULATE, ASSETS, PLAYER
+    global CLOCK, SURFACE_MAIN, GAME, FOV_CALCULATE, FOV_MAP, ASSETS, PLAYER
 
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
@@ -548,7 +507,7 @@ def gameInitialize():
                                             constants.MAP_HEIGHT*constants.CELL_HEIGHT))
 
     GAME = objGame()
-    GAME.currentMap = mapCreate()
+    GAME.currentMap, FOV_MAP = map_util.mapCreate()
     FOV_CALCULATE = True
     
     ASSETS = structAssets()
