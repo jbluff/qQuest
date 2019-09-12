@@ -1,5 +1,6 @@
 import pygame
 import constants
+import qqGlobal
 
 class structAssets:
     '''
@@ -63,7 +64,7 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawMap(surface, mapToDraw, fovMap, **kwargs):
+def drawMap(surface, mapToDraw, fovMap):
     global ASSETS
     for x in range(0, constants.MAP_WIDTH):
         for y in range(0, constants.MAP_HEIGHT):
@@ -81,7 +82,7 @@ def drawMap(surface, mapToDraw, fovMap, **kwargs):
                 else:
                     surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
-def drawGameMessages(surface, game, **kwargs):
+def drawGameMessages(surface, game):
     numMessages = min(len(game.messageHistory), constants.NUM_GAME_MESSAGES)
     if(numMessages==0):
         return 0
@@ -92,22 +93,23 @@ def drawGameMessages(surface, game, **kwargs):
 
     drawTextList(surface, messages, startX=0, startY=startY)
 
-def drawDebug(surface, **kwargs):
-    drawFPS(surface, **kwargs)
+def drawDebug(surface):
+    drawFPS(surface)
 
-def drawFPS(surface, clock=None, **kwargs):
+def drawFPS(surface):
+    clock = qqGlobal.CLOCK
     drawText(surface, "fps: " + str(int(clock.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame(game, surface, fovMap, **kwargs):
+def drawGame(game, surface, fovMap):
     surface.fill(constants.COLOR_DEFAULT_BG)
     drawMap(surface, game.currentMap, fovMap)
 
     for gameObj in game.currentObjects:
         gameObj.draw()
 
-    drawGameMessages(surface, game, **kwargs)
-    drawDebug(surface, **kwargs)
+    drawGameMessages(surface, game)
+    drawDebug(surface)
 
     pygame.display.flip()
 

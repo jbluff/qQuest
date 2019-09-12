@@ -1,18 +1,20 @@
 import pygame
 import tcod as libtcod
-import random
 
-import graphics
 import constants
+import qqGlobal
+import graphics
+
 import map_util
 import menus
-
+import ai
+import creatures
 
 
 
 ### things that do things ###
 class objActor:
-    def __init__(self, x, y, name, animation, creature=None, ai=None, container=None, item=None):
+    def __init__(self, x, y, name, animation, game, creature=None, ai=None, container=None, item=None):
 
         self.x, self.y = x, y
         self.name = name
@@ -22,6 +24,7 @@ class objActor:
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
+        self.game = game
 
         self.creature = creature
         if self.creature:
@@ -40,6 +43,7 @@ class objActor:
             self.item.owner = self
 
     def draw(self):
+        clock = qqGlobal.CLOCK
         global FOV_MAP
         isVisible = FOV_MAP.fov[self.y, self.x]
         if not isVisible:
@@ -49,9 +53,9 @@ class objActor:
             SURFACE_MAIN.blit(self.animation[0], (self.x * constants.CELL_WIDTH,
                                                   self.y * constants.CELL_HEIGHT))
         else:
-            if CLOCK.get_fps() > 0.0:
+            if clock.get_fps() > 0.0:
                 '''update the animation's timer.  Note draw() is called once per frame.'''
-                self.flickerTimer += 1/CLOCK.get_fps() 
+                self.flickerTimer += 1/clock.get_fps() 
 
             if self.flickerTimer > self.flickerSpeed:
                 self.flickerTimer = 0
@@ -81,13 +85,13 @@ class comCreature:
                 self.deathFunction(self.owner)
 
     def move(self, dx, dy):
-        tileIsWall = (GAME.currentMap[self.owner.x + dx]
+        tileIsWall = (self.owner.game.currentMap[self.owner.x + dx]
                         [self.owner.y + dy].blockPath == True)
 
-        target = GAME.checkForCreature(self.owner.x + dx, self.owner.y + dy, exclude_object=self.owner)
+        target = self.owner.game.checkForCreature(self.owner.x + dx, self.owner.y + dy, exclude_object=self.owner)
 
         if target:
-            GAME.addMessage(self.name + " attacks " + target.name)
+            self.owner.game.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
 
         if not tileIsWall and target is None:
@@ -117,36 +121,21 @@ class comItem:
     def pickup(self, actor):
         if actor.container:
             if actor.container.volume + self.volume > actor.container.max_volume:
-                GAME.addMessage(actor.creature.name_instance + "doesn't have enough room")
+                self.owner.game.addMessage(actor.creature.name_instance + "doesn't have enough room")
             else:
-                GAME.addMessage(actor.creature.name + " picked up " + self.name)
+                self.owner.game.addMessage(actor.creature.name + " picked up " + self.name)
                 actor.container.inventory.append(self.owner)
-                GAME.currentObjects.remove(self.owner)
+                self.owner.game.currentObjects.remove(self.owner)
                 self.currentContainer = actor.container
 
     def drop(self, actor):
-        GAME.currentObjects.append(self.owner)
+        self.owner.game.currentObjects.append(self.owner)
         self.currentContainer.inventory.remove(self.owner)
         self.owner.x = actor.x #self.currentContainer.owner.x #why doesn't this work.  hrm. 
         self.owner.y = actor.y #self.currentContainer.owner.y
-        GAME.addMessage("item " + self.name + " dropped!")
+        self.owner.game.addMessage("item " + self.name + " dropped!")
 
 
-### NPC behavior things ###
-class aiTest:
-    def takeTurn(self):
-        dx = random.randint(-1,1)
-        dy = random.randint(-1,1)
-        self.owner.creature.move(dx,dy)
-
-def deathMonster(monster):
-    '''
-    What happens when a non-player character dies?
-    Monster is actor class instance.
-    '''
-    GAME.addMessage(monster.creature.name + " has been slain!")
-    monster.creature = None
-    monster.ai = None
 
 
 
@@ -222,11 +211,11 @@ def gameHandleKeys():
 
             # pause menu
             if event.key == pygame.K_p:
-                menus.pause(SURFACE_MAIN, GAME, CLOCK)
+                menus.pause(SURFACE_MAIN, GAME)
 
             # inventory menu
             if event.key == pygame.K_i:
-                menus.inventory(SURFACE_MAIN, PLAYER, CLOCK)
+                menus.inventory(SURFACE_MAIN, PLAYER)
 
             if event.key == pygame.K_q:
                 return "QUIT"
@@ -237,7 +226,9 @@ def gameExit():
     quit()
 
 def gameMainLoop():
-    global GAME, CLOCK, FOV_CALCULATE, FOV_MAP
+    global GAME, FOV_CALCULATE, FOV_MAP
+    clock = qqGlobal.CLOCK
+
     quit = False
     
     GAME.addMessage("oh heyy", constants.COLOR_WHITE)
@@ -255,9 +246,9 @@ def gameMainLoop():
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
-        graphics.drawGame(GAME, SURFACE_MAIN, FOV_MAP, clock=CLOCK)
+        graphics.drawGame(GAME, SURFACE_MAIN, FOV_MAP)
 
-        CLOCK.tick(constants.GAME_FPS)
+        clock.tick(constants.GAME_FPS)
 
     gameExit()
 
@@ -265,18 +256,16 @@ def gameMainLoop():
 def gameAddEnemy(coordX, coordY, name):
     inventory = comContainer()
     item = comItem(name=name+"'s corpse")
-    creature = comCreature(name, deathFunction=deathMonster)
-    ai = aiTest()
-    enemy = objActor(coordX, coordY, "evil jelly", ASSETS.a_jelly, 
-                     creature=creature, ai=ai, container=inventory, item=item)
+    creature = comCreature(name, deathFunction=lambda x: creatures.deathMonster(GAME, x))
+    enemy = objActor(coordX, coordY, "evil jelly", ASSETS.a_jelly, GAME, 
+                     creature=creature, ai=ai.aiTest(), container=inventory, item=item)
     GAME.currentObjects.append(enemy)
 
 def gameInitialize():
-    global CLOCK, SURFACE_MAIN, GAME, FOV_CALCULATE, FOV_MAP, ASSETS, PLAYER
+    global SURFACE_MAIN, GAME, FOV_CALCULATE, FOV_MAP, ASSETS, PLAYER
 
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
-    CLOCK = pygame.time.Clock()
 
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
                                             constants.MAP_HEIGHT*constants.CELL_HEIGHT))
@@ -287,12 +276,10 @@ def gameInitialize():
     GAME.currentMap, FOV_MAP = map_util.mapCreate()
     FOV_CALCULATE = True
     
-    
-
     # init hero
     container1 = comContainer()
     creatureCom1 = comCreature("jenny")
-    PLAYER = objActor(1,1, "hero", ASSETS.a_player, 
+    PLAYER = objActor(1,1, "hero", ASSETS.a_player, GAME, 
                       creature=creatureCom1, 
                       container=container1)
     GAME.currentObjects.append(PLAYER)

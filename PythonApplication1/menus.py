@@ -2,6 +2,7 @@ import pygame
 
 import constants
 import graphics
+import qqGlobal
 
 def updateSelected(invList, selectedIdx):
     #TODO:  bgColor
@@ -14,7 +15,9 @@ def updateSelected(invList, selectedIdx):
     return invList
 
 ### MENU FUNCTIONS ###
-def pause(surface, game, clock):
+def pause(surface, game):
+    clock = qqGlobal.CLOCK
+
     ''' dummy function, sort of dumb '''
     game.addMessage("paused!")
 
@@ -41,7 +44,9 @@ def pause(surface, game, clock):
         pygame.display.flip()
 
 
-def inventory(parentSurface, actor, clock):
+def inventory(parentSurface, actor):
+    clock = qqGlobal.CLOCK
+
     menuWidth = 200
     menuHeight = 300
     #Font..
