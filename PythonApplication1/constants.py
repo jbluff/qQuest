@@ -40,3 +40,5 @@ FOV_RADIUS = 10             # Sight radius for FOV
 
 ''' message window stuff '''
 NUM_GAME_MESSAGES = 4
+
+GAME_FPS = 60

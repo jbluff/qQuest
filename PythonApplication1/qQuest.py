@@ -283,9 +283,19 @@ def menuPause():
                 if event.key == pygame.K_p:
                     breakMenuLoop = 1
 
-
         drawText(SURFACE_MAIN, menuText, (coordX, coordY), constants.COLOR_WHITE, bgColor=constants.COLOR_BLACK)
+        CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
+
+def updateSelected(invList, selectedIdx):
+    #TODO:  bgColor
+    numItems = len(invList)-1
+    for idx in range(1,numItems+1):
+        if idx == selectedIdx+1:
+            invList[idx][1] = constants.COLOR_RED
+        else:
+            invList[idx][1] = constants.COLOR_GREY
+    return invList
 
 def menuInventory():
     owner = PLAYER #alternately, pass an an inventory..
@@ -302,8 +312,11 @@ def menuInventory():
 
     inventorySurface = pygame.Surface((menuWidth, menuHeight))
 
-    printList = [("Inventory:", constants.COLOR_WHITE)]
-    printList.extend([(obj.name,constants.COLOR_GREY) for obj in owner.container.inventory])
+    #TODO:  bgColor
+    invList = [["Inventory:", constants.COLOR_WHITE],]
+    invList.extend([[obj.item.name,constants.COLOR_GREY] for obj in owner.container.inventory])
+    selected = 0
+    invList = updateSelected(invList, selected)
 
     breakMenuLoop = False
     while not breakMenuLoop:
@@ -314,15 +327,34 @@ def menuInventory():
         eventsList = pygame.event.get()
         for event in eventsList:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_i:
-                    breakMenuLoop = 1
+                if event.key == pygame.K_i or event.key == pygame.K_q:
+                    breakMenuLoop = True
+                    break
 
+                elif event.key == pygame.K_DOWN:
+                    if selected < len(invList) - 2:
+                        selected += 1
+
+                elif event.key == pygame.K_UP:
+                    if selected > 0:
+                        selected -= 1
+                   
+                elif event.key == pygame.K_d:
+                    owner.container.inventory[selected].item.drop(PLAYER) #fix this nonsense.
+                    del invList[selected+1]
+                    if selected > 0:
+                        selected -= 1
+
+                invList = updateSelected(invList, selected)
+                
         # Draw
-        drawTextList(inventorySurface, printList)
+        drawTextList(inventorySurface, invList)
 
         # Display
         parentSurface.blit(inventorySurface, (coordX, coordY))
+        CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
+        
 
 
 ### DRAWING FUNCTIONS ###
@@ -455,11 +487,6 @@ def gameHandleKeys():
                     if obj.item:
                         obj.item.pickup(PLAYER)
 
-            #drop objects
-            if event.key == pygame.K_d:
-                if len(PLAYER.container.inventory) > 0:
-                    PLAYER.container.inventory[-1].item.drop(PLAYER)
-
             # pause menu
             if event.key == pygame.K_p:
                 menuPause()
@@ -496,14 +523,25 @@ def gameMainLoop():
 
         drawGame()
 
-        CLOCK.tick(60)
+        CLOCK.tick(constants.GAME_FPS)
 
     gameExit()
+
+#temporary and bad
+def gameAddEnemy(coordX, coordY, name):
+    inventory = comContainer()
+    item = comItem(name=name+"'s corpse")
+    creature = comCreature(name, deathFunction=deathMonster)
+    ai = aiTest()
+    enemy = objActor(coordX, coordY, "evil jelly", ASSETS.a_jelly, 
+                     creature=creature, ai=ai, container=inventory, item=item)
+    GAME.currentObjects.append(enemy)
 
 def gameInitialize():
     global CLOCK, SURFACE_MAIN, GAME, FOV_CALCULATE, ASSETS, PLAYER
 
     pygame.init()
+    pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
     CLOCK = pygame.time.Clock()
 
     SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
@@ -524,17 +562,11 @@ def gameInitialize():
     GAME.currentObjects.append(PLAYER)
 
     # init the enemy
-    item1 = comItem(name="franks's corpse")
-    creatureCom2 = comCreature("frank", deathFunction=deathMonster)
-    aiCom = aiTest()
-    enemy = objActor(5, 7, "evil jelly", ASSETS.a_jelly, 
-                     creature=creatureCom2, 
-                     ai=aiCom,
-                     container=container1,
-                     item=item1)
-    GAME.currentObjects.append(enemy)
+    gameAddEnemy(5,7,"frank")
 
-    
+    gameAddEnemy(10,3,"george")
+
+
 
 
 if __name__ == "__main__":
