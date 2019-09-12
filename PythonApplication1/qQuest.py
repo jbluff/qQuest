@@ -5,7 +5,7 @@ import random
 import graphics
 import constants
 import map_util
-
+import menus
 
 
 
@@ -149,102 +149,6 @@ def deathMonster(monster):
     monster.ai = None
 
 
-### MENU FUNCTIONS ###
-def menuPause():
-    ''' dummy function, sort of dumb '''
-    GAME.addMessage("paused!")
-
-    menuText = "paused"
-    #TODO:  font flexibility
-    windowWidth = constants.CELL_WIDTH*constants.MAP_WIDTH
-    windowHeight = constants.CELL_HEIGHT*constants.MAP_HEIGHT
-
-    textWidth, textHeight = helperTextDims(text="menuText") # font=
-
-    coordY = (windowHeight-textHeight)/2
-    coordX = (windowWidth-textWidth)/2
-
-    breakMenuLoop = False
-    while not breakMenuLoop:
-        eventsList = pygame.event.get()
-        for event in eventsList:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    breakMenuLoop = 1
-
-        drawText(SURFACE_MAIN, menuText, (coordX, coordY), constants.COLOR_WHITE, bgColor=constants.COLOR_BLACK)
-        CLOCK.tick(constants.GAME_FPS)
-        pygame.display.flip()
-
-def updateSelected(invList, selectedIdx):
-    #TODO:  bgColor
-    numItems = len(invList)-1
-    for idx in range(1,numItems+1):
-        if idx == selectedIdx+1:
-            invList[idx][1] = constants.COLOR_RED
-        else:
-            invList[idx][1] = constants.COLOR_GREY
-    return invList
-
-def menuInventory():
-    owner = PLAYER #alternately, pass an an inventory..
-    parentSurface = SURFACE_MAIN
-    menuWidth = 200
-    menuHeight = 300
-    #Font..
-
-    windowWidth = parentSurface.get_width()
-    windowHeight = parentSurface.get_height()
-
-    coordY = (windowHeight-menuHeight)/2
-    coordX = (windowWidth-menuWidth)/2
-
-    inventorySurface = pygame.Surface((menuWidth, menuHeight))
-
-    #TODO:  bgColor
-    invList = [["Inventory:", constants.COLOR_WHITE],]
-    invList.extend([[obj.item.name,constants.COLOR_GREY] for obj in owner.container.inventory])
-    selected = 0
-    invList = updateSelected(invList, selected)
-
-    breakMenuLoop = False
-    while not breakMenuLoop:
-        # Clear
-        inventorySurface.fill(constants.COLOR_BLACK)
-
-        # Register changes
-        eventsList = pygame.event.get()
-        for event in eventsList:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_i or event.key == pygame.K_q:
-                    breakMenuLoop = True
-                    break
-
-                elif event.key == pygame.K_DOWN:
-                    if selected < len(invList) - 2:
-                        selected += 1
-
-                elif event.key == pygame.K_UP:
-                    if selected > 0:
-                        selected -= 1
-                   
-                elif event.key == pygame.K_d:
-                    owner.container.inventory[selected].item.drop(PLAYER) #fix this nonsense.
-                    del invList[selected+1]
-                    if selected > 0:
-                        selected -= 1
-
-                invList = updateSelected(invList, selected)
-                
-        # Draw
-        graphics.drawTextList(inventorySurface, invList)
-
-        # Display
-        parentSurface.blit(inventorySurface, (coordX, coordY))
-        CLOCK.tick(constants.GAME_FPS)
-        pygame.display.flip()
-        
-
 
 ### MAIN GAME FUNCTIONS ### 
 
@@ -318,11 +222,11 @@ def gameHandleKeys():
 
             # pause menu
             if event.key == pygame.K_p:
-                menuPause()
+                menus.pause(SURFACE_MAIN, GAME, CLOCK)
 
             # inventory menu
             if event.key == pygame.K_i:
-                menuInventory()
+                menus.inventory(SURFACE_MAIN, PLAYER, CLOCK)
 
             if event.key == pygame.K_q:
                 return "QUIT"
