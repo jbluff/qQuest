@@ -33,12 +33,13 @@ def mapMakeFov(mapIn):
             fovMap.transparent[y][x] = not val
     return fovMap
 
-def mapCalculateFov(doCalculate=0, player=None, fovMap=None):
+def mapCalculateFov(actor):
     ''' the index order gets hosed here.  tcod is weird.'''
-    if not doCalculate:
+
+    if not actor.fovCalculate:
         return
 
-    fovMap.compute_fov(player.x,player.y,
+    actor.fovMap.compute_fov(actor.x,actor.y,
                        radius = constants.FOV_RADIUS,
                        light_walls = constants.FOV_LIGHT_WALLS,
                        algorithm = constants.FOV_ALGO)

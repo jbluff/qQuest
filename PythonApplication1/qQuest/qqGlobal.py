@@ -11,6 +11,7 @@ SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH
 
 #ASSETS = EmptyClass()  #TODO:  Figure out how to init ASSETS here
 
+#TODO:  move this into its own file.
 class Game:
     def __init__(self):
         self.currentObjects = []

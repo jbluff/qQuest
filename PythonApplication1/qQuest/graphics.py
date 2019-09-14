@@ -1,7 +1,7 @@
 import pygame
 
 from qQuest import constants
-from qQuest.qqGlobal import SURFACE_MAIN, CLOCK
+from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 
 
 #ASSETS = structAssets() #can this be in globals?
@@ -70,11 +70,11 @@ def drawMap(mapToDraw, fovMap):
                 else:
                     surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
-def drawGameMessages(game):
-    numMessages = min(len(game.messageHistory), constants.NUM_GAME_MESSAGES)
+def drawGameMessages():
+    numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
     if(numMessages==0):
         return 0
-    messages = game.messageHistory[-numMessages:]
+    messages = GAME.messageHistory[-numMessages:]
 
     _, height = helperTextDims()
     startY = SURFACE_MAIN.get_height() - numMessages*height
@@ -88,14 +88,15 @@ def drawFPS():
     drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame(game, fovMap):
+#TODO:  make the fovMap an actor substitutable thing
+def drawGame(fovMap):
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
-    drawMap(game.currentMap, fovMap)
+    drawMap(GAME.currentMap, fovMap)
 
-    for gameObj in game.currentObjects:
-        gameObj.draw()
+    for gameObj in GAME.currentObjects:
+        gameObj.draw(fovMap)
 
-    drawGameMessages(game)
+    drawGameMessages()
     drawDebug()
 
     pygame.display.flip()
@@ -124,6 +125,7 @@ class structAssets:
         #import os
         #print(os.getcwd())
         root = "pythonApplication1/" #fix this!
+        root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
         self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')        
         self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')

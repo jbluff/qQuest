@@ -2,7 +2,7 @@ import pygame
 
 from qQuest import constants
 from qQuest import graphics
-from qQuest.qqGlobal import CLOCK, SURFACE_MAIN
+from qQuest.qqGlobal import CLOCK, SURFACE_MAIN, GAME
 
 def updateSelected(invList, selectedIdx):
     #TODO:  bgColor
@@ -70,6 +70,7 @@ def inventory(parentSurface, actor):
         eventsList = pygame.event.get()
         for event in eventsList:
             if event.type == pygame.KEYDOWN:
+                invObj = actor.container.inventory[selected] # selected item's Actor.
                 if event.key == pygame.K_i or event.key == pygame.K_q:
                     breakMenuLoop = True
                     break
@@ -87,6 +88,15 @@ def inventory(parentSurface, actor):
                     del invList[selected+1]
                     if selected > 0:
                         selected -= 1
+
+                elif event.key == pygame.K_u:
+                    GAME.addMessage(actor.creature.name + " uses " + invObj.item.name )
+                    invObj.item.useFunction(actor.creature)
+                    del invObj #delete from inventory
+                    del invList[selected+1] #delete from list
+                    if selected > 0:
+                        selected -= 1
+
 
                 invList = updateSelected(invList, selected)
                 
