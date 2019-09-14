@@ -1,22 +1,10 @@
 import pygame
-import constants
-import qqGlobal
 
-class structAssets:
-    '''
-    Container class for spriteSheets, sprites, animations
-    '''
-    def __init__(self):
-        self.characterSpriteSheet = objSpriteSheet('dawnlike/Characters/humanoid0.png')
-        self.jellySpriteSheet = objSpriteSheet('16x16figs/jellySheet.png')
+from qQuest import constants
+from qQuest.qqGlobal import SURFACE_MAIN, CLOCK
 
-        self.s_wall = pygame.image.load('16x16figs/wall.png')
-        self.s_wall_dark = pygame.image.load('16x16figs/wall_dark.png')
-        self.s_floor = pygame.image.load('16x16figs/floor.png')
-        self.s_floor_dark = pygame.image.load('16x16figs/floor_dark.png')
 
-        self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
-        self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
+#ASSETS = structAssets() #can this be in globals?
 
 class objSpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations '''
@@ -64,8 +52,8 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawMap(surface, mapToDraw, fovMap):
-    global ASSETS
+def drawMap(mapToDraw, fovMap):
+    surface = SURFACE_MAIN
     for x in range(0, constants.MAP_WIDTH):
         for y in range(0, constants.MAP_HEIGHT):
 
@@ -82,34 +70,33 @@ def drawMap(surface, mapToDraw, fovMap):
                 else:
                     surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
-def drawGameMessages(surface, game):
+def drawGameMessages(game):
     numMessages = min(len(game.messageHistory), constants.NUM_GAME_MESSAGES)
     if(numMessages==0):
         return 0
     messages = game.messageHistory[-numMessages:]
 
     _, height = helperTextDims()
-    startY = surface.get_height() - numMessages*height
+    startY = SURFACE_MAIN.get_height() - numMessages*height
 
-    drawTextList(surface, messages, startX=0, startY=startY)
+    drawTextList(SURFACE_MAIN, messages, startX=0, startY=startY)
 
-def drawDebug(surface):
-    drawFPS(surface)
+def drawDebug():
+    drawFPS()
 
-def drawFPS(surface):
-    clock = qqGlobal.CLOCK
-    drawText(surface, "fps: " + str(int(clock.get_fps())), (0,0), constants.COLOR_WHITE, 
+def drawFPS():
+    drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame(game, surface, fovMap):
-    surface.fill(constants.COLOR_DEFAULT_BG)
-    drawMap(surface, game.currentMap, fovMap)
+def drawGame(game, fovMap):
+    SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+    drawMap(game.currentMap, fovMap)
 
     for gameObj in game.currentObjects:
         gameObj.draw()
 
-    drawGameMessages(surface, game)
-    drawDebug(surface)
+    drawGameMessages(game)
+    drawDebug()
 
     pygame.display.flip()
 
@@ -128,9 +115,29 @@ def drawTextList(surface, messages, startX=0, startY=0):
     for idx, (message, color) in enumerate(messages):
         drawText(surface,message, (startX, startY+idx*height),color,constants.COLOR_BLACK)  
 
+class structAssets:
+    '''
+    Container class for spriteSheets, sprites, animations
+    '''
+    def __init__(self):
+
+        #import os
+        #print(os.getcwd())
+        root = "pythonApplication1/" #fix this!
+        self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
+        self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')        
+        self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')
+
+        self.s_wall = pygame.image.load(root+'16x16figs/wall.png')
+        self.s_wall_dark = pygame.image.load(root+'16x16figs/wall_dark.png')
+        self.s_floor = pygame.image.load(root+'16x16figs/floor.png')
+        self.s_floor_dark = pygame.image.load(root+'16x16figs/floor_dark.png')
+
+        self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
+        self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
+
+        self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)        
 
 
-def initAssets():
-    global ASSETS
-    ASSETS = structAssets()
-    return ASSETS
+ASSETS = structAssets()
+    

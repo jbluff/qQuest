@@ -1,8 +1,8 @@
 import pygame
 
-import constants
-import graphics
-import qqGlobal
+from qQuest import constants
+from qQuest import graphics
+from qQuest.qqGlobal import CLOCK, SURFACE_MAIN
 
 def updateSelected(invList, selectedIdx):
     #TODO:  bgColor
@@ -16,8 +16,6 @@ def updateSelected(invList, selectedIdx):
 
 ### MENU FUNCTIONS ###
 def pause(surface, game):
-    clock = qqGlobal.CLOCK
-
     ''' dummy function, sort of dumb '''
     game.addMessage("paused!")
 
@@ -40,13 +38,11 @@ def pause(surface, game):
                     breakMenuLoop = 1
 
         graphics.drawText(surface, menuText, (coordX, coordY), constants.COLOR_WHITE, bgColor=constants.COLOR_BLACK)
-        clock.tick(constants.GAME_FPS)
+        CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
 
 
 def inventory(parentSurface, actor):
-    clock = qqGlobal.CLOCK
-
     menuWidth = 200
     menuHeight = 300
     #Font..
@@ -87,7 +83,7 @@ def inventory(parentSurface, actor):
                         selected -= 1
                    
                 elif event.key == pygame.K_d:
-                    actor.container.inventory[selected].item.drop(actor) #fix this nonsense.
+                    actor.container.inventory[selected].item.drop() #fix this nonsense.
                     del invList[selected+1]
                     if selected > 0:
                         selected -= 1
@@ -99,6 +95,6 @@ def inventory(parentSurface, actor):
 
         # Display
         parentSurface.blit(inventorySurface, (coordX, coordY))
-        clock.tick(constants.GAME_FPS)
+        CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
         

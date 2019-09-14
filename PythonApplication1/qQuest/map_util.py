@@ -1,6 +1,6 @@
 import tcod as libtcod
 
-import constants
+from qQuest import constants
 
 class structTile:
     def __init__(self, blockPath):

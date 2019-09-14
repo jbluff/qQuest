@@ -21,7 +21,8 @@ COLOR_DEFAULT_BG = COLOR_GREY
 
 ''' Fonts '''
 #TODO:  change to pygame.font.match_font(), remove fonts folder
-FONT_CONSOLA = pygame.font.Font('fonts/consola.ttf', 14)
+#FONT_CONSOLA = pygame.font.Font('fonts/consola.ttf', 14)
+FONT_CONSOLA = pygame.font.Font(pygame.font.match_font('consola'), 14)
 FONT_DEBUG = FONT_CONSOLA
 
 ''' Sprites '''
