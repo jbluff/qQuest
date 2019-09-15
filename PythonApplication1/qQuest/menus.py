@@ -70,12 +70,14 @@ def inventory(parentSurface, actor):
         eventsList = pygame.event.get()
         for event in eventsList:
             if event.type == pygame.KEYDOWN:
-                invObj = actor.container.inventory[selected] # selected item's Actor.
+                
                 if event.key == pygame.K_i or event.key == pygame.K_q:
                     breakMenuLoop = True
                     break
 
-                elif event.key == pygame.K_DOWN:
+                if invList == 1: #empty inventory
+                    continue 
+                if event.key == pygame.K_DOWN:
                     if selected < len(invList) - 2:
                         selected += 1
 
@@ -90,9 +92,12 @@ def inventory(parentSurface, actor):
                         selected -= 1
 
                 elif event.key == pygame.K_u:
+                    #todo:  check out of range
+                    invObj = actor.container.inventory[selected] # selected item's Actor.
                     GAME.addMessage(actor.creature.name + " uses " + invObj.item.name )
-                    invObj.item.useFunction(actor.creature)
-                    del invObj #delete from inventory
+                    #invObj.item.useFunction(actor.creature)
+                    invObj.item.use(actor.creature)
+                    #del invObj #delete from inventory
                     del invList[selected+1] #delete from list
                     if selected > 0:
                         selected -= 1

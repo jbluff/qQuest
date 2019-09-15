@@ -103,15 +103,30 @@ class Creature:
             self.owner.fovCalculate = True
 
 '''
-Items are an actor attribute
+Items are an actor attribute.
+useFunction : called when the item is used, passed self
+numCharges : number of items item is used before..
+depleteFunction : called (passed self) when charges run out.
+    defaults to delete self.  Allows for e.g. turning into an empty bottle
 '''
 class Item:
-    def __init__(self, weight=0.0, volume=0.0, name="itemblaggg", useFunction=None):
+    def __init__(self, weight=0.0, volume=0.0, name="defaultItemName", 
+                 useFunction=None, numCharges=1, depleteFunction=None):
         self.weight = weight
         self.volume = volume 
         self.name = name
         self.useFunction = useFunction
+        self.numCharges = numCharges
+        self.maxNumCharges = numCharges
+        
+        #if depleteFunction is None:
+        #    depleteFunction = lambda x: self.__del__
+        self.depleteFunction = depleteFunction
 
+    #def __del__(self):
+    #    del self.owner.container
+    #    del self
+        
     def pickup(self, actor):
         if actor.container:
             if actor.container.volume + self.volume > actor.container.max_volume:
@@ -130,10 +145,18 @@ class Item:
         self.owner.y = actor.y 
         GAME.addMessage("item " + self.name + " dropped!")
 
-    def use(self):
-        if self.useFunction:
-            self.useFunction(self)
-        pass
+    def use(self, target):
+        if self.useFunction is None:
+            return
+
+        print('using')
+        self.useFunction(target)
+        self.numCharges -= 1
+        if self.numCharges <= 0:
+            print("depleting")
+            if self.depleteFunction is None:
+                self.currentContainer.inventory.remove(self.owner)
+            #self.depleteFunction(self)
 
 
 '''
