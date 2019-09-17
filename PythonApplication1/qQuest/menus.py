@@ -57,7 +57,7 @@ def inventory(parentSurface, actor):
 
     #TODO:  bgColor
     invList = [["Inventory:", constants.COLOR_WHITE],]
-    invList.extend([[obj.item.name,constants.COLOR_GREY] for obj in actor.container.inventory])
+    invList.extend([[obj.name,constants.COLOR_GREY] for obj in actor.container.inventory])
     selected = 0
     invList = updateSelected(invList, selected)
 
@@ -86,17 +86,16 @@ def inventory(parentSurface, actor):
                         selected -= 1
                    
                 elif event.key == pygame.K_d:
-                    actor.container.inventory[selected].item.drop() #fix this nonsense.
+                    actor.container.inventory[selected].drop() #fix this nonsense.
                     del invList[selected+1]
                     if selected > 0:
                         selected -= 1
 
                 elif event.key == pygame.K_u:
-                    #todo:  check out of range
                     invObj = actor.container.inventory[selected] # selected item's Actor.
-                    GAME.addMessage(actor.creature.name + " uses " + invObj.item.name )
+                    GAME.addMessage(actor.name + " uses " + invObj.name )
                     #invObj.item.useFunction(actor.creature)
-                    invObj.item.use(actor.creature)
+                    invObj.use(actor)
                     #del invObj #delete from inventory
                     del invList[selected+1] #delete from list
                     if selected > 0:

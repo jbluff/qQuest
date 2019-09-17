@@ -30,7 +30,7 @@ class Game:
                 object.x == x and
                 object.y == y and
                 object.creature):
-                return object.creature
+                return object
         return None
 
     def objectsAtCoords(self,x,y):

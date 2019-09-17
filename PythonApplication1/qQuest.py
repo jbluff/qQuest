@@ -23,22 +23,22 @@ def gameHandleKeys():
         if event.type == pygame.KEYDOWN:
             # arrow key up -> move player up
             if event.key == pygame.K_UP:
-                PLAYER.creature.move(0, -1)
+                PLAYER.move(0, -1)
                 return "player-moved"
 
             # arrow key down -> move player down
             if event.key == pygame.K_DOWN:
-                PLAYER.creature.move(0, 1)
+                PLAYER.move(0, 1)
                 return "player-moved"
 
             # arrow key left -> move player left
             if event.key == pygame.K_LEFT:
-                PLAYER.creature.move(-1, 0)
+                PLAYER.move(-1, 0)
                 return "player-moved"
 
             # arrow key right -> move player right
             if event.key == pygame.K_RIGHT:
-                PLAYER.creature.move(1, 0)
+                PLAYER.move(1, 0)
                 return "player-moved"
 
             # pickup objects
@@ -47,7 +47,7 @@ def gameHandleKeys():
                 objs = GAME.objectsAtCoords(PLAYER.x, PLAYER.y)
                 for obj in objs:
                     if obj.item:
-                        obj.item.pickup(PLAYER)
+                        obj.pickup(PLAYER)
 
             # pause menu
             if event.key == pygame.K_p:
@@ -91,18 +91,18 @@ def gameMainLoop():
 #temporary and bad
 def gameAddEnemy(coordX, coordY, name):
     inventory = Container()
-    item = Item(name=name+"'s corpse")
-    creature = Creature(name, deathFunction=lambda x: actors.deathMonster(GAME, x))
-    enemy = Actor(coordX, coordY, "evil jelly", ASSETS.a_jelly,
-                     creature=creature, ai=ai.aiTest(), 
-                     container=inventory, item=item)
+    #item = Item(name=name+"'s corpse")
+    #creature = Creature(name, deathFunction=lambda x: actors.deathMonster(GAME, x))
+    enemy = Creature( (coordX, coordY), "evil jelly", ASSETS.a_jelly,
+                     ai=ai.aiTest(), 
+                     container=inventory)#, item=item)
     GAME.currentObjects.append(enemy)
 
 def gameAddItem(coordX, coordY, name):
     useFunction = lambda target: magic.castHeal(target, 5)
-    item = Item(name=name, useFunction=useFunction)
-    goggles = Actor(coordX, coordY, "BaseItem", ASSETS.a_goggles, 
-                       item=item)
+    #item = Item(name=name, useFunction=useFunction)
+    goggles = Item( (coordX, coordY), "Goggles", ASSETS.a_goggles, 
+                       useFunction=useFunction)
     GAME.currentObjects.append(goggles)
 
 
@@ -118,10 +118,8 @@ def gameInitialize():
     
     # init hero
     playerInventory = Container()
-    playerCreature = Creature("jenny")
-    PLAYER = Actor(1,1, "hero", ASSETS.a_player, 
+    PLAYER = Creature( (1,1), "hero", ASSETS.a_player, 
                    fovMap=playerFovMap,
-                   creature=playerCreature, 
                    container=playerInventory)
     PLAYER.fovCalculate = True
 
