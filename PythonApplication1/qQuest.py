@@ -95,7 +95,7 @@ def gameAddEnemy(coordX, coordY, name):
     #creature = Creature(name, deathFunction=lambda x: actors.deathMonster(GAME, x))
     enemy = Creature( (coordX, coordY), "evil jelly", ASSETS.a_jelly,
                      ai=ai.aiTest(), 
-                     container=inventory)#, item=item)
+                     container=inventory, deathFunction=actors.deathMonster)#, item=item)
     GAME.currentObjects.append(enemy)
 
 def gameAddItem(coordX, coordY, name):

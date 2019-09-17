@@ -80,7 +80,7 @@ class Creature(Actor):
 
         if self.hp <= 0:
             if self.deathFunction:
-                self.deathFunction(self.owner)
+                self.deathFunction(self)
 
     def heal(self, deltaHp):
         #TODO!
@@ -208,7 +208,33 @@ def deathMonster(monster):
     What happens when a non-player character dies?
     Monster is actor class instance.
     '''
-    game.addMessage(monster.name + " has been slain!")
-    monster.creature = None
-    monster.ai = None
+    GAME.addMessage(monster.name + " has been slain!")
+    
+    creatureToItems(monster)
 
+
+'''
+Destroys a creature, turns it into a corpse and drops its inventory items.
+> inventory item feature unadded
+> also want the ability to change the graphic
+> also kwargs can have e.g. weight, useFunction
+'''
+def creatureToItems(creature, **kwargs):
+
+    itemList = []
+
+    inventory = creature.container.inventory
+    if inventory:
+        itemList.extend(inventory)
+
+    corpse = Item((creature.x, creature.y),
+                  creature.name+"'s corpse",
+                  [creature.animation[0],],
+                  **kwargs)
+    
+    itemList.append(corpse)
+
+    for el in itemList:
+        GAME.currentObjects.append(el)
+
+    GAME.currentObjects.remove(creature)
