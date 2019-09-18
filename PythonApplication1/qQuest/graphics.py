@@ -89,17 +89,25 @@ def drawFPS():
              bgColor=constants.COLOR_BLACK)
 
 #TODO:  make the fovMap an actor substitutable thing
-def drawGame(fovMap):
+def drawGame(fovMap=None):
+    if fovMap is None:
+        fovMap = GAME.currentFovMap
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
     drawMap(GAME.currentMap, fovMap)
 
-    for gameObj in GAME.currentObjects:
-        gameObj.draw(fovMap)
+    drawObjects(fovMap)
 
     drawGameMessages()
     drawDebug()
 
     pygame.display.flip()
+
+def drawObjects(fovMap):
+    for gameObj in GAME.currentObjects:
+        if gameObj.item:
+            if gameObj.deleted:# or gameObj.currentContainer:
+                return
+        gameObj.draw(fovMap)
 
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
@@ -116,7 +124,7 @@ def drawTextList(surface, messages, startX=0, startY=0):
     for idx, (message, color) in enumerate(messages):
         drawText(surface,message, (startX, startY+idx*height),color,constants.COLOR_BLACK)  
 
-class structAssets:
+class structAssets():
     '''
     Container class for spriteSheets, sprites, animations
     '''
@@ -127,9 +135,14 @@ class structAssets:
         root = "pythonApplication1/" #fix this!
         root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
-        self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')        
+        self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
+        self.potionSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Potion.png')    
         self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')
 
+        self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
+        self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
+
+       
         self.s_wall = pygame.image.load(root+'16x16figs/wall.png')
         self.s_wall_dark = pygame.image.load(root+'16x16figs/wall_dark.png')
         self.s_floor = pygame.image.load(root+'16x16figs/floor.png')
@@ -140,6 +153,10 @@ class structAssets:
 
         self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)        
 
+        self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)        
+        self.red_potion = self.potionSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)        
+
+        self.a_demon = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
+        self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
 
 ASSETS = structAssets()
-    

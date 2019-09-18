@@ -4,11 +4,13 @@ import tcod as libtcod
 
 from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
 from qQuest import actors, magic
-from qQuest.actors import Actor, Creature, Item, Container
+from qQuest.actors import Actor, Creature, Item, Container, Equipment
 
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 
+from qQuest.lib.itemLib import ITEMS
+from qQuest.lib.monsterLib import MONSTERS
 
 def gameHandleKeys():
 
@@ -88,34 +90,42 @@ def gameMainLoop():
 
     gameExit()
 
-#temporary and bad
-def gameAddEnemy(coordX, coordY, name):
-    inventory = Container()
-    #item = Item(name=name+"'s corpse")
-    #creature = Creature(name, deathFunction=lambda x: actors.deathMonster(GAME, x))
-    enemy = Creature( (coordX, coordY), "evil jelly", ASSETS.a_jelly,
-                     ai=ai.aiTest(), 
-                     container=inventory, deathFunction=actors.deathMonster)#, item=item)
+
+def gameAddEnemy(coordX, coordY, name, uniqueName=None):
+    monsterDict = MONSTERS[name]
+    name = monsterDict['name']
+    if uniqueName:
+        name = uniqueName + " the " + name
+
+    inventory = Container(**monsterDict['kwargs'])
+    enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
+                     ai=getattr(ai,monsterDict['ai'])(), 
+                     container=inventory, deathFunction=monsterDict['deathFunction'])    #item = Item(name=name+"'s corpse")
     GAME.currentObjects.append(enemy)
 
 def gameAddItem(coordX, coordY, name):
-    useFunction = lambda target: magic.castHeal(target, 5)
-    #item = Item(name=name, useFunction=useFunction)
-    goggles = Item( (coordX, coordY), "Goggles", ASSETS.a_goggles, 
-                       useFunction=useFunction)
-    GAME.currentObjects.append(goggles)
+    itemDict = ITEMS[name]
+    if 'equipment' in itemDict.keys():
+        item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+                       **itemDict['kwargs'])
+    else:
+        item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+                       useFunction=itemDict['useFunction'], **itemDict['kwargs'])
+
+    GAME.currentObjects.append(item)
+
 
 
 def gameInitialize():
-    global PLAYER 
+    global PLAYER #, GAME
 
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-  
     GAME.currentMap, playerFovMap = map_util.mapCreate()
-    
-    
+    #GAME.currentFovMap = playerFovMap
+    setattr(GAME, "currentFovMap", playerFovMap)
+
     # init hero
     playerInventory = Container()
     PLAYER = Creature( (1,1), "hero", ASSETS.a_player, 
@@ -126,11 +136,13 @@ def gameInitialize():
     GAME.currentObjects.append(PLAYER)
 
     # init the enemy
-    gameAddEnemy(5,7,"frank")
-    gameAddEnemy(10,3,"george")
+    gameAddEnemy(5,7,"jelly", uniqueName="frank")
+    gameAddEnemy(10,3,"jelly", uniqueName="george")
+    gameAddEnemy(10,4,"demon", uniqueName="Mephisto, lord of terror")
 
     gameAddItem(4,4,"goggles")
 
+    gameAddItem(8,4,"healingPotion")
 
 
 

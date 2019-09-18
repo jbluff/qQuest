@@ -56,17 +56,21 @@ def inventory(parentSurface, actor):
     inventorySurface = pygame.Surface((menuWidth, menuHeight))
 
     #TODO:  bgColor
-    invList = [["Inventory:", constants.COLOR_WHITE],]
-    invList.extend([[obj.name,constants.COLOR_GREY] for obj in actor.container.inventory])
     selected = 0
-    invList = updateSelected(invList, selected)
+    
 
     breakMenuLoop = False
+    redrawGame = True
     while not breakMenuLoop:
+        invList = [["Inventory:", constants.COLOR_WHITE],]
+        invList.extend([[obj.name,constants.COLOR_GREY] for obj in actor.container.inventory if not obj.deleted])
+        invList = updateSelected(invList, selected)
+
         # Clear
         inventorySurface.fill(constants.COLOR_BLACK)
 
         # Register changes
+        
         eventsList = pygame.event.get()
         for event in eventsList:
             if event.type == pygame.KEYDOWN:
@@ -77,6 +81,7 @@ def inventory(parentSurface, actor):
 
                 if invList == 1: #empty inventory
                     continue 
+
                 if event.key == pygame.K_DOWN:
                     if selected < len(invList) - 2:
                         selected += 1
@@ -90,20 +95,29 @@ def inventory(parentSurface, actor):
                     del invList[selected+1]
                     if selected > 0:
                         selected -= 1
+                    redrawGame = True
 
                 elif event.key == pygame.K_u:
                     invObj = actor.container.inventory[selected] # selected item's Actor.
-                    GAME.addMessage(actor.name + " uses " + invObj.name )
-                    #invObj.item.useFunction(actor.creature)
-                    invObj.use(actor)
-                    #del invObj #delete from inventory
-                    del invList[selected+1] #delete from list
-                    if selected > 0:
-                        selected -= 1
+                    
+                    success = invObj.use(actor)
+
+                    if success:
+                        GAME.addMessage(actor.name + " uses " + invObj.name )
+                        if invObj.deleted:
+                            del invList[selected+1] #delete from menu list -- doesn't really work.
+                            if selected > 0:
+                                selected -= 1
+                    redrawGame = True
+
 
 
                 invList = updateSelected(invList, selected)
                 
+        #shouldn't be done every loop
+        if redrawGame:
+            graphics.drawGame()
+            redrawGame = False
         # Draw
         graphics.drawTextList(inventorySurface, invList)
 

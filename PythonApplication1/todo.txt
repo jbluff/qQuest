@@ -1,0 +1,34 @@
+
+TODO:
+
+Deleting, done via an Item attribute
+    This is fine-- we'll overwrite game.currentObjects at each level
+
+Add a bunch of items and stuff.
+
+Create directions for player
+
+Directional spells/casts, etc.
+
+Game 
+- saving
+- loading
+- menu
+
+Unify image reference stuff, get rid of Assets structure
+
+Add new AIs
+
+Add level generation (lol, huge task)
+- both procedural and from file
+
+Replace "seen but not visible" w/ transparent overlay
+
+Make fancier unseen fog of war
+
+
+
+
+
+
+

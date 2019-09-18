@@ -6,7 +6,7 @@ from qQuest import graphics
 Target is a Creature
 '''
 def castHeal(target, value):
-    
+    print("heal was cast")
     #TODO:  implement creature.heal function
     endHp = min(target.maxHp, target.hp+value)
     deltaHp = endHp - target.hp

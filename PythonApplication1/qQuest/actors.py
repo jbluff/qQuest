@@ -4,7 +4,9 @@ from qQuest.qqGlobal import GAME, SURFACE_MAIN, CLOCK
 '''
 All drawn things which are not floor ties.  May reflect player, NPCs, items
 '''
-class Actor:
+
+class Actor():
+
     def __init__(self, pos, name, animation, fovMap=None, ai=None, container=None, item=None, **kwargs):
         #fovMap shouldn't be here.
 
@@ -31,6 +33,7 @@ class Actor:
 
         self.creature = None #overwritten by Creature.__init__
         self.item = None #overwritten by Item.__init__
+        self.deleted = False
 
     def draw(self, fovMap):
         
@@ -67,7 +70,6 @@ Creatures are actor attributes which represent actors that can move, fight, die
 '''
 class Creature(Actor):
     def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
-        print(args)
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
@@ -125,10 +127,7 @@ class Item(Actor):
         #    depleteFunction = lambda x: self.__del__
         self.depleteFunction = depleteFunction
         self.item = True
-
-    #def __del__(self):
-    #    del self.owner.container
-    #    del self
+        #self.currentContainer = None
         
     def pickup(self, actor):
         if actor.container:
@@ -144,14 +143,17 @@ class Item(Actor):
         actor = self.currentContainer.owner
         GAME.currentObjects.append(self) #clunky AF
         self.currentContainer.inventory.remove(self)
+        #self.currentContainer = None
         self.x = actor.x  
         self.y = actor.y 
         GAME.addMessage("item " + self.name + " dropped!")
 
     def use(self, target):
+        print("use was called")
+        print(self.useFunction)
         if self.useFunction is None:
             return
-
+        print("found useFunction")
         success = self.useFunction(target)
         if not success:
             return 
@@ -159,17 +161,21 @@ class Item(Actor):
         self.numCharges -= 1
         if self.numCharges <= 0:
             if self.depleteFunction is None:
-                self.currentContainer.inventory.remove(self.owner)
+                self.currentContainer.inventory.remove(self)
+                self.deleted = True
             #self.depleteFunction(self)
 
 # let's be serious, this should use inheritance.
-class Equipment:
+class Equipment(Item):
 
-    def __init__(self, slot, attackBonus=0, defenseBonus=0):
+    def __init__(self, *args, slot=None, attackBonus=0, 
+                 defenseBonus=0, **kwargs):
+        super().__init__(*args, **kwargs)
         self.slot = slot
         self.attackBonus = attackBonus
         self.defenseBonus = defenseBonus
         self.equipped = False
+        self.equipment = True
 
     def toggleEquip(self):
         if self.eqipped:
@@ -178,9 +184,11 @@ class Equipment:
             self.eqipp()
 
     def unequip(self):
+        #slot stuff
         GAME.addMessage("item unequipped")
         
     def equip(self):
+        #slot stuff
         GAME.addMessage("item equipped")
         
 
@@ -189,7 +197,7 @@ Containers represent actor attributes which can contain in game items
 e.g. player inventory is a container.  Chest items have containers.  etc.
 '''
 class Container:
-    def __init__(self, volume=10.0, inventory=[]):
+    def __init__(self, volume=10.0, inventory=[], **kwargs):
         self.max_volume = volume
         self.inventory = inventory
         #todo:   subtract volume of initialy added items
@@ -223,9 +231,9 @@ def creatureToItems(creature, **kwargs):
 
     itemList = []
 
-    inventory = creature.container.inventory
-    if inventory:
-        itemList.extend(inventory)
+    #inventory = creature.container.inventory
+    #if inventory:
+    #    itemList.extend(inventory)
 
     corpse = Item((creature.x, creature.y),
                   creature.name+"'s corpse",
