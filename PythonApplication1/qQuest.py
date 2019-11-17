@@ -68,29 +68,29 @@ def gameExit():
     quit()
 
 def gameMainLoop():
-
-    GAME.addMessage("whatup", constants.COLOR_WHITE)
     playerAction = "no-action"
+    viewer = PLAYER # can see other Creature FOV for degbugging purposes
 
     while playerAction != "QUIT":
        
         playerAction = gameHandleKeys()
 
-        map_util.mapCalculateFov(PLAYER)#, fovMap=FOV_MAP)
-        PLAYER.fovCalculate = False
-
+            
         if playerAction == "player-moved":
+            map_util.mapCalculateFov(viewer)
             for gameObj in GAME.currentObjects:
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
-        graphics.drawGame(PLAYER.fovMap)
-
+        graphics.drawGame(viewer.fovMap)
         CLOCK.tick(constants.GAME_FPS)
 
     gameExit()
 
 
+'''
+    Creates NPC characters by type, looking up info in a library file.
+'''
 def gameAddEnemy(coordX, coordY, name, uniqueName=None):
     monsterDict = MONSTERS[name]
     name = monsterDict['name']
@@ -100,9 +100,13 @@ def gameAddEnemy(coordX, coordY, name, uniqueName=None):
     inventory = Container(**monsterDict['kwargs'])
     enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
                      ai=getattr(ai,monsterDict['ai'])(), 
-                     container=inventory, deathFunction=monsterDict['deathFunction'])    #item = Item(name=name+"'s corpse")
+                     container=inventory, deathFunction=monsterDict['deathFunction'],
+                     fovMap=map_util.createFovMap(GAME.currentMap))    
     GAME.currentObjects.append(enemy)
 
+'''
+    Creates Items by type, looking up info in a library file.
+'''
 def gameAddItem(coordX, coordY, name):
     itemDict = ITEMS[name]
     if 'equipment' in itemDict.keys():
@@ -114,26 +118,34 @@ def gameAddItem(coordX, coordY, name):
 
     GAME.currentObjects.append(item)
 
+'''
+    Only call this once!  Creates a global/singleton.
+'''
+def gameAddPlayer(x,y):
+    global PLAYER
+
+    playerInventory = Container()
+    playerFovMap = map_util.createFovMap(GAME.currentMap)
+    PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
+                   fovMap=playerFovMap,
+                   container=playerInventory)
+    setattr(GAME, "currentFovMap", playerFovMap)
+    map_util.mapCalculateFov(PLAYER)
+
+
+    GAME.currentObjects.append(PLAYER)
 
 
 def gameInitialize():
-    global PLAYER #, GAME
+    
 
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    GAME.currentMap, playerFovMap = map_util.mapCreate()
-    #GAME.currentFovMap = playerFovMap
-    setattr(GAME, "currentFovMap", playerFovMap)
+    GAME.currentMap = map_util.createMap()
 
     # init hero
-    playerInventory = Container()
-    PLAYER = Creature( (1,1), "hero", ASSETS.a_player, 
-                   fovMap=playerFovMap,
-                   container=playerInventory)
-    PLAYER.fovCalculate = True
-
-    GAME.currentObjects.append(PLAYER)
+    gameAddPlayer(1,1)
 
     # init the enemy
     gameAddEnemy(5,7,"jelly", uniqueName="frank")
@@ -141,7 +153,6 @@ def gameInitialize():
     gameAddEnemy(10,4,"demon", uniqueName="Mephisto, lord of terror")
 
     gameAddItem(4,4,"goggles")
-
     gameAddItem(8,4,"healingPotion")
 
 

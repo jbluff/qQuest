@@ -133,7 +133,7 @@ class structAssets():
         #import os
         #print(os.getcwd())
         root = "pythonApplication1/" #fix this!
-        root = ""
+        #root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
         self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
         self.potionSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Potion.png')    

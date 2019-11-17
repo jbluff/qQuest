@@ -7,7 +7,7 @@ class structTile:
         self.blockPath = blockPath
         self.explored = False
 
-def mapCreate():
+def createMap():
     newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
 
     for i in range(constants.MAP_HEIGHT):
@@ -20,11 +20,9 @@ def mapCreate():
     newMap[3][3].blockPath = True
     newMap[5][6].blockPath = True
 
-    fovMap = mapMakeFov(newMap)
+    return newMap
 
-    return newMap, fovMap
-
-def mapMakeFov(mapIn):
+def createFovMap(mapIn):
     ''' the index order gets hosed here.  tcod is weird.'''
     fovMap = libtcod.map.Map(width=constants.MAP_WIDTH, height=constants.MAP_HEIGHT)
     for y in range(constants.MAP_HEIGHT):
@@ -43,6 +41,7 @@ def mapCalculateFov(actor):
                        radius = constants.FOV_RADIUS,
                        light_walls = constants.FOV_LIGHT_WALLS,
                        algorithm = constants.FOV_ALGO)
+    actor.fovCalculate = False
 
 
     

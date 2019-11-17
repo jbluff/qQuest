@@ -7,7 +7,7 @@ All drawn things which are not floor ties.  May reflect player, NPCs, items
 
 class Actor():
 
-    def __init__(self, pos, name, animation, fovMap=None, ai=None, container=None, item=None, **kwargs):
+    def __init__(self, pos, name, animation, ai=None, container=None, item=None, **kwargs):
         #fovMap shouldn't be here.
 
         self.x, self.y = pos
@@ -18,9 +18,6 @@ class Actor():
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
-
-        self.fovMap = fovMap
-        self.fovCalculate = False
 
         self.ai = ai
         if self.ai:
@@ -69,12 +66,15 @@ class Actor():
 Creatures are actor attributes which represent actors that can move, fight, die
 '''
 class Creature(Actor):
-    def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
+    def __init__(self, *args, hp=10, deathFunction=None, fovMap=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
         self.creature = True
+
+        self.fovMap = fovMap
+        self.fovCalculate = not (fovMap is None)
 
     def takeDamage(self, damage):
         self.hp -= damage
