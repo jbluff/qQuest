@@ -57,7 +57,7 @@ def gameHandleKeys():
 
             # inventory menu
             if event.key == pygame.K_i:
-                menus.inventory(SURFACE_MAIN, PLAYER)
+                menus.InventoryMenu(SURFACE_MAIN, PLAYER)
             
             if event.key == pygame.K_q:
                 return "QUIT"
