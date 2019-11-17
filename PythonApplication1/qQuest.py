@@ -53,7 +53,7 @@ def gameHandleKeys():
 
             # pause menu
             if event.key == pygame.K_p:
-                menus.pause(GAME)
+                menus.PauseMenu(SURFACE_MAIN)
 
             # inventory menu
             if event.key == pygame.K_i:
@@ -89,7 +89,7 @@ def gameMainLoop():
 
 
 '''
-    Creates NPC characters by type, looking up info in a library file.
+    Creates NPC characters by type, looking qp info in a library file.
 '''
 def gameAddEnemy(coordX, coordY, name, uniqueName=None):
     monsterDict = MONSTERS[name]

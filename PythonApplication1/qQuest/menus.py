@@ -4,15 +4,6 @@ from qQuest import constants
 from qQuest import graphics
 from qQuest.qqGlobal import CLOCK, SURFACE_MAIN, GAME
 
-def updateSelected(invList, selectedIdx):
-    #TODO:  bgColor
-    numItems = len(invList)-1
-    for idx in range(1,numItems+1):
-        if idx == selectedIdx+1:
-            invList[idx][1] = constants.COLOR_RED
-        else:
-            invList[idx][1] = constants.COLOR_GREY
-    return invList
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -21,8 +12,6 @@ class Menu:
 
         windowWidth = constants.CELL_WIDTH*constants.MAP_WIDTH
         windowHeight = constants.CELL_HEIGHT*constants.MAP_HEIGHT
-
-        #textWidth, textHeight = graphics.helperTextDims(text="menuText") 
 
         self.coordY = (windowHeight-self.menuHeight)/2
         self.coordX = (windowWidth-self.menuWidth)/2
@@ -33,7 +22,6 @@ class Menu:
         self.redrawGame = True
 
         self.mainLoop()
-
 
     def mainLoop(self):
         
@@ -58,7 +46,6 @@ class Menu:
         self.parentSurface.blit(self.menuSurface, (self.coordX, self.coordY))
         CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
-
 
     '''
     How to respond to key strokes
@@ -85,6 +72,28 @@ class Menu:
         raise NotImplementedError("redrawMenuBody must be implemented by child class")
 
 
+# This is a rather pointless thing, at present.
+class PauseMenu(Menu):
+    def __init__(self, parentSurface):
+        super().__init__(parentSurface, menuSize=(200,50))
+
+    def restartLoop(self):
+        pass
+
+    def finishLoop(self):
+        pass
+
+    def parseEvent(self, event):
+        if event.type != pygame.KEYDOWN:
+            return
+                    
+        if event.key == pygame.K_q:
+            self.breakLoop = True
+
+    def redrawMenuBody(self):
+        graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE]])
+
+        
 class InventoryMenu(Menu):
     def __init__(self, parentSurface, actor):
         self.actor = actor
@@ -94,13 +103,13 @@ class InventoryMenu(Menu):
     def restartLoop(self):
         self.invList = [["Inventory:", constants.COLOR_WHITE],]
         self.invList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
-        self.invList = updateSelected(self.invList, self.selected)
+        self.updateSelected() #this really only needs to be called in the init
 
-        self.menuSurface.fill(constants.COLOR_BLACK)
+        self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
 
     def finishLoop(self):
+        #self.updateSelected()
         pass
-        #self.invList = updateSelected(self.invList, self.selected)
 
     def parseEvent(self, event):
 
@@ -115,18 +124,15 @@ class InventoryMenu(Menu):
             return 
 
         if event.key == pygame.K_DOWN:
-            if self.selected < len(self.invList) - 2:
-                self.selected += 1
+            self.incrementSelected()
 
         elif event.key == pygame.K_UP:
-            if self.selected > 0:
-                self.selected -= 1
+            self.decrementSelected()
             
         elif event.key == pygame.K_d:
             self.actor.container.inventory[self.selected].drop() #fix this nonsense.
             del self.invList[self.selected+1]
-            if self.selected > 0:
-                self.selected -= 1
+            self.decrementSelected()
             self.redrawGame = True
 
         elif event.key == pygame.K_u:
@@ -138,38 +144,26 @@ class InventoryMenu(Menu):
                 GAME.addMessage(self.actor.name + " uses " + invObj.name )
                 if invObj.deleted:
                     del self.invList[self.selected+1] #delete from menu list -- doesn't really work.
-                    if self.selected > 0:
-                        self.selected -= 1
+                    self.decrementSelected()
             self.redrawGame = True
 
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, self.invList)
-        
 
+    def updateSelected(self):
+        numItems = len(self.invList)-1
+        for idx in range(1,numItems+1):
+            if idx == self.selected+1:
+                self.invList[idx][1] = constants.COLOR_RED
+            else:
+                self.invList[idx][1] = constants.COLOR_GREY
 
-### MENU FUNCTIONS ###
-def pause(surface, game):
-    ''' dummy function, sort of dumb '''
-    game.addMessage("paused!")
+    def decrementSelected(self):
+        if self.selected > 0:
+            self.selected -= 1
+        self.updateSelected()
 
-    menuText = "paused"
-    #TODO:  font flexibility
-    windowWidth = constants.CELL_WIDTH*constants.MAP_WIDTH
-    windowHeight = constants.CELL_HEIGHT*constants.MAP_HEIGHT
-
-    textWidth, textHeight = graphics.helperTextDims(text="menuText") # font=
-
-    coordY = (windowHeight-textHeight)/2
-    coordX = (windowWidth-textWidth)/2
-
-    breakMenuLoop = False
-    while not breakMenuLoop:
-        eventsList = pygame.event.get()
-        for event in eventsList:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_p:
-                    breakMenuLoop = 1
-
-        graphics.drawText(surface, menuText, (coordX, coordY), constants.COLOR_WHITE, bgColor=constants.COLOR_BLACK)
-        CLOCK.tick(constants.GAME_FPS)
-        pygame.display.flip()
+    def incrementSelected(self):
+        if self.selected < len(self.invList) - 2:
+            self.selected += 1
+        self.updateSelected()
