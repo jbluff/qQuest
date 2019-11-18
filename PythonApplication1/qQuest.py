@@ -1,6 +1,7 @@
 import pygame
 import tcod as libtcod
-
+import json
+import os
 
 from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
 from qQuest import actors, magic
@@ -11,6 +12,10 @@ from qQuest.graphics import ASSETS
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS
+
+'''
+Needed external packages (on pip):  pygame, tcod
+'''
 
 def gameHandleKeys():
 
@@ -137,12 +142,16 @@ def gameAddPlayer(x,y):
 
 
 def gameInitialize():
-    
+    # filePath = os.path.join(os.path.dirname(__file__),"levels","testLevelE.lvl")
+
+    # with open(filePath, "r") as levelFile:
+    #     levelDict = json.load(levelFile)
 
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    GAME.currentMap = map_util.createMap()
+    levelDict = map_util.loadLevelFile("testLevel")
+    GAME.currentMap = map_util.createMap(levelDict)
 
     # init hero
     gameAddPlayer(1,1)

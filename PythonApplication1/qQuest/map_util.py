@@ -1,4 +1,5 @@
 import tcod as libtcod
+import json, os
 
 from qQuest import constants
 
@@ -7,7 +8,31 @@ class structTile:
         self.blockPath = blockPath
         self.explored = False
 
-def createMap():
+def loadLevelFile(levelName):
+    filePath = os.path.join(os.path.dirname(__file__),"levels",levelName+".lvl")
+
+    with open(filePath, "r") as levelFile:
+        levelDict = json.load(levelFile)
+    levelFile.close()
+
+    return levelDict
+
+def createMap(levelDict):
+    newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
+
+    for i in range(constants.MAP_HEIGHT):
+        newMap[0][i].blockPath = True
+        newMap[constants.MAP_WIDTH-1][i].blockPath = True
+    for i in range(constants.MAP_WIDTH):
+        newMap[i][0].blockPath = True
+        newMap[i][constants.MAP_HEIGHT-1].blockPath = True
+
+    newMap[3][3].blockPath = True
+    newMap[5][6].blockPath = True
+
+    return newMap
+
+def createMapOld():
     newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
 
     for i in range(constants.MAP_HEIGHT):
