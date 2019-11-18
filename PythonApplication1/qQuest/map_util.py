@@ -1,7 +1,9 @@
 import tcod as libtcod
+import pygame
 import json, os
 
 from qQuest import constants
+from qQuest.qqGlobal import GAME, SURFACE_MAIN
 
 class structTile:
     def __init__(self, blockPath):
@@ -9,7 +11,7 @@ class structTile:
         self.explored = False
 
 def loadLevelFile(levelName):
-    filePath = os.path.join(os.path.dirname(__file__),"levels",levelName+".lvl")
+    filePath = os.path.join(os.path.dirname(__file__),"..","levels",levelName+".lvl")
 
     with open(filePath, "r") as levelFile:
         levelDict = json.load(levelFile)
@@ -17,18 +19,31 @@ def loadLevelFile(levelName):
 
     return levelDict
 
+# loadMap, really.
 def createMap(levelDict):
-    newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
+    levelArray = levelDict["level"]
+    decoder = levelDict["decoderRing"]
 
-    for i in range(constants.MAP_HEIGHT):
-        newMap[0][i].blockPath = True
-        newMap[constants.MAP_WIDTH-1][i].blockPath = True
-    for i in range(constants.MAP_WIDTH):
-        newMap[i][0].blockPath = True
-        newMap[i][constants.MAP_HEIGHT-1].blockPath = True
+    mapHeight = len(levelArray)
+    mapWidth = len(levelArray[0])
+    GAME.mapHeight = len(levelArray)
+    GAME.mapWidth = len(levelArray[0])
 
-    newMap[3][3].blockPath = True
-    newMap[5][6].blockPath = True
+    print(mapHeight)
+    print(mapWidth)
+    newMap = [[structTile(False) for y in range(0, mapHeight)] for x in range(0, mapWidth )]
+
+    for i in range(GAME.mapHeight):
+        for j in range(GAME.mapWidth):
+            tileType = decoder[levelArray[i][j]]
+            if tileType == "wall":
+                newMap[j][i].blockPath = True
+
+
+    #newMap[3][3].blockPath = True
+    #newMap[5][6].blockPath = True
+
+    GAME.updateSurfaceSize()
 
     return newMap
 
@@ -49,9 +64,9 @@ def createMapOld():
 
 def createFovMap(mapIn):
     ''' the index order gets hosed here.  tcod is weird.'''
-    fovMap = libtcod.map.Map(width=constants.MAP_WIDTH, height=constants.MAP_HEIGHT)
-    for y in range(constants.MAP_HEIGHT):
-        for x in range(constants.MAP_WIDTH):
+    fovMap = libtcod.map.Map(width=GAME.mapWidth, height=GAME.mapHeight)
+    for y in range(GAME.mapHeight):
+        for x in range(GAME.mapWidth):
             val = mapIn[x][y].blockPath
             fovMap.transparent[y][x] = not val
     return fovMap

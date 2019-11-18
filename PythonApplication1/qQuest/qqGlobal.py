@@ -3,8 +3,9 @@ from qQuest import constants
 
 CLOCK = pygame.time.Clock()
 
-SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
-                                        constants.MAP_HEIGHT*constants.CELL_HEIGHT))
+SURFACE_MAIN = pygame.display.set_mode((100,100))
+# SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
+#                                         constants.MAP_HEIGHT*constants.CELL_HEIGHT))
 
 #class EmptyClass(object):
 #    pass
@@ -36,5 +37,9 @@ class Game:
     def objectsAtCoords(self,x,y):
         return [obj for obj in self.currentObjects if obj.x == x and obj.y == y]
 
+
+    def updateSurfaceSize(self):
+        pygame.display.set_mode((self.mapWidth*constants.CELL_WIDTH,
+                                 self.mapHeight*constants.CELL_HEIGHT))
 
 GAME = Game()

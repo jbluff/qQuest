@@ -54,8 +54,8 @@ def helperTextObjects(text, textColor, bgColor=None):
 
 def drawMap(mapToDraw, fovMap):
     surface = SURFACE_MAIN
-    for x in range(0, constants.MAP_WIDTH):
-        for y in range(0, constants.MAP_HEIGHT):
+    for x in range(0, GAME.mapWidth):#constants.MAP_WIDTH):
+        for y in range(0, GAME.mapHeight):#constants.MAP_HEIGHT):
 
             isVisible = fovMap.fov[y, x]
             if isVisible:

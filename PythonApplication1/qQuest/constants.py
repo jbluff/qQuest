@@ -1,8 +1,8 @@
 import pygame
 pygame.init()
 
-MAP_WIDTH = 30
-MAP_HEIGHT = 20
+#MAP_WIDTH = 30
+#MAP_HEIGHT = 20
 
 CELL_WIDTH = 16
 CELL_HEIGHT = 16
