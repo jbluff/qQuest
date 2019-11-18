@@ -1,9 +1,10 @@
 import tcod as libtcod
 import pygame
 import json, os
+import numpy as np
 
-from qQuest import constants
-from qQuest.qqGlobal import GAME, SURFACE_MAIN
+#from qQuest import constants
+#from qQuest.qqGlobal import GAME, SURFACE_MAIN
 
 class structTile:
     def __init__(self, blockPath):
@@ -19,8 +20,7 @@ def loadLevelFile(levelName):
 
     return levelDict
 
-# loadMap, really.
-def createMap(levelDict):
+def loadLevel(levelDict):
     levelArray = levelDict["level"]
     decoder = levelDict["decoderRing"]
 
@@ -39,26 +39,7 @@ def createMap(levelDict):
             if tileType == "wall":
                 newMap[j][i].blockPath = True
 
-
-    #newMap[3][3].blockPath = True
-    #newMap[5][6].blockPath = True
-
     GAME.updateSurfaceSize()
-
-    return newMap
-
-def createMapOld():
-    newMap = [[structTile(False) for y in range(0, constants.MAP_HEIGHT)] for x in range(0, constants.MAP_WIDTH)]
-
-    for i in range(constants.MAP_HEIGHT):
-        newMap[0][i].blockPath = True
-        newMap[constants.MAP_WIDTH-1][i].blockPath = True
-    for i in range(constants.MAP_WIDTH):
-        newMap[i][0].blockPath = True
-        newMap[i][constants.MAP_HEIGHT-1].blockPath = True
-
-    newMap[3][3].blockPath = True
-    newMap[5][6].blockPath = True
 
     return newMap
 
@@ -83,5 +64,79 @@ def mapCalculateFov(actor):
                        algorithm = constants.FOV_ALGO)
     actor.fovCalculate = False
 
+def squareRoom(width, height):
+    mapArray = [["_",] * width,]
+    for i in range(height-2):
+        mapArray += [["_",] + ["_",] * (width-2) + ["_",],]
+    mapArray += [["_",] * width,]
+    return np.array(mapArray, dtype=np.str)
+
+def placeRoom(mapArray, roomArray, x=0, y=0):
+    mapYSize, mapXSize = mapArray.shape
+    roomYSize, roomXSize = roomArray.shape
+
+    dx, dy = 0, 0
+    if (x<0):
+        dx = 0-x #changing the index point
+        mapArray = expandMapLeft(mapArray, dx)
+        x += dx 
+    if (x+roomXSize > mapXSize):
+        mapArray = expandMapRight(mapArray, x+roomXSize-mapXSize)
+    if (y<0):
+        dy = 0-y
+        mapArray = expandMapUp(mapArray, dy)
+        y += dy
+    if (y+roomYSize > mapYSize):
+        mapArray = expandMapDown(mapArray, y+roomYSize-mapYSize)
+
+    for i,xRow in enumerate(mapArray):
+        for j, el in enumerate(xRow):
+            # i becomes y, j becomes x
+            if j >= x and j<x+roomXSize and i >= y and i < y+roomYSize:
+                mapArray[i][j] = roomArray[i-y][j-x] 
+    return mapArray
+
+
+
+def expandMapLeft(mapArray, dx):
+    ySize, xSize = mapArray.shape
+    print("Expanding left")
+    newMapArray = np.array([["#",]*(xSize+dx),]*(ySize), dtype=np.str)
+    newMapArray = placeRoom(newMapArray, mapArray, x=dx, y=0)
+    return newMapArray
+
+def expandMapRight(mapArray, dx):
+    ySize, xSize = mapArray.shape
+    print("Expanding right")
+    newMapArray = np.array([["#",]*(xSize+dx),]*(ySize), dtype=np.str)
+    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=0)
+    return newMapArray
+
+def expandMapUp(mapArray, dy):
+    ySize, xSize = mapArray.shape
+    print("Expanding up")
+    newMapArray = np.array([["#",]*(xSize),]*(ySize+dy), dtype=np.str)
+    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=dy)
+    return newMapArray
+
+def expandMapDown(mapArray, dy):
+    ySize, xSize = mapArray.shape
+    print("Expanding down")
+    newMapArray = np.array([["#",]*(xSize),]*(ySize+dy), dtype=np.str)
+    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=0)
+    return newMapArray
+
+
+if __name__ == "__main__":
+    mapArray = np.array([["#",]*8,]*7, dtype=np.str)
+    room = squareRoom(2, 4)
+
+    mapArray = placeRoom(mapArray, room, x=2, y=15)
+
+    print(mapArray)
+
+    #mapArray = expandMapUp(mapArray, 3)
+    #print(mapArray)
+    pass
 
     
