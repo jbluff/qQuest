@@ -64,11 +64,15 @@ def mapCalculateFov(actor):
                        algorithm = constants.FOV_ALGO)
     actor.fovCalculate = False
 
-def squareRoom(width, height):
-    mapArray = [["_",] * width,]
+def makeWalledRoom(width, height):
+    mapArray = [["#",] * width,]
     for i in range(height-2):
-        mapArray += [["_",] + ["_",] * (width-2) + ["_",],]
-    mapArray += [["_",] * width,]
+        mapArray += [["#",] + ["_",] * (width-2) + ["#",],]
+    mapArray += [["#",] * width,]
+    return np.array(mapArray, dtype=np.str)
+
+def makeRoom(width, height, symbol="_"):
+    mapArray = [[symbol,] * width,]*height
     return np.array(mapArray, dtype=np.str)
 
 def placeRoom(mapArray, roomArray, x=0, y=0):
@@ -79,15 +83,19 @@ def placeRoom(mapArray, roomArray, x=0, y=0):
     if (x<0):
         dx = 0-x #changing the index point
         mapArray = expandMapLeft(mapArray, dx)
+        mapYSize, mapXSize = mapArray.shape
         x += dx 
     if (x+roomXSize > mapXSize):
         mapArray = expandMapRight(mapArray, x+roomXSize-mapXSize)
+        mapYSize, mapXSize = mapArray.shape
     if (y<0):
         dy = 0-y
         mapArray = expandMapUp(mapArray, dy)
+        mapYSize, mapXSize = mapArray.shape
         y += dy
     if (y+roomYSize > mapYSize):
         mapArray = expandMapDown(mapArray, y+roomYSize-mapYSize)
+        mapYSize, mapXSize = mapArray.shape
 
     for i,xRow in enumerate(mapArray):
         for j, el in enumerate(xRow):
@@ -101,38 +109,35 @@ def placeRoom(mapArray, roomArray, x=0, y=0):
 def expandMapLeft(mapArray, dx):
     ySize, xSize = mapArray.shape
     print("Expanding left")
-    newMapArray = np.array([["#",]*(xSize+dx),]*(ySize), dtype=np.str)
-    newMapArray = placeRoom(newMapArray, mapArray, x=dx, y=0)
-    return newMapArray
+    newMapArray = makeRoom(xSize+dx, ySize, symbol="#")
+    return placeRoom(newMapArray, mapArray, x=dx, y=0)
 
 def expandMapRight(mapArray, dx):
     ySize, xSize = mapArray.shape
     print("Expanding right")
-    newMapArray = np.array([["#",]*(xSize+dx),]*(ySize), dtype=np.str)
-    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=0)
-    return newMapArray
+    newMapArray = makeRoom(xSize+dx, ySize, symbol="#")
+    return placeRoom(newMapArray, mapArray, x=0, y=0)
 
 def expandMapUp(mapArray, dy):
     ySize, xSize = mapArray.shape
     print("Expanding up")
-    newMapArray = np.array([["#",]*(xSize),]*(ySize+dy), dtype=np.str)
-    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=dy)
-    return newMapArray
+    newMapArray = makeRoom(xSize, ySize+dy, symbol="#")
+    return placeRoom(newMapArray, mapArray, x=0, y=dy)
 
 def expandMapDown(mapArray, dy):
     ySize, xSize = mapArray.shape
     print("Expanding down")
-    newMapArray = np.array([["#",]*(xSize),]*(ySize+dy), dtype=np.str)
-    newMapArray = placeRoom(newMapArray, mapArray, x=0, y=0)
-    return newMapArray
-
+    newMapArray = makeRoom(xSize, ySize+dy, symbol="#")
+    return placeRoom(newMapArray, mapArray, x=0, y=0)
 
 if __name__ == "__main__":
-    mapArray = np.array([["#",]*8,]*7, dtype=np.str)
-    room = squareRoom(2, 4)
+    mapArray = np.array([["#",]*10,]*10, dtype=np.str)
 
-    mapArray = placeRoom(mapArray, room, x=2, y=15)
+    newRoom = makeRoom(3, 3, symbol="_")
+    mapArray = placeRoom(mapArray, newRoom, x=2, y=2)
 
+    newRoom = makeRoom(5, 3, symbol="_")
+    mapArray = placeRoom(mapArray, newRoom, x=2, y=7)
     print(mapArray)
 
     #mapArray = expandMapUp(mapArray, 3)
