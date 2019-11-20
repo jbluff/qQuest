@@ -1,6 +1,6 @@
 import tcod as libtcod
 import pygame
-import json, os, copy
+import json, os, copy, random
 import numpy as np
 
 #from qQuest import constants
@@ -70,10 +70,38 @@ def mapCalculateFov(actor):
 #         mapArray += [["#",] + ["_",] * (width-2) + ["#",],]
 #     mapArray += [["#",] * width,]
 #     return np.array(mapArray, dtype=np.str)
+class Room:
+    def __init__(self, roomArray, x, y, corridor=False):
+        self.roomArray = np.array(roomArray)
+        self.x = x # x address of upper left pt
+        self.y = y # y address of upper left pt
+
+        self.w = roomArray.shape[1]
+        self.h = roomArray.shape[0]
+
+        self.cooridor = corridor
+
+    def translate(self, vector):
+        self.x += vector[0]
+        self.y += vector[1]
+
 class Map:
     def __init__(self, initWidth=10, initHeight=10):
-        self.mapArray = makeRoom(initWidth, initHeight, symbol="#")
-        self.rooms = [] #Id'd by four number:  upperLeftX, upperLeftY, lowerRightX, lowerRightY
+        self.mapArray = makeRoom(initWidth, initHeight, symbol="#").roomArray
+        self.rooms = [] 
+
+        self.width, self.height = initWidth, initHeight
+
+    def renderArray(self):
+        self.mapArray = makeRoom(self.width, self.height, symbol="#").roomArray
+
+        for room in self.rooms:
+            # There must be a good numpy way to do this.
+            for y, row in enumerate(list(room.roomArray)):
+                for x, el in enumerate(row):
+                    self.mapArray[room.y+y][room.x+x] = el
+
+            #self.mapArray[room.y:room.y+room.h-1][room.x:room.x+room.w-1] = room.roomArray
 
     def plot(self):
         print('\n')
@@ -81,81 +109,161 @@ class Map:
             print(''.join(row))
         print('\n')
 
-    def expandMapLeft(self, dx):
-        self.expandMap((dx, 0), (dx,0))
+    # def expandMapLeft(self, dx):
+    #     self.expandMap((dx, 0), (dx,0))
 
-    def expandMapRight(self, dx):
-        self.expandMap((dx, 0), (0,0))
+    # def expandMapRight(self, dx):
+    #     self.expandMap((dx, 0), (0,0))
 
-    def expandMapUp(self, dy):
-        self.expandMap((0, dy), (0,dy))
+    # def expandMapUp(self, dy):
+    #     self.expandMap((0, dy), (0,dy))
 
-    def expandMapDown(self, dy):
-        self.expandMap((0, dy), (0,0))
+    # def expandMapDown(self, dy):
+    #     self.expandMap((0, dy), (0,0))
 
     # Also offset all existing room datas
-    def expandMap(self, deltaTuple, offsetTuple):
-        ySize, xSize = self.mapArray.shape
-        oldRoom = copy.copy(self.mapArray)
-        self.mapArray = makeRoom(xSize+deltaTuple[0], ySize+deltaTuple[1], symbol="#")
+    # Signs represent directions -- this function cannot shrink map
+    def expandMap(self, deltaTuple):
+        #oldYSize, oldXSize = self.mapArray.shape
+        dx, dy = deltaTuple
 
-        dx, dy = offsetTuple
-        self.placeRoom(oldRoom, x=dx, y=dy, addRoomIndex=False)
-        for i, roomList in enumerate(self.rooms):
-            [a, b, c, d] = roomList
-            self.rooms[i] = [a+dx, b+dy, c+dx, d+dy]
-        del oldRoom
+        self.width += abs(dx)
+        self.height += abs(dy)
+        #oldRoom = copy.copy(self.mapArray)
+        #self.mapArray = makeRoom(oldXSize+dx, oldYSize+dy, symbol="#").roomArray
+
+        #x, y = offsetTuple
+
+        #self.mapArray[y:oldYSize][x:oldXSize] = oldRoom
+        #self.placeRoom(oldRoom, x=dx, y=dy, addRoomIndex=False)
+        if (dx < 0):
+            for i, room in enumerate(self.rooms):
+                room.translate((abs(dx),0))
+        if (dy < 0):
+            for i, room in enumerate(self.rooms):
+                room.translate((0,abs(dy)))
+        #del oldRoom
 
     
-    def placeRoom(self, roomArray, x=0, y=0, addRoomIndex=True):
-        mapYSize, mapXSize = self.mapArray.shape
-        roomYSize, roomXSize = roomArray.shape
+    def placeRoom(self, room, x=None, y=None):#, addRoomIndex=True):
+        #mapYSize, mapXSize = self.mapArray.shape
+        #roomYSize, roomXSize = room.roomArray.shape
 
-        dx, dy = 0, 0
-        if (x<0):
-            dx = 0-x #changing the index point
-            self.expandMapLeft(dx)
-            x += dx 
-        if (x+roomXSize > self.mapArray.shape[1]):
-            self.expandMapRight(x+roomXSize-mapXSize)
-        if (y<0):
-            dy = 0-y
-            self.expandMapUp(dy)
-            y += dy
-        if (y+roomYSize > self.mapArray.shape[0]):
-            self.expandMapDown(y+roomYSize-mapYSize)
+        if x:
+            room.x = x
+        if y:
+            room.y = y
 
-        for i,xRow in enumerate(self.mapArray):
-            for j, el in enumerate(xRow):
-                # i becomes y, j becomes x
-                if j >= x and j<x+roomXSize and i >= y and i < y+roomYSize:
-                    self.mapArray[i][j] = roomArray[i-y][j-x] 
-
-        #Id'd by four number:  upperLeftX, upperLeftY, lowerRightX, lowerRightY
-        if addRoomIndex:
-            self.rooms.append([x,y,x+roomXSize-1, y+roomYSize-1])
+        self.rooms.append(room)
+        # dx, dy = 0, 0
+        # if (x<0):
+        #     dx = 0-x #changing the index point
+        #     self.expandMapLeft(dx)
+        #     x += dx 
+        # if (x+roomXSize > self.mapArray.shape[1]):
+        #     self.expandMapRight(x+roomXSize-mapXSize)
+        # if (y<0):
+        #     dy = 0-y
+        #     self.expandMapUp(dy)
+        #     y += dy
+        # if (y+roomYSize > self.mapArray.shape[0]):
+        #     self.expandMapDown(y+roomYSize-mapYSize)
 
 
-def makeRoom(width, height, symbol="_"):
+        # for i,xRow in enumerate(self.mapArray):
+        #     for j, el in enumerate(xRow):
+        #         # i becomes y, j becomes x
+        #         if j >= x and j<x+roomXSize and i >= y and i < y+roomYSize:
+        #             self.mapArray[i][j] = room.roomArray[i-y][j-x] 
+
+        # #Id'd by four number:  upperLeftX, upperLeftY, lowerRightX, lowerRightY
+        # if addRoomIndex:
+        #     self.rooms.append([x,y,x+roomXSize-1, y+roomYSize-1])
+
+    # def placeRoomAtPoint(self, roomArray, point, vector, **kwargs):
+    #     roomYSize, roomXSize = roomArray.shape
+
+    #     if (vector == (0,+1)).all(): # facing right
+    #         x = point[0]+1
+    #         y = point[1] + round((random.random()-0.5) * roomYSize)
+
+    #         self.placeRoom(roomArray, x=0, y=0, **kwargs)
+
+
+
+def makeRoom(width, height, symbol="_", **kwargs):
     mapArray = [[symbol,] * width,]*height
-    return np.array(mapArray, dtype=np.str)
+    return Room(np.array(mapArray, dtype=np.str), 0, 0, **kwargs)
+
+#  Given a room tuple, return a point on the edge and the normal vector
+def chooseRandomBorderPoint(roomList):
+    # upperLeftX, upperLeftY, lowerRightX, lowerRightY
+    side = random.randint(0,3) # top, right, bottom, left
+   
+    roomWidth = roomList[2] - roomList[0]
+    roomHeight = roomList[3] - roomList[1]
+
+    if side==0: # top
+        yLoc = roomList[1]
+        xLoc = roomList[0]  + random.randint(0, roomWidth-1)
+        vector = (0,-1)
+    elif side==2: # bottom
+        yLoc = roomList[3]
+        xLoc = roomList[0]  + random.randint(0, roomWidth-1)
+        vector = (0,+1)
+    elif side==1: # right
+        xLoc = roomList[2]
+        yLoc = roomList[1]  + random.randint(0, roomHeight-1)
+        vector = (+1,0)
+    elif side==3: # left
+        xLoc = roomList[0]
+        yLoc = roomList[1]  + random.randint(0, roomHeight-1)
+        vector = (-1,0)
+
+    return np.array([xLoc, yLoc]), np.array(vector)
+
+# returns what would be the next point (where a new room might start..)
+def tunnelOut(map, roomIdx, numPnts):
+    # TODO:  add turning
+    point, vector = chooseRandomBorderPoint(newMap.rooms[roomIdx])
+    singleTile = makeRoom(1,1,symbol="_")
+    
+    point += vector
+    newMap.placeRoom(singleTile, *point, addRoomIndex=False)
+    for i in range(numPnts-1):
+        point += vector
+        print(point)
+        newMap.placeRoom(singleTile, *point, addRoomIndex=False)       
+    
+    return point, vector
 
 
 if __name__ == "__main__":
-    newMap = Map(5,5)
+    newMap = Map(8,8)
 
-    newRoom = makeRoom(3,3)
-    newMap.placeRoom(newRoom, -1, -1)
+    newRoom = makeRoom(4,4)
+    newMap.placeRoom(newRoom, x=2, y=2)
+    newMap.renderArray()
     newMap.plot()
-    print(newMap.rooms)
 
-    newMap.expandMapLeft(1)
+    newMap.expandMap((1,1))
+    newMap.renderArray()
     newMap.plot()
-    print(newMap.rooms)
+    #newMap.expandMapLeft(1)
 
-    newMap.expandMapRight(1)
-    newMap.plot()
-    print(newMap.rooms)
+    #point, vector = tunnelOut(newMap, 0, 5)
+    #newMap.plot()
+
+    #newMap.placeRoomAtPoint(newRoom, point, vector, addRoomIndex=True)
+    #newMap.plot()
+
+    # point, vector = chooseRandomBorderPoint(newMap.rooms[0])
+    # newMap.mapArray[point[1], point[0]] = "+"
+    # newMap.mapArray[point[1]+vector[1], point[0]+vector[0]] = "Q"
+    # newMap.plot()
+    # print(point)
+    # print(vector)
+
 
     # mapArray = np.array([["#",]*10,]*10, dtype=np.str)
 
