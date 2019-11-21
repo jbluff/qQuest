@@ -70,27 +70,88 @@ def mapCalculateFov(actor):
 #         mapArray += [["#",] + ["_",] * (width-2) + ["#",],]
 #     mapArray += [["#",] * width,]
 #     return np.array(mapArray, dtype=np.str)
+
+class Walker:
+    def __init__(self, mapInst, roomIdx):
+        self.map = mapInst
+        self.roomIdx = roomIdx
+
+        self.room = self.map.rooms[self.roomIdx]
+
+        self.x, self.y = 0, 0
+        self.vector = (1, 0) #x, y
+
+        self.distanceTravelled = 0
+
+        self.turnProbability = 0.2
+        self.travelDistance = 10
+
+    def render(self):
+        self.map.mapArray[self.y][self.x] = "@"
+
+    def chooseRandomBorderPoint(self):
+        side = random.randint(0,3) # top, right, bottom, left
+
+        if side==0: # top
+            print('top')
+            self.y = self.room.y
+            self.x = self.room.x  + random.randint(0, self.room.w-1)
+            self.vector = (0,-1)
+        elif side==2: # bottom
+            print('bottom')
+            self.y = self.room.y + self.room.h - 1
+            self.x = self.room.x  + random.randint(0, self.room.w-1)
+            self.vector = (0,+1)
+        elif side==1: # right
+            print('right')
+            self.x = self.room.x + self.room.w - 1
+            self.y = self.room.y  + random.randint(0, self.room.h-1)
+            self.vector = (+1,0)
+        elif side==3: # left
+            print('left')
+            self.x = self.room.x
+            self.y = self.room.y + random.randint(0, self.room.h-1)
+            self.vector = (-1,0)
+
+    def travel(self):
+        self.x += self.vector[0]
+        self.y += self.vector[1]
+
+        print(f'newPosition {self.x},{self.y}')
+        newRoom = makeRoom(1, 1, symbol="_", roomType='corridor')
+        self.map.placeRoom(newRoom, x=self.x, y=self.y)
+
+        self.distanceTravelled += 1
+
+        if self.distanceTravelled >= self.travelDistance:
+            return -1
+        else:
+            return 0
+
+        self.turnProbability = 0.2
+        self.travelDistance = 10
+
+    def translate(self, vector):
+        self.x += vector[0]
+        self.y += vector[1]
+
 class Room:
-    def __init__(self, roomArray, x, y, corridor=False):
+    def __init__(self, roomArray, x, y, roomType='room'):
         self.roomArray = np.array(roomArray)
-        self.x = x # x address of upper left pt
-        self.y = y # y address of upper left pt
-
-        self.w = roomArray.shape[1]
-        self.h = roomArray.shape[0]
-
-        self.cooridor = corridor
+        self.x, self.y = x, y # upper left pt
+        self.h, self.w = roomArray.shape
+        self.roomType = roomType
 
     def translate(self, vector):
         self.x += vector[0]
         self.y += vector[1]
 
 class Map:
-    def __init__(self, initWidth=10, initHeight=10):
+    def __init__(self, initWidth=10, initHeight=10, walker=None):
         self.mapArray = makeRoom(initWidth, initHeight, symbol="#").roomArray
         self.rooms = [] 
-
         self.width, self.height = initWidth, initHeight
+        self.walker = walker
 
     def renderArray(self):
         self.mapArray = makeRoom(self.width, self.height, symbol="#").roomArray
@@ -101,30 +162,15 @@ class Map:
                 for x, el in enumerate(row):
                     self.mapArray[room.y+y][room.x+x] = el
 
-            #self.mapArray[room.y:room.y+room.h-1][room.x:room.x+room.w-1] = room.roomArray
-
     def plot(self):
         print('\n')
         for row in self.mapArray:
             print(''.join(row))
         print('\n')
 
-    # def expandMapLeft(self, dx):
-    #     self.expandMap((dx, 0), (dx,0))
-
-    # def expandMapRight(self, dx):
-    #     self.expandMap((dx, 0), (0,0))
-
-    # def expandMapUp(self, dy):
-    #     self.expandMap((0, dy), (0,dy))
-
-    # def expandMapDown(self, dy):
-    #     self.expandMap((0, dy), (0,0))
-
     # Also offset all existing room datas
     # Signs represent directions -- this function cannot shrink map
     def expandMap(self, deltaTuple):
-
         dx, dy = deltaTuple
 
         self.width += abs(dx)
@@ -133,43 +179,36 @@ class Map:
         if (dx < 0):
             for i, room in enumerate(self.rooms):
                 room.translate((abs(dx),0))
+            if self.walker:
+                self.walker.translate((-dx,0))
         if (dy < 0):
             for i, room in enumerate(self.rooms):
                 room.translate((0,abs(dy)))
+            if self.walker:
+                self.walker.translate((0, -dy))
+            # if (dy > 0):
+        #         
 
-    
     def placeRoom(self, room, x=None, y=None):#, addRoomIndex=True):
-
         if x:
             room.x = x
         if y:
             room.y = y
-
         self.rooms.append(room)
 
         if x < 0:
-            self.expandMap((abs(x,0)))
+            print('expand left')
+            self.expandMap((-1*abs(x),0))
         if y < 0:
-            self.expandMap((abs(y,0)))
-
-
+            print('expand up')
+            self.expandMap((0, -1*abs(y)))
         if x + room.w > self.width:
+            print('expand right')
             self.expandMap((x+room.w-self.width,0))
-
         if y + room.h > self.height:
+            print('expand down')
             self.expandMap((0, y+room.h-self.height))
 
-
-
-
-    # def placeRoomAtPoint(self, roomArray, point, vector, **kwargs):
-    #     roomYSize, roomXSize = roomArray.shape
-
-    #     if (vector == (0,+1)).all(): # facing right
-    #         x = point[0]+1
-    #         y = point[1] + round((random.random()-0.5) * roomYSize)
-
-    #         self.placeRoom(roomArray, x=0, y=0, **kwargs)
 
 
 
@@ -177,57 +216,30 @@ def makeRoom(width, height, symbol="_", **kwargs):
     mapArray = [[symbol,] * width,]*height
     return Room(np.array(mapArray, dtype=np.str), 0, 0, **kwargs)
 
-#  Given a room tuple, return a point on the edge and the normal vector
-def chooseRandomBorderPoint(roomList):
-    # upperLeftX, upperLeftY, lowerRightX, lowerRightY
-    side = random.randint(0,3) # top, right, bottom, left
-   
-    roomWidth = roomList[2] - roomList[0]
-    roomHeight = roomList[3] - roomList[1]
-
-    if side==0: # top
-        yLoc = roomList[1]
-        xLoc = roomList[0]  + random.randint(0, roomWidth-1)
-        vector = (0,-1)
-    elif side==2: # bottom
-        yLoc = roomList[3]
-        xLoc = roomList[0]  + random.randint(0, roomWidth-1)
-        vector = (0,+1)
-    elif side==1: # right
-        xLoc = roomList[2]
-        yLoc = roomList[1]  + random.randint(0, roomHeight-1)
-        vector = (+1,0)
-    elif side==3: # left
-        xLoc = roomList[0]
-        yLoc = roomList[1]  + random.randint(0, roomHeight-1)
-        vector = (-1,0)
-
-    return np.array([xLoc, yLoc]), np.array(vector)
-
-# returns what would be the next point (where a new room might start..)
-def tunnelOut(map, roomIdx, numPnts):
-    # TODO:  add turning
-    point, vector = chooseRandomBorderPoint(newMap.rooms[roomIdx])
-    singleTile = makeRoom(1,1,symbol="_")
-    
-    point += vector
-    newMap.placeRoom(singleTile, *point, addRoomIndex=False)
-    for i in range(numPnts-1):
-        point += vector
-        print(point)
-        newMap.placeRoom(singleTile, *point, addRoomIndex=False)       
-    
-    return point, vector
 
 
 if __name__ == "__main__":
     newMap = Map(8,8)
 
-    newRoom = makeRoom(4,5)
+    newRoom = makeRoom(4,4)
     newMap.placeRoom(newRoom, x=2, y=2)
-    newMap.renderArray()
-    newMap.plot()
 
+    if 0:
+        newRoom = makeRoom(1,1)
+        newMap.placeRoom(newRoom, x=-2, y=8)
+        newMap.renderArray()
+        newMap.plot()
+
+    if 1:
+        fred = Walker(newMap, 0)
+        newMap.walker = fred
+        fred.chooseRandomBorderPoint()
+        for i in range(3):
+            fred.travel()
+        newMap.renderArray()
+        fred.render()
+        newMap.plot()
+        
     #newMap.expandMap((1,1))
     #newMap.renderArray()
     #newMap.plot()
