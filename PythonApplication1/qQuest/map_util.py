@@ -124,30 +124,21 @@ class Map:
     # Also offset all existing room datas
     # Signs represent directions -- this function cannot shrink map
     def expandMap(self, deltaTuple):
-        #oldYSize, oldXSize = self.mapArray.shape
+
         dx, dy = deltaTuple
 
         self.width += abs(dx)
         self.height += abs(dy)
-        #oldRoom = copy.copy(self.mapArray)
-        #self.mapArray = makeRoom(oldXSize+dx, oldYSize+dy, symbol="#").roomArray
 
-        #x, y = offsetTuple
-
-        #self.mapArray[y:oldYSize][x:oldXSize] = oldRoom
-        #self.placeRoom(oldRoom, x=dx, y=dy, addRoomIndex=False)
         if (dx < 0):
             for i, room in enumerate(self.rooms):
                 room.translate((abs(dx),0))
         if (dy < 0):
             for i, room in enumerate(self.rooms):
                 room.translate((0,abs(dy)))
-        #del oldRoom
 
     
     def placeRoom(self, room, x=None, y=None):#, addRoomIndex=True):
-        #mapYSize, mapXSize = self.mapArray.shape
-        #roomYSize, roomXSize = room.roomArray.shape
 
         if x:
             room.x = x
@@ -155,30 +146,21 @@ class Map:
             room.y = y
 
         self.rooms.append(room)
-        # dx, dy = 0, 0
-        # if (x<0):
-        #     dx = 0-x #changing the index point
-        #     self.expandMapLeft(dx)
-        #     x += dx 
-        # if (x+roomXSize > self.mapArray.shape[1]):
-        #     self.expandMapRight(x+roomXSize-mapXSize)
-        # if (y<0):
-        #     dy = 0-y
-        #     self.expandMapUp(dy)
-        #     y += dy
-        # if (y+roomYSize > self.mapArray.shape[0]):
-        #     self.expandMapDown(y+roomYSize-mapYSize)
+
+        if x < 0:
+            self.expandMap((abs(x,0)))
+        if y < 0:
+            self.expandMap((abs(y,0)))
 
 
-        # for i,xRow in enumerate(self.mapArray):
-        #     for j, el in enumerate(xRow):
-        #         # i becomes y, j becomes x
-        #         if j >= x and j<x+roomXSize and i >= y and i < y+roomYSize:
-        #             self.mapArray[i][j] = room.roomArray[i-y][j-x] 
+        if x + room.w > self.width:
+            self.expandMap((x+room.w-self.width,0))
 
-        # #Id'd by four number:  upperLeftX, upperLeftY, lowerRightX, lowerRightY
-        # if addRoomIndex:
-        #     self.rooms.append([x,y,x+roomXSize-1, y+roomYSize-1])
+        if y + room.h > self.height:
+            self.expandMap((0, y+room.h-self.height))
+
+
+
 
     # def placeRoomAtPoint(self, roomArray, point, vector, **kwargs):
     #     roomYSize, roomXSize = roomArray.shape
@@ -241,14 +223,14 @@ def tunnelOut(map, roomIdx, numPnts):
 if __name__ == "__main__":
     newMap = Map(8,8)
 
-    newRoom = makeRoom(4,4)
+    newRoom = makeRoom(4,5)
     newMap.placeRoom(newRoom, x=2, y=2)
     newMap.renderArray()
     newMap.plot()
 
-    newMap.expandMap((1,1))
-    newMap.renderArray()
-    newMap.plot()
+    #newMap.expandMap((1,1))
+    #newMap.renderArray()
+    #newMap.plot()
     #newMap.expandMapLeft(1)
 
     #point, vector = tunnelOut(newMap, 0, 5)
