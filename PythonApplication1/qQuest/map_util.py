@@ -64,27 +64,17 @@ def mapCalculateFov(actor):
                        algorithm = constants.FOV_ALGO)
     actor.fovCalculate = False
 
-# def makeWalledRoom(width, height):
-#     mapArray = [["#",] * width,]
-#     for i in range(height-2):
-#         mapArray += [["#",] + ["_",] * (width-2) + ["#",],]
-#     mapArray += [["#",] * width,]
-#     return np.array(mapArray, dtype=np.str)
-
 class Walker:
     def __init__(self, mapInst, roomIdx):
         self.map = mapInst
         self.roomIdx = roomIdx
-
         self.room = self.map.rooms[self.roomIdx]
 
         self.x, self.y = 0, 0
         self.vector = (1, 0) #x, y
 
-        self.distanceTravelled = 0
-
-        self.turnProbability = 0.2
-        self.travelDistance = 10
+        self.turnProbability = self.map.turnProbability
+        self.tunnelLength = random.randint(*self.map.tunnelLengthLimits)
 
     def render(self):
         self.map.mapArray[self.y][self.x] = "@"
@@ -93,43 +83,68 @@ class Walker:
         side = random.randint(0,3) # top, right, bottom, left
 
         if side==0: # top
-            print('top')
             self.y = self.room.y
             self.x = self.room.x  + random.randint(0, self.room.w-1)
             self.vector = (0,-1)
         elif side==2: # bottom
-            print('bottom')
             self.y = self.room.y + self.room.h - 1
             self.x = self.room.x  + random.randint(0, self.room.w-1)
             self.vector = (0,+1)
         elif side==1: # right
-            print('right')
             self.x = self.room.x + self.room.w - 1
             self.y = self.room.y  + random.randint(0, self.room.h-1)
             self.vector = (+1,0)
         elif side==3: # left
-            print('left')
             self.x = self.room.x
             self.y = self.room.y + random.randint(0, self.room.h-1)
             self.vector = (-1,0)
 
-    def travel(self):
+    def travelOneStep(self):
         self.x += self.vector[0]
         self.y += self.vector[1]
 
-        print(f'newPosition {self.x},{self.y}')
         newRoom = makeRoom(1, 1, symbol="_", roomType='corridor')
         self.map.placeRoom(newRoom, x=self.x, y=self.y)
 
-        self.distanceTravelled += 1
+        #self.distanceTravelled += 1
 
-        if self.distanceTravelled >= self.travelDistance:
-            return -1
-        else:
-            return 0
+        # branch!
+        self.turn()
 
-        self.turnProbability = 0.2
-        self.travelDistance = 10
+    def travel(self, numPts=None):
+        if numPts == None:
+            numPts = self.tunnelLength
+        for i in range(numPts):
+            self.travelOneStep()
+        
+        return (self.x+self.vector[0], self.y+self.vector[1])
+
+    def turn(self):
+        if (random.random() < self.turnProbability):
+            if random.randint(0,1):
+                self.turnLeft()
+            else:
+                self.turnRight()
+
+    def turnLeft(self):
+        if self.vector==(-1,0):
+            self.vector = (0,-1)
+        elif self.vector==(0,-1):
+            self.vector = (1,0)
+        elif self.vector==(1,0):
+            self.vector = (0,1)
+        elif self.vector==(0,1):
+            self.vector = (-1,0)
+
+    def turnRight(self):
+        if self.vector==(-1,0):
+            self.vector = (0,1)
+        elif self.vector==(0,1):
+            self.vector = (1,0)
+        elif self.vector==(1,0):
+            self.vector = (0,-1)
+        elif self.vector==(0,-1):
+            self.vector = (-1,0)
 
     def translate(self, vector):
         self.x += vector[0]
@@ -152,6 +167,27 @@ class Map:
         self.rooms = [] 
         self.width, self.height = initWidth, initHeight
         self.walker = walker
+
+        self.turnProbability = 0.2
+        self.tunnelLengthLimits = (3, 10)
+        self.roomSizeLimits = (3,7)
+
+    def checkRoomOverlaps(self, newRoom):
+        overlapInfo = []
+        for room in self.rooms:
+            xOverlap, yOverlap = False, False
+            A, B, C, D = room.x, room.x + room.w - 1, newRoom.x, newRoom.x + newRoom.w - 1
+            print(f'{A},{B},{C},{D}')
+            if (B >= D and A <= D) or (A <= C and B >= C):
+                xOverlap = True
+
+            A, B, C, D = room.y, room.y + room.h - 1, newRoom.y, newRoom.y + newRoom.h - 1
+            print(f'{A},{B},{C},{D}')
+            if (B >= D and A <= D) or (A <= C and B >= C):
+                yOverlap = True
+            overlapInfo.append((xOverlap, yOverlap))
+        return overlapInfo
+
 
     def renderArray(self):
         self.mapArray = makeRoom(self.width, self.height, symbol="#").roomArray
@@ -186,31 +222,47 @@ class Map:
                 room.translate((0,abs(dy)))
             if self.walker:
                 self.walker.translate((0, -dy))
-            # if (dy > 0):
-        #         
+   
 
     def placeRoom(self, room, x=None, y=None):#, addRoomIndex=True):
         if x:
             room.x = x
         if y:
             room.y = y
+
         self.rooms.append(room)
 
-        if x < 0:
-            print('expand left')
-            self.expandMap((-1*abs(x),0))
-        if y < 0:
-            print('expand up')
-            self.expandMap((0, -1*abs(y)))
-        if x + room.w > self.width:
-            print('expand right')
-            self.expandMap((x+room.w-self.width,0))
-        if y + room.h > self.height:
-            print('expand down')
-            self.expandMap((0, y+room.h-self.height))
+        if room.x < 0:
+            self.expandMap((-1*abs(room.x),0))
+        if room.y < 0:
+            self.expandMap((0, -1*abs(room.y)))
+        if room.x + room.w > self.width:
+            self.expandMap((room.x+room.w-self.width,0))
+        if room.y + room.h > self.height:
+            self.expandMap((0,room.y+room.h-self.height))
+
+    def chooseWalkerStart(self):
+        roomIdcs = [idx for idx,room in enumerate(self.rooms) if room.roomType=="room"]
+        return random.sample(roomIdcs, 1)[0]
+
+    def spawnWalker(self):
+        
+        startIdx = self.chooseWalkerStart()
+        self.walker = Walker(self, startIdx)
+        self.walker.chooseRandomBorderPoint()
+        x, y = self.walker.travel(10)
 
 
+        self.walker = None
 
+        roomX = random.randint(*self.roomSizeLimits)
+        roomY = random.randint(*self.roomSizeLimits)
+        newRoom = makeRoom(roomX, roomY, roomType='room')
+        self.placeRoom(newRoom, x=x, y=y)
+
+    def spawnMultipleWalkers(self, n):
+        for _ in range(n):
+            self.spawnWalker()
 
 def makeRoom(width, height, symbol="_", **kwargs):
     mapArray = [[symbol,] * width,]*height
@@ -230,41 +282,22 @@ if __name__ == "__main__":
         newMap.renderArray()
         newMap.plot()
 
-    if 1:
-        fred = Walker(newMap, 0)
-        newMap.walker = fred
-        fred.chooseRandomBorderPoint()
-        for i in range(3):
-            fred.travel()
+    if 0:
+        #newMap.spawnWalker()
+        newMap.spawnMultipleWalkers(20)
+
         newMap.renderArray()
-        fred.render()
+        newMap.plot()
+
+
+    if 1:
+        newRoom = makeRoom(4,4)
+        newRoom.x = 6
+        newRoom.y = -2
+        print(newMap.checkRoomOverlaps(newRoom))
+        newMap.placeRoom(newRoom)#, x=6, y=5)
+        newMap.renderArray()
         newMap.plot()
         
-    #newMap.expandMap((1,1))
-    #newMap.renderArray()
-    #newMap.plot()
-    #newMap.expandMapLeft(1)
-
-    #point, vector = tunnelOut(newMap, 0, 5)
-    #newMap.plot()
-
-    #newMap.placeRoomAtPoint(newRoom, point, vector, addRoomIndex=True)
-    #newMap.plot()
-
-    # point, vector = chooseRandomBorderPoint(newMap.rooms[0])
-    # newMap.mapArray[point[1], point[0]] = "+"
-    # newMap.mapArray[point[1]+vector[1], point[0]+vector[0]] = "Q"
-    # newMap.plot()
-    # print(point)
-    # print(vector)
-
-
-    # mapArray = np.array([["#",]*10,]*10, dtype=np.str)
-
-    # newRoom = makeRoom(3, 3, symbol="_")
-    # mapArray = placeRoom(mapArray, newRoom, x=2, y=2)
-
-    # print(mapArray)
-    pass
 
     
