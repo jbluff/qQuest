@@ -4,7 +4,7 @@ from qQuest import ai
 from qQuest.actors import Actor, Creature, Item, Container, Equipment
 
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
-#from qQuest.graphics import ASSETS
+from qQuest.graphics import ASSETS
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS
@@ -51,3 +51,39 @@ class Level:
                         container=inventory, deathFunction=monsterDict['deathFunction'],
                         fovMap=map_util.createFovMap(self.map))    
         self.objects.append(enemy)
+
+    '''
+    Only call this once!  Creates a global/singleton.
+    '''
+    def addPlayer(self, x,y):
+        #global PLAYER
+        #GAME.player
+
+        playerInventory = Container()
+        playerFovMap = map_util.createFovMap(self.map)
+        #PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
+        GAME.player = Creature( (x,y), "hero", ASSETS.a_player, 
+                    fovMap=playerFovMap,
+                    container=playerInventory)
+        self.currentFovMap = playerFovMap
+        map_util.mapCalculateFov(GAME.player)
+        #map_util.mapCalculateFov(PLAYER)
+
+        #self.objects.append(PLAYER)
+        self.objects.append(GAME.player)
+        
+
+    '''
+        Creates Items by type, looking up info in a library file.
+    '''
+    def addItem(self, coordX, coordY, name):
+        itemDict = ITEMS[name]
+        if 'equipment' in itemDict.keys():
+            item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+                        **itemDict['kwargs'])
+        else:
+            item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+                        useFunction=itemDict['useFunction'], **itemDict['kwargs'])
+
+        self.objects.append(item)
+

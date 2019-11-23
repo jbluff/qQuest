@@ -48,31 +48,39 @@ def gameHandleKeys():
         if event.type == pygame.KEYDOWN:
             # arrow key up -> move player up
             if event.key == pygame.K_UP:
-                PLAYER.move(0, -1)
+                #PLAYER.move(0, -1)
+                GAME.player.move(0, -1)
                 return "player-moved"
 
             # arrow key down -> move player down
             if event.key == pygame.K_DOWN:
-                PLAYER.move(0, 1)
+                #PLAYER.move(0, 1)
+                GAME.player.move(0, 1)
                 return "player-moved"
 
             # arrow key left -> move player left
             if event.key == pygame.K_LEFT:
-                PLAYER.move(-1, 0)
+                #PLAYER.move(-1, 0)
+                GAME.player.move(-1, 0)
                 return "player-moved"
 
             # arrow key right -> move player right
             if event.key == pygame.K_RIGHT:
-                PLAYER.move(1, 0)
+                #PLAYER.move(1, 0)
+                GAME.player.move(1, 0)
                 return "player-moved"
 
             # pickup objects
             # TODO:  break this into a subroutine
             if event.key == pygame.K_g:
-                objs = GAME.currentLevel.objectsAtCoords(PLAYER.x, PLAYER.y)
+                
+                #objs = GAME.currentLevel.objectsAtCoords(PLAYER.x, PLAYER.y)
+                objs = GAME.currentLevel.objectsAtCoords(GAME.player.x, GAME.player.y)
                 for obj in objs:
                     if obj.item:
-                        obj.pickup(PLAYER)
+                        
+                        #obj.pickup(PLAYER)
+                        obj.pickup(GAME.player)
 
             # pause menu
             if event.key == pygame.K_p:
@@ -80,7 +88,9 @@ def gameHandleKeys():
 
             # inventory menu
             if event.key == pygame.K_i:
-                menus.InventoryMenu(SURFACE_MAIN, PLAYER)
+                
+                #menus.InventoryMenu(SURFACE_MAIN, PLAYER)
+                menus.InventoryMenu(SURFACE_MAIN, GAME.player)
             
             if event.key == pygame.K_q:
                 return "QUIT"
@@ -91,8 +101,10 @@ def gameExit():
     quit()
 
 def gameMainLoop():
+    #global PLAYER
     playerAction = "no-action"
-    viewer = PLAYER # can see other Creature FOV for degbugging purposes
+    #viewer = PLAYER # can see other Creature FOV for degbugging purposes
+    viewer = GAME.player
 
     while playerAction != "QUIT":
        
@@ -127,36 +139,36 @@ def gameMainLoop():
 #                      fovMap=map_util.createFovMap(GAME.currentLevel.map))    
 #     GAME.currentLevel.objects.append(enemy)
 
-'''
-    Creates Items by type, looking up info in a library file.
-'''
-def gameAddItem(coordX, coordY, name):
-    itemDict = ITEMS[name]
-    if 'equipment' in itemDict.keys():
-        item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                       **itemDict['kwargs'])
-    else:
-        item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                       useFunction=itemDict['useFunction'], **itemDict['kwargs'])
+# '''
+#     Creates Items by type, looking up info in a library file.
+# '''
+# def gameAddItem(coordX, coordY, name):
+#     itemDict = ITEMS[name]
+#     if 'equipment' in itemDict.keys():
+#         item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+#                        **itemDict['kwargs'])
+#     else:
+#         item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
+#                        useFunction=itemDict['useFunction'], **itemDict['kwargs'])
 
-    GAME.currentLevel.objects.append(item)
+#     GAME.currentLevel.objects.append(item)
 
-'''
-    Only call this once!  Creates a global/singleton.
-'''
-def gameAddPlayer(x,y):
-    global PLAYER
+# '''
+#     Only call this once!  Creates a global/singleton.
+# '''
+# def gameAddPlayer(x,y):
+#     global PLAYER
 
-    playerInventory = Container()
-    playerFovMap = map_util.createFovMap(GAME.currentLevel.map)
-    PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
-                   fovMap=playerFovMap,
-                   container=playerInventory)
-    setattr(GAME.currentLevel, "currentFovMap", playerFovMap)
-    map_util.mapCalculateFov(PLAYER)
+#     playerInventory = Container()
+#     playerFovMap = map_util.createFovMap(GAME.currentLevel.map)
+#     PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
+#                    fovMap=playerFovMap,
+#                    container=playerInventory)
+#     setattr(GAME.currentLevel, "currentFovMap", playerFovMap)
+#     map_util.mapCalculateFov(PLAYER)
 
 
-    GAME.currentLevel.objects.append(PLAYER)
+#     GAME.currentLevel.objects.append(PLAYER)
 
 
 def gameInitialize():
@@ -177,15 +189,15 @@ def gameInitialize():
     #GAME.map = map_util.loadLevel(levelDict)
 
     # init hero
-    gameAddPlayer(15,2)
+    level1.addPlayer(15,2)
 
     # init the enemy
     level1.addEnemy(15,4,"jelly", uniqueName="frank")
     #gameAddEnemy(10,3,"jelly", uniqueName="george")
     #gameAddEnemy(10,4,"demon", uniqueName="Mephisto, lord of terror")
 
-    gameAddItem(4,4,"goggles")
-    gameAddItem(8,4,"healingPotion")
+    level1.addItem(16,2,"goggles")
+    level1.addItem(17,2,"healingPotion")
 
 
 if __name__ == "__main__":
