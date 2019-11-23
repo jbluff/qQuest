@@ -93,7 +93,7 @@ def drawGame(fovMap=None):
     if fovMap is None:
         fovMap = GAME.currentLevel.currentFovMap
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
-    drawMap(GAME.currentLevel.currentMap, fovMap)
+    drawMap(GAME.currentLevel.map, fovMap)
 
     drawObjects(fovMap)
 
@@ -103,7 +103,7 @@ def drawGame(fovMap=None):
     pygame.display.flip()
 
 def drawObjects(fovMap):
-    for gameObj in GAME.currentLevel.currentObjects:
+    for gameObj in GAME.currentLevel.objects:
         if gameObj.item:
             if gameObj.deleted:# or gameObj.currentContainer:
                 return

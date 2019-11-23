@@ -69,7 +69,7 @@ def gameHandleKeys():
             # pickup objects
             # TODO:  break this into a subroutine
             if event.key == pygame.K_g:
-                objs = GAME.objectsAtCoords(PLAYER.x, PLAYER.y)
+                objs = GAME.currentLevel.objectsAtCoords(PLAYER.x, PLAYER.y)
                 for obj in objs:
                     if obj.item:
                         obj.pickup(PLAYER)
@@ -101,7 +101,7 @@ def gameMainLoop():
             
         if playerAction == "player-moved":
             map_util.mapCalculateFov(viewer)
-            for gameObj in GAME.currentLevel.currentObjects:
+            for gameObj in GAME.currentLevel.objects:
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
@@ -111,21 +111,21 @@ def gameMainLoop():
     gameExit()
 
 
-'''
-    Creates NPC characters by type, looking qp info in a library file.
-'''
-def gameAddEnemy(coordX, coordY, name, uniqueName=None):
-    monsterDict = MONSTERS[name]
-    name = monsterDict['name']
-    if uniqueName:
-        name = uniqueName + " the " + name
+# '''
+#     Creates NPC characters by type, looking qp info in a library file.
+# '''
+# def gameAddEnemy(coordX, coordY, name, uniqueName=None):
+#     monsterDict = MONSTERS[name]
+#     name = monsterDict['name']
+#     if uniqueName:
+#         name = uniqueName + " the " + name
 
-    inventory = Container(**monsterDict['kwargs'])
-    enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
-                     ai=getattr(ai,monsterDict['ai'])(), 
-                     container=inventory, deathFunction=monsterDict['deathFunction'],
-                     fovMap=map_util.createFovMap(GAME.currentLevel.currentMap))    
-    GAME.currentLevel.currentObjects.append(enemy)
+#     inventory = Container(**monsterDict['kwargs'])
+#     enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
+#                      ai=getattr(ai,monsterDict['ai'])(), 
+#                      container=inventory, deathFunction=monsterDict['deathFunction'],
+#                      fovMap=map_util.createFovMap(GAME.currentLevel.map))    
+#     GAME.currentLevel.objects.append(enemy)
 
 '''
     Creates Items by type, looking up info in a library file.
@@ -139,7 +139,7 @@ def gameAddItem(coordX, coordY, name):
         item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
                        useFunction=itemDict['useFunction'], **itemDict['kwargs'])
 
-    GAME.currentLevel.currentObjects.append(item)
+    GAME.currentLevel.objects.append(item)
 
 '''
     Only call this once!  Creates a global/singleton.
@@ -148,7 +148,7 @@ def gameAddPlayer(x,y):
     global PLAYER
 
     playerInventory = Container()
-    playerFovMap = map_util.createFovMap(GAME.currentLevel.currentMap)
+    playerFovMap = map_util.createFovMap(GAME.currentLevel.map)
     PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
                    fovMap=playerFovMap,
                    container=playerInventory)
@@ -156,7 +156,7 @@ def gameAddPlayer(x,y):
     map_util.mapCalculateFov(PLAYER)
 
 
-    GAME.currentLevel.currentObjects.append(PLAYER)
+    GAME.currentLevel.objects.append(PLAYER)
 
 
 def gameInitialize():
@@ -171,18 +171,18 @@ def gameInitialize():
     #levelDict = map_util.loadLevelFile("testLevel")
     levelDict = map_util.loadLevelFile("newMap1")
     level1 = Level(GAME, levelDict)#, activeFovMap)
-    #level1.currentMap = map_util.loadLevel(levelDict)
+    #level1.map = map_util.loadLevel(levelDict)
     #currentLevel.
     GAME.currentLevel = level1
-    #GAME.currentMap = map_util.loadLevel(levelDict)
+    #GAME.map = map_util.loadLevel(levelDict)
 
     # init hero
     gameAddPlayer(15,2)
 
     # init the enemy
-    gameAddEnemy(5,7,"jelly", uniqueName="frank")
-    gameAddEnemy(10,3,"jelly", uniqueName="george")
-    gameAddEnemy(10,4,"demon", uniqueName="Mephisto, lord of terror")
+    level1.addEnemy(15,4,"jelly", uniqueName="frank")
+    #gameAddEnemy(10,3,"jelly", uniqueName="george")
+    #gameAddEnemy(10,4,"demon", uniqueName="Mephisto, lord of terror")
 
     gameAddItem(4,4,"goggles")
     gameAddItem(8,4,"healingPotion")

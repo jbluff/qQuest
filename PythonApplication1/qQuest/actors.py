@@ -90,7 +90,7 @@ class Creature(Actor):
         pass
 
     def move(self, dx, dy):
-        tileIsWall = (GAME.currentLevel.currentMap[self.x + dx]
+        tileIsWall = (GAME.currentLevel.map[self.x + dx]
                         [self.y + dy].blockPath == True)
 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
@@ -136,12 +136,12 @@ class Item(Actor):
             else:
                 GAME.addMessage(actor.name + " picked up " + self.name)
                 actor.container.inventory.append(self)
-                GAME.currentLevel.currentObjects.remove(self)
+                GAME.currentLevel.objects.remove(self)
                 self.currentContainer = actor.container
 
     def drop(self):
         actor = self.currentContainer.owner
-        GAME.currentLevel.currentObjects.append(self) #clunky AF
+        GAME.currentLevel.objects.append(self) #clunky AF
         self.currentContainer.inventory.remove(self)
         #self.currentContainer = None
         self.x = actor.x  
@@ -243,6 +243,6 @@ def creatureToItems(creature, **kwargs):
     itemList.append(corpse)
 
     for el in itemList:
-        GAME.currentLevel.currentObjects.append(el)
+        GAME.currentLevel.objects.append(el)
 
-    GAME.currentLevel.currentObjects.remove(creature)
+    GAME.currentLevel.objects.remove(creature)
