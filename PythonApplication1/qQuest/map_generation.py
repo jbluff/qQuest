@@ -6,7 +6,7 @@ class Walker:
     def __init__(self, mapInst, roomIdx):
         self.map = mapInst
         self.roomIdx = roomIdx
-        self.room = self.map.rooms[self.roomIdx]
+        self.room = self.map.mapObjects[self.roomIdx]
 
         self.x, self.y = 0, 0
         self.vector = (1, 0) #x, y
@@ -41,8 +41,9 @@ class Walker:
         self.x += self.vector[0]
         self.y += self.vector[1]
 
-        newRoom = makeRoom(1, 1, symbol="_", roomType='corridor')
-        success = self.map.placeRoom(newRoom, x=self.x, y=self.y)
+        newRoom = makeMapObject(1, 1, symbol="_", objectType='corridor')
+        success = self.map.placeMapObject(newRoom, x=self.x, y=self.y)
+        #print('placed corridor!')
         #self.distanceTravelled += 1
 
         # branch!
@@ -50,11 +51,13 @@ class Walker:
         return success
 
     def travel(self, numPts=None):
+        #print(f'travelLen{numPts}')
         if numPts == None:
             numPts = self.tunnelLength
         for i in range(numPts):
             success = self.travelOneStep()
             if not success:
+                #print(f'failed to travel after {i} steps')
                 break
         
         return (self.x+self.vector[0], self.y+self.vector[1])
@@ -90,12 +93,12 @@ class Walker:
         self.x += vector[0]
         self.y += vector[1]
 
-class Room:
-    def __init__(self, roomArray, x, y, roomType='room'):
+class MapObject:
+    def __init__(self, roomArray, x, y, objectType='room'):
         self.roomArray = np.array(roomArray)
         self.x, self.y = x, y # upper left pt
         self.h, self.w = roomArray.shape
-        self.roomType = roomType
+        self.objectType = objectType
 
     def translate(self, vector):
         self.x += vector[0]
@@ -103,25 +106,30 @@ class Room:
 
 class Map:
     def __init__(self, initWidth=10, initHeight=10, walker=None):
-        self.mapArray = makeRoom(initWidth, initHeight, symbol="#").roomArray
-        self.rooms = [] 
+        self.mapArray = makeMapObject(initWidth, initHeight, symbol="#").roomArray
+        self.mapObjects = [] 
         self.width, self.height = initWidth, initHeight
         self.walker = walker
 
         self.turnProbability = 0.2
-        self.tunnelLengthLimits = (3, 10)
+        self.tunnelLengthLimits = (5, 10)
         self.roomSizeLimits = (3,7)
 
-    def checkRoomOverlaps(self, newRoom):
+        self.metaDict = {"level" : self.mapArray,
+                         "decoderRing" : {
+                            "_" : "floor",
+                            "#" : "wall"}}
+
+    def checkOverlaps(self, newObj):
         overlapInfo = []
-        for room in self.rooms:
+        for mo in self.mapObjects:
             xOverlap, yOverlap = False, False
-            A, B, C, D = room.x, room.x + room.w - 1, newRoom.x, newRoom.x + newRoom.w - 1
+            A, B, C, D = mo.x, mo.x + mo.w - 1, newObj.x, newObj.x + newObj.w - 1
             #print(f'{A},{B},{C},{D}')
             if (B >= D and A <= D) or (A <= C and B >= C):
                 xOverlap = True
 
-            A, B, C, D = room.y, room.y + room.h - 1, newRoom.y, newRoom.y + newRoom.h - 1
+            A, B, C, D = mo.y, mo.y + mo.h - 1, newObj.y, newObj.y + newObj.h - 1
             #print(f'{A},{B},{C},{D}')
             if (B >= D and A <= D) or (A <= C and B >= C):
                 yOverlap = True
@@ -130,9 +138,17 @@ class Map:
 
 
     def renderArray(self):
-        self.mapArray = makeRoom(self.width, self.height, symbol="#").roomArray
+        self.mapArray = makeMapObject(self.width, self.height, symbol="#").roomArray
 
-        for room in self.rooms:
+        roomIdcs = self.getObjTypeIdcs(objType='room')
+        corridorIdcs = self.getObjTypeIdcs(objType='corridor')
+
+        otherIdcs = set(range(len(self.mapObjects)))
+        otherIdcs.difference_update(set(roomIdcs+corridorIdcs))
+        #+set(corridorIdcs))
+
+        # get ordering right here!
+        for room in self.mapObjects:
             # There must be a good numpy way to do this.
             for y, row in enumerate(list(room.roomArray)):
                 for x, el in enumerate(row):
@@ -153,53 +169,56 @@ class Map:
         self.height += abs(dy)
 
         if (dx < 0):
-            for i, room in enumerate(self.rooms):
+            for i, room in enumerate(self.mapObjects):
                 room.translate((abs(dx),0))
             if self.walker:
                 self.walker.translate((-dx,0))
         if (dy < 0):
-            for i, room in enumerate(self.rooms):
+            for i, room in enumerate(self.mapObjects):
                 room.translate((0,abs(dy)))
             if self.walker:
                 self.walker.translate((0, -dy))
    
-    def isOverlappingCorridor(self, newRoom):
-        if newRoom.roomType != 'corridor':
+    def isOverlappingCorridor(self, newObj):
+        if newObj.objectType != 'corridor':
+            #print(f'wrongtype')
             return False
-        overlaps = self.checkRoomOverlaps(newRoom)
+        overlaps = self.checkOverlaps(newObj)
         completeOverlaps = [x and y for x, y in overlaps]
         if sum(completeOverlaps)>0:
+            #print('overlaps')
             return True
         return False
 
     def isOverlappingRoom(self, room):
         return False
 
-    def placeRoom(self, room, x=None, y=None):#, addRoomIndex=True):
+    def placeMapObject(self, mapObj, x=None, y=None):#, addRoomIndex=True):
         if x:
-            room.x = x
+            mapObj.x = x
         if y:
-            room.y = y
+            mapObj.y = y
 
-        success = not self.isOverlappingCorridor(room)
+        success = not self.isOverlappingCorridor(mapObj)
         if not success:
+            #print('failed in placeMapObject')
             return False
         #self.isOverlappingRoom(room)
 
-        self.rooms.append(room)
+        self.mapObjects.append(mapObj)
 
-        if room.x < 0:
-            self.expandMap((-1*abs(room.x),0))
-        if room.y < 0:
-            self.expandMap((0, -1*abs(room.y)))
-        if room.x + room.w > self.width:
-            self.expandMap((room.x+room.w-self.width,0))
-        if room.y + room.h > self.height:
-            self.expandMap((0,room.y+room.h-self.height))
+        if mapObj.x < 0:
+            self.expandMap((-1*abs(mapObj.x),0))
+        if mapObj.y < 0:
+            self.expandMap((0, -1*abs(mapObj.y)))
+        if mapObj.x + mapObj.w > self.width:
+            self.expandMap((mapObj.x+mapObj.w-self.width,0))
+        if mapObj.y + mapObj.h > self.height:
+            self.expandMap((0,mapObj.y+mapObj.h-self.height))
         return True
 
     def chooseWalkerStart(self):
-        roomIdcs = [idx for idx,room in enumerate(self.rooms) if room.roomType=="room"]
+        roomIdcs = [idx for idx,mo in enumerate(self.mapObjects) if mo.objectType=="room"]
         return random.sample(roomIdcs, 1)[0]
 
     def spawnWalker(self):
@@ -207,13 +226,13 @@ class Map:
         startIdx = self.chooseWalkerStart()
         self.walker = Walker(self, startIdx)
         self.walker.chooseRandomBorderPoint()
-        x, y = self.walker.travel(10)
+        x, y = self.walker.travel(10) #this should be a random length
         self.walker = None
 
         roomX = random.randint(*self.roomSizeLimits)
         roomY = random.randint(*self.roomSizeLimits)
-        newRoom = makeRoom(roomX, roomY, roomType='room')
-        success = self.placeRoom(newRoom, x=x, y=y)
+        newRoom = makeMapObject(roomX, roomY, objectType='room')
+        success = self.placeMapObject(newRoom, x=x, y=y)
 
     def spawnMultipleWalkers(self, n):
         for _ in range(n):
@@ -223,26 +242,58 @@ class Map:
         self.expandMap((-1,-1))
         self.expandMap((1,1))
 
-def makeRoom(width, height, symbol="_", **kwargs):
+    def getObjTypeIdcs(self, objType='room'):
+        return [ x for (x,room) in enumerate(self.mapObjects) if room.objectType == objType]
+
+    def addEntity(self, symbol, name, rmIdx=None):
+        if rmIdx is None:
+            roomIdcs = self.getObjTypeIdcs(objType='room')
+            roomIdcs = roomIdcs[1:]
+            rmIdx = random.sample(roomIdcs, 1)[0]
+            print(rmIdx)
+
+        room = self.mapObjects[rmIdx]
+        posX = room.x + random.randint(0, room.w-1)
+        posY = room.y + random.randint(0, room.h-1)
+
+        entity = makeMapObject(1,1,symbol=symbol, objectType='entity')
+        self.placeMapObject(entity, x=posX, y=posY)
+
+        self.metaDict[symbol] = name
+
+    def saveMap(self, fname):
+        self.metaDict['level'] = self.mapArray.tolist()
+        #print(self.metaDict)
+
+        filePath = os.path.join(os.path.dirname(__file__),fname+".lvl")
+        print(filePath)
+        with open(filePath, "w") as data_file:
+            json.dump(self.metaDict, data_file)
+        data_file.close()
+
+def makeMapObject(width, height, symbol="_", **kwargs):
     mapArray = [[symbol,] * width,]*height
-    return Room(np.array(mapArray, dtype=np.str), 0, 0, **kwargs)
+    return MapObject(np.array(mapArray, dtype=np.str), 0, 0, **kwargs)
+
 
 
 
 if __name__ == "__main__":
     newMap = Map(8,8)
 
-    newRoom = makeRoom(4,4)
-    newRoom.roomArray[2][2] = "p"
-    newMap.placeRoom(newRoom, x=2, y=2)
+    newRoom = makeMapObject(4,4)
+    
+    newMap.placeMapObject(newRoom, x=2, y=2)
 
     if 0:
-        newRoom = makeRoom(1,1)
-        newMap.placeRoom(newRoom, x=-2, y=8)
+        #newRoom = makeMapObject(1,1)
+        #newMap.placeMapObject(newRoom, x=-2, y=8)
+        newMap.spawnWalker()
+        print(newMap.mapObjects)
         newMap.renderArray()
         newMap.plot()
 
-    if 1:
+    if 0:
         #newMap.spawnWalker()
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
@@ -251,27 +302,37 @@ if __name__ == "__main__":
 
         mapList = newMap.mapArray.tolist()
         print(type(mapList))
-        levelDict = {"level" : mapList,
-            "decoderRing" : {
-                            "_" : "floor",
-                            "#" : "wall",
-                            "p" : "player"}}
+        
 
         filePath = os.path.join(os.path.dirname(__file__),"newMap1.lvl")
         print(filePath)
         with open(filePath, "w") as data_file:
-            json.dump(levelDict, data_file)
+            json.dump(self.metaDict, data_file)
         data_file.close()
 
 
     if 0:
-        newRoom = makeRoom(4,4)
+        newRoom = makeMapObject(4,4)
         newRoom.x = 6
         newRoom.y = -2
         print(newMap.checkRoomOverlaps(newRoom))
-        newMap.placeRoom(newRoom)#, x=6, y=5)
+        newMap.placeMapObject(newRoom)#, x=6, y=5)
         newMap.renderArray()
         newMap.plot()
         
 
+    if 1:
+        newMap.spawnMultipleWalkers(20)
+        newMap.closeMapEdges()
+        newMap.renderArray()
+        newMap.plot()
+        newMap.addEntity('p', 'player', rmIdx=0)
+        #for _ in range(10):
+        #    newMap.addEntity('e', 'enemy')
+        newMap.renderArray()
+        newMap.plot()
+
+        #newMap.mapArray = list(newMap.mapArray)
+
+        newMap.saveMap("mapWithPlayer")
     

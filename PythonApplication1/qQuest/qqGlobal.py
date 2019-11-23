@@ -1,5 +1,6 @@
 import pygame
 from qQuest import constants
+#from qQuest.map_util import structTile
 
 CLOCK = pygame.time.Clock()
 
@@ -41,5 +42,30 @@ class Game:
     def updateSurfaceSize(self):
         pygame.display.set_mode((self.mapWidth*constants.CELL_WIDTH,
                                  self.mapHeight*constants.CELL_HEIGHT))
+
+    # def loadLevel(self, levelDict):
+    #     levelArray = levelDict["level"]
+    #     decoder = levelDict["decoderRing"]
+
+    #     mapHeight = len(levelArray)
+    #     mapWidth = len(levelArray[0])
+    #     self.mapHeight = len(levelArray)
+    #     self.mapWidth = len(levelArray[0])
+
+    #     print(mapHeight)
+    #     print(mapWidth)
+    #     newMap = [[structTile(False) for y in range(0, mapHeight)] for x in range(0, mapWidth )]
+
+    #     for i in range(self.mapHeight):
+    #         for j in range(self.mapWidth):
+    #             tileType = decoder[levelArray[i][j]]
+    #             if tileType == "wall":
+    #                 newMap[j][i].blockPath = True
+
+    #     GAME.updateSurfaceSize()
+
+    #     self.currentMap = newMap
+
+
 
 GAME = Game()
