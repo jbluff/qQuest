@@ -91,9 +91,9 @@ def drawFPS():
 #TODO:  make the fovMap an actor substitutable thing
 def drawGame(fovMap=None):
     if fovMap is None:
-        fovMap = GAME.currentFovMap
+        fovMap = GAME.currentLevel.currentFovMap
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
-    drawMap(GAME.currentMap, fovMap)
+    drawMap(GAME.currentLevel.currentMap, fovMap)
 
     drawObjects(fovMap)
 
@@ -103,7 +103,7 @@ def drawGame(fovMap=None):
     pygame.display.flip()
 
 def drawObjects(fovMap):
-    for gameObj in GAME.currentObjects:
+    for gameObj in GAME.currentLevel.currentObjects:
         if gameObj.item:
             if gameObj.deleted:# or gameObj.currentContainer:
                 return

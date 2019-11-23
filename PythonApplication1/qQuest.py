@@ -6,6 +6,7 @@ import os
 from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
 from qQuest import actors, magic
 from qQuest.actors import Actor, Creature, Item, Container, Equipment
+from qQuest.levels import Level
 
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
@@ -13,6 +14,23 @@ from qQuest.graphics import ASSETS
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS
 
+
+'''
+TODO:  
+- Finish map loading, including player & monster location
+    - expand to generally load things from the libraries
+- Separate out Level() and Game() classes.  One game can have several levels
+    - CurrentEntities in a game, Entities in a level
+- Camera stuff
+- Fixed piece sooms
+- Save & load games
+- Support for non-square roomes 
+    - this is required for reasonable use of set pieces
+- Image processing on procGen rooms for rounding etc.
+- New monster AIs
+- Area effect spells
+- Directional facing of character, monsters?
+'''
 '''
 Needed external packages (on pip):  pygame, tcod
 '''
@@ -83,7 +101,7 @@ def gameMainLoop():
             
         if playerAction == "player-moved":
             map_util.mapCalculateFov(viewer)
-            for gameObj in GAME.currentObjects:
+            for gameObj in GAME.currentLevel.currentObjects:
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
@@ -106,8 +124,8 @@ def gameAddEnemy(coordX, coordY, name, uniqueName=None):
     enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
                      ai=getattr(ai,monsterDict['ai'])(), 
                      container=inventory, deathFunction=monsterDict['deathFunction'],
-                     fovMap=map_util.createFovMap(GAME.currentMap))    
-    GAME.currentObjects.append(enemy)
+                     fovMap=map_util.createFovMap(GAME.currentLevel.currentMap))    
+    GAME.currentLevel.currentObjects.append(enemy)
 
 '''
     Creates Items by type, looking up info in a library file.
@@ -121,7 +139,7 @@ def gameAddItem(coordX, coordY, name):
         item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
                        useFunction=itemDict['useFunction'], **itemDict['kwargs'])
 
-    GAME.currentObjects.append(item)
+    GAME.currentLevel.currentObjects.append(item)
 
 '''
     Only call this once!  Creates a global/singleton.
@@ -130,15 +148,15 @@ def gameAddPlayer(x,y):
     global PLAYER
 
     playerInventory = Container()
-    playerFovMap = map_util.createFovMap(GAME.currentMap)
+    playerFovMap = map_util.createFovMap(GAME.currentLevel.currentMap)
     PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
                    fovMap=playerFovMap,
                    container=playerInventory)
-    setattr(GAME, "currentFovMap", playerFovMap)
+    setattr(GAME.currentLevel, "currentFovMap", playerFovMap)
     map_util.mapCalculateFov(PLAYER)
 
 
-    GAME.currentObjects.append(PLAYER)
+    GAME.currentLevel.currentObjects.append(PLAYER)
 
 
 def gameInitialize():
@@ -152,7 +170,11 @@ def gameInitialize():
 
     #levelDict = map_util.loadLevelFile("testLevel")
     levelDict = map_util.loadLevelFile("newMap1")
-    GAME.currentMap = map_util.loadLevel(levelDict)
+    level1 = Level(GAME, levelDict)#, activeFovMap)
+    #level1.currentMap = map_util.loadLevel(levelDict)
+    #currentLevel.
+    GAME.currentLevel = level1
+    #GAME.currentMap = map_util.loadLevel(levelDict)
 
     # init hero
     gameAddPlayer(15,2)
@@ -164,7 +186,6 @@ def gameInitialize():
 
     gameAddItem(4,4,"goggles")
     gameAddItem(8,4,"healingPotion")
-
 
 
 if __name__ == "__main__":

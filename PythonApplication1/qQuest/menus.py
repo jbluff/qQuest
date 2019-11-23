@@ -10,8 +10,8 @@ class Menu:
         self.parentSurface = parentSurface
         self.menuWidth, self.menuHeight = menuSize
 
-        windowWidth = constants.CELL_WIDTH*constants.MAP_WIDTH
-        windowHeight = constants.CELL_HEIGHT*constants.MAP_HEIGHT
+        windowWidth = constants.CELL_WIDTH*GAME.mapWidth
+        windowHeight = constants.CELL_HEIGHT*GAME.mapHeight
 
         self.coordY = (windowHeight-self.menuHeight)/2
         self.coordX = (windowWidth-self.menuWidth)/2
