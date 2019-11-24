@@ -90,10 +90,14 @@ class Creature(Actor):
         pass
 
     def move(self, dx, dy):
-        tileIsWall = (GAME.currentLevel.map[self.x + dx]
-                        [self.y + dy].blockPath == True)
+        # tileIsWall = (GAME.currentLevel.map[self.x + dx]
+        #                 [self.y + dy].blockPath == True)
+        tileIsWall = (GAME.currentLevel.map[self.y + dy]
+                        [self.x + dx].blockPath == True)
 
+        # target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
+
         if target:
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)

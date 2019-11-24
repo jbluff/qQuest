@@ -286,20 +286,25 @@ if __name__ == "__main__":
     
     newMap.placeMapObject(newRoom, x=2, y=2)
 
-    if 0:
+    if 1:
         #newRoom = makeMapObject(1,1)
         #newMap.placeMapObject(newRoom, x=-2, y=8)
         newMap.spawnWalker()
-        print(newMap.mapObjects)
+        newMap.addEntity('p', 'player', rmIdx=0)
         newMap.renderArray()
         newMap.plot()
+        newMap.saveMap("testMap")
 
     if 0:
         #newMap.spawnWalker()
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
+
+        newMap.addEntity('p', 'player', rmIdx=0)
         newMap.renderArray()
         newMap.plot()
+
+
 
         mapList = newMap.mapArray.tolist()
         print(type(mapList))
@@ -322,7 +327,7 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 1:
+    if 0:
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
         newMap.renderArray()

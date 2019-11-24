@@ -1,4 +1,4 @@
-import json, os
+import json, os, itertools
 import numpy as np
 
 from qQuest import map_util
@@ -38,35 +38,38 @@ class Level:
         decoder = self.levelDict["decoderRing"]
 
         self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
-        self.map = [[structTile(False) for y in range(0, self.mapHeight)] for x in range(0, self.mapWidth )]
+        self.map = [[structTile(False) for x in range(0, self.mapWidth )] for y in range(0, self.mapHeight)]
 
-        #zip
-        for i in range(self.mapHeight):
-            for j in range(self.mapWidth):
-                tileType = decoder[self.levelArray[i][j]]
-                if tileType == "floor":
-                    continue
+        #itertools
+        #for i in range(self.mapHeight):
+        #for j in range(self.mapWidth):
+        for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
+            tileType = decoder[self.levelArray[i][j]]
+            if tileType == "floor":
+                continue
 
-                if tileType == "wall":
-                    self.map[j][i].blockPath = True
-                    continue
+            if tileType == "wall":
+                self.map[i][j].blockPath = True
+                continue
+            
+            if tileType == "player":
+                self.addPlayer(j, i)
+                continue
+
+            if tileType in ITEMS.keys():
+                self.addItem(j, i, tileType)
+                continue
+
+            raise Exception("Failed at adding item during level parsing.")
+
+        self.updateFovMaps() #needs to be done after all walls placed.
+
+    def updateFovMaps(self):
+        for obj in self.objects:
+            if obj.fovMap:
+                obj.fovMap = map_util.createFovMap(self.map)
+                obj.fovCalculate = True
                 
-                if tileType == "player":
-                    self.addPlayer(j, i)
-                    continue
-
-                print(tileType)
-                if tileType in ITEMS.keys():
-                    self.addItem(j, i, tileType)
-                    continue
-
-                raise Exception("Failed at adding item during level parsing.")
-
-                
-                
-                
-
-    
     def checkForCreature(self, x, y, exclude_object = None):
         '''
         Returns target creature instance if target location contains creature
@@ -96,7 +99,7 @@ class Level:
         enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
                         ai=getattr(ai,monsterDict['ai'])(), 
                         container=inventory, deathFunction=monsterDict['deathFunction'],
-                        fovMap=map_util.createFovMap(self.map))    
+                        fovMap=None)#map_util.createFovMap(self.map))    
         self.objects.append(enemy)
 
 

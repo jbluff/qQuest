@@ -93,11 +93,11 @@ def gameMainLoop():
     playerAction = "no-action"
 
     viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
+    map_util.mapCalculateFov(viewer)
 
     while playerAction != "QUIT":
        
         playerAction = gameHandleKeys()
-
             
         if playerAction == "player-moved":
             map_util.mapCalculateFov(viewer)
@@ -117,7 +117,8 @@ def gameInitialize():
 
     #level1 = Level("newMap1")
     #level1 = Level("mapWithPlayer")
-    level1 = Level("mapwPG")
+    #level1 = Level("mapwPG")
+    level1 = Level("testMap")
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
@@ -125,12 +126,12 @@ def gameInitialize():
     #level1.addPlayer(15,2)
 
     # init the enemy
-    level1.addEnemy(15,4,"jelly", uniqueName="frank")
+    #level1.addEnemy(15,4,"jelly", uniqueName="frank")
 
     #level1.addItem(16,2,"goggles")
     #level1.addItem(17,2,"healingPotion")
 
-    level1.addEnemy(15,10,"demon", uniqueName="Mephisto, lord of terror")
+    #level1.addEnemy(15,10,"demon", uniqueName="Mephisto, lord of terror")
 
 
 if __name__ == "__main__":
