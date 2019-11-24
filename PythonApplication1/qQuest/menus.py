@@ -1,4 +1,4 @@
-import os, datetime, pickle
+import os, datetime, pickle, dill
 import pygame
 
 from qQuest import constants
@@ -38,7 +38,7 @@ class Menu:
 
             # Do we need to redraw the main game surface?
             if self.redrawGame:
-                graphics.drawGame()
+                graphics.drawGame(fovMap=GAME.player.fovMap)
                 redrawGame = False
 
             self.redrawMenu()
@@ -232,5 +232,6 @@ class SaveLoadMenu(Menu):
         filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
         print(filePath)
         with open(filePath, 'wb') as f:
-            pickle.dump(GAME, f)
+            # pickle.dump(GAME, f)
+            dill.dump(GAME, f)
         pass

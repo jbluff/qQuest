@@ -1,16 +1,8 @@
 import pygame
-import tcod as libtcod
-import json, os, datetime, pickle
 
 from qQuest import constants, graphics, map_util, menus
 from qQuest.levels import Level
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
-#from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
-#from qQuest import actors, magic
-#from qQuest.actors import Actor, Creature, Item, Container, Equipment
-#from qQuest.graphics import ASSETS
-#from qQuest.lib.itemLib import ITEMS
-#from qQuest.lib.monsterLib import MONSTERS
 
 
 '''
@@ -123,19 +115,8 @@ def gameInitialize():
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
-# def gameSave(saveName='default'):
-#     dt = datetime.datetime.now()
-#     dtString = dt.strftime('%Y%H%M%M')
-
-#     fileName = dtString + '_' + saveName + '.sav'
-#     filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
-#     with open(filePath, 'wb') as f:
-#         pickle.dump(GAME, f)
-#     pass
-
 
 if __name__ == "__main__":
-    #gameSave()
     gameInitialize()
     gameMainLoop()
 
