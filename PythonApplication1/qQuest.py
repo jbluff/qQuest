@@ -1,27 +1,27 @@
 import pygame
 import tcod as libtcod
-import json
-import os
+import json, os, datetime, pickle
 
-from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
-from qQuest import actors, magic
-from qQuest.actors import Actor, Creature, Item, Container, Equipment
+from qQuest import constants, graphics, map_util, menus
 from qQuest.levels import Level
-
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
-from qQuest.graphics import ASSETS
-
-from qQuest.lib.itemLib import ITEMS
-from qQuest.lib.monsterLib import MONSTERS
+#from qQuest import constants, qqGlobal, graphics, map_util, menus, ai
+#from qQuest import actors, magic
+#from qQuest.actors import Actor, Creature, Item, Container, Equipment
+#from qQuest.graphics import ASSETS
+#from qQuest.lib.itemLib import ITEMS
+#from qQuest.lib.monsterLib import MONSTERS
 
 
 '''
 TODO:  
-- Camera stuff
-- Fixed piece sooms
+
+- menus w/ text input
 - Save & load games
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
+- Fixed piece rooms
+- Camera stuff
 - Image processing on procGen rooms for rounding etc.
 - New monster AIs
 - Area effect spells
@@ -75,8 +75,12 @@ def gameHandleKeys():
             if event.key == pygame.K_i:
                 menus.InventoryMenu(SURFACE_MAIN, GAME.player)
             
+            if event.key == pygame.K_s:
+                menus.SaveLoadMenu(SURFACE_MAIN)
+
             if event.key == pygame.K_q:
                 return "QUIT"
+
     return "no-action"
 
 def gameExit():
@@ -113,15 +117,25 @@ def gameInitialize():
     #level1 = Level("newMap1")
     #level1 = Level("mapWithPlayer")
     #level1 = Level("mapwPG")
-    #level1 = Level("testMap")
-    level1 = Level("mapwPIE")
+    level1 = Level("testMap")
+    #level1 = Level("mapwPIE")
 
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
+# def gameSave(saveName='default'):
+#     dt = datetime.datetime.now()
+#     dtString = dt.strftime('%Y%H%M%M')
+
+#     fileName = dtString + '_' + saveName + '.sav'
+#     filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
+#     with open(filePath, 'wb') as f:
+#         pickle.dump(GAME, f)
+#     pass
 
 
 if __name__ == "__main__":
+    #gameSave()
     gameInitialize()
     gameMainLoop()
 

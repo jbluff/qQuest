@@ -1,9 +1,11 @@
+import os, datetime, pickle
 import pygame
 
 from qQuest import constants
 from qQuest import graphics
 from qQuest.qqGlobal import CLOCK, SURFACE_MAIN, GAME
 
+#TODO:  create general text selection menu class
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -93,7 +95,7 @@ class PauseMenu(Menu):
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE]])
 
-        
+
 class InventoryMenu(Menu):
     def __init__(self, parentSurface, actor):
         self.actor = actor
@@ -167,3 +169,68 @@ class InventoryMenu(Menu):
         if self.selected < len(self.invList) - 2:
             self.selected += 1
         self.updateSelected()
+
+class SaveLoadMenu(Menu):
+    def __init__(self, parentSurface):
+        self.selected = 0
+        super().__init__(parentSurface)
+
+    def restartLoop(self):
+        self.textList = [["Save", constants.COLOR_WHITE],["Load", constants.COLOR_WHITE]]
+        self.updateSelected() #this really only needs to be called in the init
+        self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
+
+    def updateSelected(self):
+        for idx, el in enumerate(self.textList):
+            if idx == self.selected:
+                self.textList[idx][1] = constants.COLOR_RED
+            else:
+                self.textList[idx][1] = constants.COLOR_GREY
+
+    def decrementSelected(self):
+        if self.selected > 0:
+            self.selected -= 1
+        self.updateSelected()
+
+    def incrementSelected(self):
+        if self.selected < len(self.textList) - 2:
+            self.selected += 1
+        self.updateSelected()
+
+    def redrawMenuBody(self):
+        graphics.drawTextList(self.menuSurface, self.textList)
+
+    def parseEvent(self, event):
+
+        if event.type != pygame.KEYDOWN:
+            return
+                    
+        if event.key == pygame.K_q:
+            self.breakLoop = True
+            return
+
+        if event.key == pygame.K_DOWN:
+            self.incrementSelected()
+
+        elif event.key == pygame.K_UP:
+            self.decrementSelected()
+
+        elif event.key == pygame.K_RETURN:
+            if self.selected == 0:
+                self.gameSave()
+
+    
+    def finishLoop(self):
+        #self.updateSelected()
+        pass
+
+    def gameSave(self, saveName='default'):
+        dt = datetime.datetime.now()
+        dtString = dt.strftime('%Y%H%M%M')
+
+        fileName = dtString + '_' + saveName + '.sav'
+        filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
+        print(filePath)
+        with open(filePath, 'wb') as f:
+            pickle.dump(GAME, f)
+        pass

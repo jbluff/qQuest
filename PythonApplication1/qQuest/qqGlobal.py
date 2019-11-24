@@ -7,6 +7,7 @@ CLOCK = pygame.time.Clock()
 
 SURFACE_MAIN = pygame.display.set_mode((100,100))
 
+
 class Game:
     def __init__(self):
         
@@ -21,9 +22,9 @@ class Game:
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color))
 
-    def updateSurfaceSize(self):
-        pygame.display.set_mode((self.mapWidth*constants.CELL_WIDTH,
-                                 self.mapHeight*constants.CELL_HEIGHT))
+    # def updateSurfaceSize(self):
+    #     pygame.display.set_mode((self.mapWidth*constants.CELL_WIDTH,
+    #                              self.mapHeight*constants.CELL_HEIGHT))
 
     def saveGame(self):
         raise NotImplementedError
@@ -47,6 +48,12 @@ class Game:
                     break
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
-        self.updateSurfaceSize()
+        #self.updateSurfaceSize()
+        updateSurfaceSize(self)
+
 
 GAME = Game()
+
+def updateSurfaceSize(game):
+    pygame.display.set_mode((game.mapWidth*constants.CELL_WIDTH,
+                             game.mapHeight*constants.CELL_HEIGHT))
