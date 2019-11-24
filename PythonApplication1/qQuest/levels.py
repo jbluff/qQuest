@@ -1,4 +1,6 @@
 import json, os
+import numpy as np
+
 from qQuest import map_util
 from qQuest import ai
 #from qQuest import actors, magic
@@ -17,17 +19,15 @@ class structTile:
 
 class Level:
     def __init__(self, levelName):
-        #self.game = parentGame
         self.levelName = levelName
 
+        self.fovMap = None
+        self.objects = []
+        
         self.loadLevelFile()
         self.parseLevelDict()
-        #self.map = map_util.loadLevel(levelDict)
 
-        self.fovMap = None
-        #self.fovMap = []  ## TODO:  need to add ability to save FovMap when switching back to previous level
 
-        self.objects = []
 
     def loadLevelFile(self):#,levelName):
         filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")
@@ -36,24 +36,26 @@ class Level:
         levelFile.close()
 
     def parseLevelDict(self):
-        levelArray = self.levelDict["level"]
+        self.levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
 
-        #clean this up
-        mapHeight = len(levelArray)
-        mapWidth = len(levelArray[0])
-        GAME.mapHeight = len(levelArray)
-        GAME.mapWidth = len(levelArray[0])
+        self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
+        self.map = [[structTile(False) for y in range(0, self.mapHeight)] for x in range(0, self.mapWidth )]
 
-        self.map = [[structTile(False) for y in range(0, mapHeight)] for x in range(0, mapWidth )]
-
-        for i in range(GAME.mapHeight):
-            for j in range(GAME.mapWidth):
-                tileType = decoder[levelArray[i][j]]
+        #zip
+        for i in range(self.mapHeight):
+            for j in range(self.mapWidth):
+                tileType = decoder[self.levelArray[i][j]]
                 if tileType == "wall":
                     self.map[j][i].blockPath = True
+                    continue
+                
+                if tileType == "player":
+                    self.addPlayer(j, i)
+                
+                
 
-        GAME.updateSurfaceSize()
+        
 
 
     def checkForCreature(self, x, y, exclude_object = None):

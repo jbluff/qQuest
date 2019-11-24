@@ -43,11 +43,17 @@ from qQuest.qqGlobal import GAME, SURFACE_MAIN
 
 #     return newMap
 
+
 def createFovMap(mapIn):
-    ''' the index order gets hosed here.  tcod is weird.'''
-    fovMap = libtcod.map.Map(width=GAME.mapWidth, height=GAME.mapHeight)
-    for y in range(GAME.mapHeight):
-        for x in range(GAME.mapWidth):
+    ''' the index order gets hosed here.  tcod is weird.
+    i have no excuse for this'''
+
+    #mapHeight, mapWidth = np.array(mapIn).shape
+    mapWidth, mapHeight = np.array(mapIn).shape
+
+    fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
+    for y in range(mapHeight):
+        for x in range(mapWidth):
             val = mapIn[x][y].blockPath
             fovMap.transparent[y][x] = not val
     return fovMap

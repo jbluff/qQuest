@@ -32,7 +32,6 @@ class Game:
         self.currentLevel = False
         raise NotImplementedError
 
-    # is the property() construction necessary?  no. 
     @property
     def currentLevel(self):
         return self.levels[self.currentLevelIdx]
@@ -46,5 +45,9 @@ class Game:
                 if level == value:
                     self.currentLevelIdx = idx
                     break
+
+        # These should probably move into a GAME method or something.
+        self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
+        self.updateSurfaceSize()
 
 GAME = Game()

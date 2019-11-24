@@ -259,13 +259,13 @@ class Map:
         entity = makeMapObject(1,1,symbol=symbol, objectType='entity')
         self.placeMapObject(entity, x=posX, y=posY)
 
-        self.metaDict[symbol] = name
+        self.metaDict['decoderRing'][symbol] = name
 
     def saveMap(self, fname):
         self.metaDict['level'] = self.mapArray.tolist()
         #print(self.metaDict)
 
-        filePath = os.path.join(os.path.dirname(__file__),fname+".lvl")
+        filePath = os.path.join(os.path.dirname(__file__),"..","levels",fname+".lvl")
         print(filePath)
         with open(filePath, "w") as data_file:
             json.dump(self.metaDict, data_file)

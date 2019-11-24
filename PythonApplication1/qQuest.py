@@ -115,14 +115,13 @@ def gameInitialize():
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    #levelDict = map_util.loadLevelFile("newMap1") # could be grouped into Level init
-    #level1 = Level(levelDict)
-    level1 = Level("newMap1")
+    #level1 = Level("newMap1")
+    level1 = Level("mapWithPlayer")
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
     # init hero
-    level1.addPlayer(15,2)
+    #level1.addPlayer(15,2)
 
     # init the enemy
     level1.addEnemy(15,4,"jelly", uniqueName="frank")
