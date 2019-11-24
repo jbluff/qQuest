@@ -110,7 +110,7 @@ class Level:
         playerFovMap = map_util.createFovMap(self.map) 
         if GAME.player is None:
             playerInventory = Container()
-            GAME.player = Creature( (x,y), "hero", ASSETS.a_player, 
+            GAME.player = Creature( (x,y), "hero", "a_player",#ASSETS.a_player, 
                     fovMap=playerFovMap,
                     container=playerInventory)
         else:
