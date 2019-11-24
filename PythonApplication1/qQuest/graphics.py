@@ -91,12 +91,11 @@ def drawFPS():
 #TODO:  make the fovMap an actor substitutable thing
 def drawGame(fovMap=None):
     if fovMap is None:
-        fovMap = GAME.currentLevel.currentFovMap
+        fovMap = GAME.currentLevel.fovMap
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+
     drawMap(GAME.currentLevel.map, fovMap)
-
     drawObjects(fovMap)
-
     drawGameMessages()
     drawDebug()
 

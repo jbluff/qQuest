@@ -10,8 +10,8 @@ def createFovMap(mapIn):
     ''' the index order gets hosed here.  tcod is weird.
     i have no excuse for this'''
 
-    #mapHeight, mapWidth = np.array(mapIn).shape
-    mapWidth, mapHeight = np.array(mapIn).shape
+    mapHeight, mapWidth = np.array(mapIn).shape
+    #mapWidth, mapHeight = np.array(mapIn).shape
 
     fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
     for y in range(mapHeight):

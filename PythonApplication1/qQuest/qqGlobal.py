@@ -46,7 +46,6 @@ class Game:
                     self.currentLevelIdx = idx
                     break
 
-        # These should probably move into a GAME method or something.
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
         self.updateSurfaceSize()
 

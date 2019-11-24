@@ -46,7 +46,7 @@ class Level:
                 tileType = decoder[self.levelArray[i][j]]
                 if tileType == "floor":
                     continue
-                
+
                 if tileType == "wall":
                     self.map[j][i].blockPath = True
                     continue
@@ -111,7 +111,7 @@ class Level:
             GAME.player.x = x
             GAME.player.y = y
        
-        self.currentFovMap = playerFovMap
+        self.fovMap = playerFovMap
         map_util.mapCalculateFov(GAME.player)
         self.objects.append(GAME.player)
 
