@@ -1,64 +1,27 @@
-import tcod as libtcod
-#import pygame
-#import json, os, copy, random
+import itertools
 import numpy as np
 
+import tcod as libtcod
 from qQuest import constants
-#from qQuest.qqGlobal import GAME, SURFACE_MAIN
 
 def createFovMap(mapIn):
-    ''' the index order gets hosed here.  tcod is weird.
-    i have no excuse for this'''
+    ''' Takes the existing map make of structTiles, uses it's blockpath properties
+    to detemine which fovMap tiles we be considered transparent.'''
 
-    # ''' the index order gets hosed here.  tcod is weird.'''
-    # fovMap = libtcod.map.Map(width=GAME.mapWidth, height=GAME.mapHeight)
-    # for y in range(GAME.mapHeight):
-    #     for x in range(GAME.mapWidth):
-    #         val = mapIn[x][y].blockPath
-    #         fovMap.transparent[y][x] = not val
-    # return fovMap
+    mapHeight, mapWidth = np.array(mapIn).shape
 
-    #mapHeight, mapWidth = np.array(mapIn).shape
-    mapHeight = len(mapIn)
-    mapWidth = len(mapIn[0])
-    #print(f'mapIn width={mapWidth} height={mapHeight}')
-    #mapWidth, mapHeight = np.array(mapIn).shape
+    fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
+    for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
+        fovMap.transparent[y][x] = not mapIn[y][x].blockPath
 
-
-    fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)#,
-    #fovMap = libtcod.map.Map(width=mapHeight, height=mapWidth)
-    for y in range(mapHeight):
-        for x in range(mapWidth):
-            val = mapIn[y][x].blockPath
-            #fovMap.transparent[x][y] = not val
-            fovMap.transparent[y][x] = not val
-            # val = mapIn[x][y].blockPath
-            # fovMap.transparent[y][x] = not val
-
-    # printArray = np.zeros((len(mapIn),len(mapIn[0])))
-    # for i, row in enumerate(mapIn):
-    #     for j, el in enumerate(row):
-    #         #printArray[i][j] = int(fovMap.transparent[i][j])
-    #         printArray[i][j] = int(mapIn[i][j].blockPath)
-    # print("blockpath:")
-    # print(printArray)
-
-    # printArray = np.zeros((len(mapIn),len(mapIn[0])))
-    # for i, row in enumerate(mapIn):
-    #     for j, el in enumerate(row):
-    #         printArray[i][j] = int(fovMap.transparent[i][j])
-    # print("transparent:")
-    # print(printArray)
-
-
+    #fovMap.transparent = np.array([[not el.blockPath for x, el in enumerate(row)] for y, row in enumerate(mapIn)])
     return fovMap
 
 def mapCalculateFov(actor):
-    ''' the index order gets hosed here.  tcod is weird.'''
+    ''' recalculate Fov based on fovmap and position. '''
 
     if not actor.fovCalculate:
         return
-    #print(actor.fovMap.transparent)
     actor.fovMap.compute_fov(actor.x,actor.y,
                        radius = constants.FOV_RADIUS,
                        light_walls = constants.FOV_LIGHT_WALLS,

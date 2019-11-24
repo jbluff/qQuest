@@ -1,10 +1,8 @@
 import pygame
 import numpy as np
+import itertools
 from qQuest import constants
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
-
-
-#ASSETS = structAssets() #can this be in globals?
 
 class objSpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations '''
@@ -55,34 +53,23 @@ def helperTextObjects(text, textColor, bgColor=None):
 def drawMap(mapToDraw, fovMap):
     surface = SURFACE_MAIN
 
-    # printArray = np.zeros((len(mapToDraw),len(mapToDraw[0])))
-    # for i, row in enumerate(mapToDraw):
-    #     for j, el in enumerate(row):
-    #         #printArray[i][j] = bool(fovMap.transparent[i][j])
-    #         printArray[i][j] = bool(mapToDraw[i][j].blockPath)
-
-    # print(printArray)
-    #print(mapToDraw)
-    #print(f'maptodraw is {len(mapToDraw)} by {len(mapToDraw[0])}')
-    #print(f'fovMap is {len(fovMap.transparent)} by {len(fovMap.transparent[0])}')
-    #print(f'GAME is {GAME.mapHeight} by {GAME.mapWidth}')
-
+    mapHeight, mapWidth = fovMap.transparent.shape
     # these GAME references are pointless
-    for x in range(0, GAME.mapWidth):#constants.MAP_WIDTH):
-        for y in range(0, GAME.mapHeight):#constants.MAP_HEIGHT):
+    for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-            isVisible = fovMap.fov[y, x]
-            if isVisible:
-                mapToDraw[y][x].explored = True
-                if mapToDraw[y][x].blockPath == True: 
-                    surface.blit(ASSETS.s_wall, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
-                else:
-                    surface.blit(ASSETS.s_floor, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
-            elif mapToDraw[y][x].explored == True:
-                if mapToDraw[y][x].blockPath == True: 
-                    surface.blit(ASSETS.s_wall_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
-                else:
-                    surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+        isVisible = fovMap.fov[y, x]
+        if isVisible:
+            mapToDraw[y][x].explored = True
+            if mapToDraw[y][x].blockPath == True: 
+                surface.blit(ASSETS.s_wall, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+            else:
+                surface.blit(ASSETS.s_floor, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+
+        elif mapToDraw[y][x].explored == True:
+            if mapToDraw[y][x].blockPath == True: 
+                surface.blit(ASSETS.s_wall_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+            else:
+                surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
 
 def drawGameMessages():
     numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
