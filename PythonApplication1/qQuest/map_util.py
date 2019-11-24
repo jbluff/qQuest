@@ -1,48 +1,10 @@
 import tcod as libtcod
-import pygame
-import json, os, copy, random
+#import pygame
+#import json, os, copy, random
 import numpy as np
 
 from qQuest import constants
-from qQuest.qqGlobal import GAME, SURFACE_MAIN
-
-# class structTile:
-#     def __init__(self, blockPath):
-#         self.blockPath = blockPath
-#         self.explored = False
-
-# def loadLevelFile(levelName):
-#     filePath = os.path.join(os.path.dirname(__file__),"..","levels",levelName+".lvl")
-
-#     with open(filePath, "r") as levelFile:
-#         levelDict = json.load(levelFile)
-#     levelFile.close()
-
-#     return levelDict
-
-# def loadLevel(levelDict):
-#     levelArray = levelDict["level"]
-#     decoder = levelDict["decoderRing"]
-
-#     mapHeight = len(levelArray)
-#     mapWidth = len(levelArray[0])
-#     GAME.mapHeight = len(levelArray)
-#     GAME.mapWidth = len(levelArray[0])
-
-#     print(mapHeight)
-#     print(mapWidth)
-#     newMap = [[structTile(False) for y in range(0, mapHeight)] for x in range(0, mapWidth )]
-
-#     for i in range(GAME.mapHeight):
-#         for j in range(GAME.mapWidth):
-#             tileType = decoder[levelArray[i][j]]
-#             if tileType == "wall":
-#                 newMap[j][i].blockPath = True
-
-#     GAME.updateSurfaceSize()
-
-#     return newMap
-
+#from qQuest.qqGlobal import GAME, SURFACE_MAIN
 
 def createFovMap(mapIn):
     ''' the index order gets hosed here.  tcod is weird.

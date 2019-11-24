@@ -116,7 +116,8 @@ def gameInitialize():
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
     #level1 = Level("newMap1")
-    level1 = Level("mapWithPlayer")
+    #level1 = Level("mapWithPlayer")
+    level1 = Level("mapwPG")
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
@@ -126,8 +127,8 @@ def gameInitialize():
     # init the enemy
     level1.addEnemy(15,4,"jelly", uniqueName="frank")
 
-    level1.addItem(16,2,"goggles")
-    level1.addItem(17,2,"healingPotion")
+    #level1.addItem(16,2,"goggles")
+    #level1.addItem(17,2,"healingPotion")
 
     level1.addEnemy(15,10,"demon", uniqueName="Mephisto, lord of terror")
 

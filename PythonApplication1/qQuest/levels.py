@@ -23,11 +23,9 @@ class Level:
 
         self.fovMap = None
         self.objects = []
-        
+
         self.loadLevelFile()
         self.parseLevelDict()
-
-
 
     def loadLevelFile(self):#,levelName):
         filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")
@@ -46,18 +44,29 @@ class Level:
         for i in range(self.mapHeight):
             for j in range(self.mapWidth):
                 tileType = decoder[self.levelArray[i][j]]
+                if tileType == "floor":
+                    continue
+                
                 if tileType == "wall":
                     self.map[j][i].blockPath = True
                     continue
                 
                 if tileType == "player":
                     self.addPlayer(j, i)
+                    continue
+
+                print(tileType)
+                if tileType in ITEMS.keys():
+                    self.addItem(j, i, tileType)
+                    continue
+
+                raise Exception("Failed at adding item during level parsing.")
+
                 
                 
+                
 
-        
-
-
+    
     def checkForCreature(self, x, y, exclude_object = None):
         '''
         Returns target creature instance if target location contains creature

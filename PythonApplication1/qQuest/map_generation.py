@@ -256,6 +256,7 @@ class Map:
         posX = room.x + random.randint(0, room.w-1)
         posY = room.y + random.randint(0, room.h-1)
 
+        # TODO -- check whether we're going to overwrite an existing thing.
         entity = makeMapObject(1,1,symbol=symbol, objectType='entity')
         self.placeMapObject(entity, x=posX, y=posY)
 
@@ -327,6 +328,13 @@ if __name__ == "__main__":
         newMap.renderArray()
         newMap.plot()
         newMap.addEntity('p', 'player', rmIdx=0)
+        newMap.addEntity('h', 'healingPotion', rmIdx=0)
+        newMap.addEntity('h', 'healingPotion')
+        newMap.addEntity('h', 'healingPotion')
+        newMap.addEntity('h', 'healingPotion')
+        newMap.addEntity('g', 'goggles')
+        newMap.addEntity('g', 'goggles')
+        newMap.addEntity('g', 'goggles')
         #for _ in range(10):
         #    newMap.addEntity('e', 'enemy')
         newMap.renderArray()
@@ -334,5 +342,5 @@ if __name__ == "__main__":
 
         #newMap.mapArray = list(newMap.mapArray)
 
-        newMap.saveMap("mapWithPlayer")
+        newMap.saveMap("mapwPG")
     
