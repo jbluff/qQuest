@@ -19,8 +19,6 @@ from qQuest.lib.monsterLib import MONSTERS
 TODO:  
 - Finish map loading, including player & monster location
     - expand to generally load things from the libraries
-- Separate out Level() and Game() classes.  One game can have several levels
-    - CurrentEntities in a game, Entities in a level
 - Camera stuff
 - Fixed piece sooms
 - Save & load games
@@ -117,8 +115,10 @@ def gameInitialize():
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    levelDict = map_util.loadLevelFile("newMap1")
-    level1 = Level(GAME, levelDict)
+    #levelDict = map_util.loadLevelFile("newMap1") # could be grouped into Level init
+    #level1 = Level(levelDict)
+    level1 = Level("newMap1")
+    GAME.levels.append(level1)
     GAME.currentLevel = level1
 
     # init hero

@@ -1,3 +1,4 @@
+import json, os
 from qQuest import map_util
 from qQuest import ai
 #from qQuest import actors, magic
@@ -9,16 +10,51 @@ from qQuest.graphics import ASSETS
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS
 
+class structTile:
+    def __init__(self, blockPath):
+        self.blockPath = blockPath
+        self.explored = False
+
 class Level:
-    def __init__(self, parentGame, levelDict): #, fovMap):
-        self.game = parentGame
-        self.levelDict = levelDict
-        self.map = map_util.loadLevel(levelDict)
+    def __init__(self, levelName):
+        #self.game = parentGame
+        self.levelName = levelName
+
+        self.loadLevelFile()
+        self.parseLevelDict()
+        #self.map = map_util.loadLevel(levelDict)
 
         self.fovMap = None
         #self.fovMap = []  ## TODO:  need to add ability to save FovMap when switching back to previous level
 
         self.objects = []
+
+    def loadLevelFile(self):#,levelName):
+        filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")
+        with open(filePath, "r") as levelFile:
+            self.levelDict = json.load(levelFile)
+        levelFile.close()
+
+    def parseLevelDict(self):
+        levelArray = self.levelDict["level"]
+        decoder = self.levelDict["decoderRing"]
+
+        #clean this up
+        mapHeight = len(levelArray)
+        mapWidth = len(levelArray[0])
+        GAME.mapHeight = len(levelArray)
+        GAME.mapWidth = len(levelArray[0])
+
+        self.map = [[structTile(False) for y in range(0, mapHeight)] for x in range(0, mapWidth )]
+
+        for i in range(GAME.mapHeight):
+            for j in range(GAME.mapWidth):
+                tileType = decoder[levelArray[i][j]]
+                if tileType == "wall":
+                    self.map[j][i].blockPath = True
+
+        GAME.updateSurfaceSize()
+
 
     def checkForCreature(self, x, y, exclude_object = None):
         '''
@@ -52,26 +88,21 @@ class Level:
                         fovMap=map_util.createFovMap(self.map))    
         self.objects.append(enemy)
 
-    '''
-    Only call this once!  Creates a global/singleton.
-    '''
-    def addPlayer(self, x,y):
-        #global PLAYER
-        #GAME.player
 
-        playerInventory = Container()
-        playerFovMap = map_util.createFovMap(self.map)
-        #PLAYER = Creature( (x,y), "hero", ASSETS.a_player, 
-        GAME.player = Creature( (x,y), "hero", ASSETS.a_player, 
+    def addPlayer(self, x,y):
+        playerFovMap = map_util.createFovMap(self.map) 
+        if GAME.player is None:
+            playerInventory = Container()
+            GAME.player = Creature( (x,y), "hero", ASSETS.a_player, 
                     fovMap=playerFovMap,
                     container=playerInventory)
+        else:
+            GAME.player.x = x
+            GAME.player.y = y
+       
         self.currentFovMap = playerFovMap
         map_util.mapCalculateFov(GAME.player)
-        #map_util.mapCalculateFov(PLAYER)
-
-        #self.objects.append(PLAYER)
         self.objects.append(GAME.player)
-        
 
     '''
         Creates Items by type, looking up info in a library file.

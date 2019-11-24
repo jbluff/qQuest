@@ -1,24 +1,22 @@
 import pygame
+import numpy as np
+
 from qQuest import constants
-#from qQuest.map_util import structTile
 
 CLOCK = pygame.time.Clock()
 
 SURFACE_MAIN = pygame.display.set_mode((100,100))
-# SURFACE_MAIN = pygame.display.set_mode((constants.MAP_WIDTH*constants.CELL_WIDTH,
-#                                         constants.MAP_HEIGHT*constants.CELL_HEIGHT))
 
-#class EmptyClass(object):
-#    pass
-
-#ASSETS = EmptyClass()  #TODO:  Figure out how to init ASSETS here
-
-#TODO:  move this into its own file.
 class Game:
     def __init__(self):
-        self.currentLevel = []
+        
         self.currentObjects = []
         self.messageHistory = []
+
+        self.currentLevelIdx = None
+        self.levels = []
+
+        self.player = None
 
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color))
@@ -34,7 +32,19 @@ class Game:
         self.currentLevel = False
         raise NotImplementedError
 
+    # is the property() construction necessary?  no. 
+    @property
+    def currentLevel(self):
+        return self.levels[self.currentLevelIdx]
 
-
+    @currentLevel.setter
+    def currentLevel(self, value):
+        if type(value) == int:
+            self.currentLevelIdx = value
+        else:
+            for idx, level in enumerate(self.levels):
+                if level == value:
+                    self.currentLevelIdx = idx
+                    break
 
 GAME = Game()
