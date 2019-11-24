@@ -13,3 +13,6 @@ MONSTERS['demon'] = {'name' : 'demon',
                     'ai' : "aiTest",
                     'deathFunction' : actors.deathMonster,
                     'kwargs' : {}}
+
+NAMES = ['frank', 'james', 'Mephisto, lord of terror',
+         'janet', 'juliette', 'Andariel, queen suof the succubi']

@@ -1,4 +1,4 @@
-import json, os, itertools
+import json, os, itertools, random
 import numpy as np
 
 from qQuest import map_util
@@ -10,7 +10,7 @@ from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 
 from qQuest.lib.itemLib import ITEMS
-from qQuest.lib.monsterLib import MONSTERS
+from qQuest.lib.monsterLib import MONSTERS, NAMES
 
 class structTile:
     def __init__(self, blockPath):
@@ -40,9 +40,6 @@ class Level:
         self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
         self.map = [[structTile(False) for x in range(0, self.mapWidth )] for y in range(0, self.mapHeight)]
 
-        #itertools
-        #for i in range(self.mapHeight):
-        #for j in range(self.mapWidth):
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
             tileType = decoder[self.levelArray[i][j]]
             if tileType == "floor":
@@ -60,13 +57,18 @@ class Level:
                 self.addItem(j, i, tileType)
                 continue
 
+            if tileType in MONSTERS.keys():
+                self.addEnemy(j, i, tileType)
+                continue
+
+
             raise Exception("Failed at adding item during level parsing.")
 
         self.updateFovMaps() #needs to be done after all walls placed.
 
     def updateFovMaps(self):
         for obj in self.objects:
-            if obj.fovMap:
+            if getattr(obj,"fovMap",False):
                 obj.fovMap = map_util.createFovMap(self.map)
                 obj.fovCalculate = True
                 
@@ -92,8 +94,9 @@ class Level:
     def addEnemy(self, coordX, coordY, name, uniqueName=None):
         monsterDict = MONSTERS[name]
         name = monsterDict['name']
-        if uniqueName:
-            name = uniqueName + " the " + name
+        if uniqueName is None:
+            uniqueName = random.choice(NAMES)
+        name = uniqueName + " the " + name
 
         inventory = Container(**monsterDict['kwargs'])
         enemy = Creature( (coordX, coordY), name, monsterDict['animation'],

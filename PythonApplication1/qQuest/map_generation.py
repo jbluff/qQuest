@@ -286,7 +286,7 @@ if __name__ == "__main__":
     
     newMap.placeMapObject(newRoom, x=2, y=2)
 
-    if 1:
+    if 0:
         #newRoom = makeMapObject(1,1)
         #newMap.placeMapObject(newRoom, x=-2, y=8)
         newMap.spawnWalker()
@@ -327,19 +327,21 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 0:
+    if 1:
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
         newMap.renderArray()
         newMap.plot()
         newMap.addEntity('p', 'player', rmIdx=0)
         newMap.addEntity('h', 'healingPotion', rmIdx=0)
-        newMap.addEntity('h', 'healingPotion')
-        newMap.addEntity('h', 'healingPotion')
-        newMap.addEntity('h', 'healingPotion')
-        newMap.addEntity('g', 'goggles')
-        newMap.addEntity('g', 'goggles')
-        newMap.addEntity('g', 'goggles')
+        for _ in range(3):
+            newMap.addEntity('h', 'healingPotion')
+
+            newMap.addEntity('g', 'goggles')
+
+            newMap.addEntity('j', 'jelly')
+
+            newMap.addEntity('d', 'demon')
         #for _ in range(10):
         #    newMap.addEntity('e', 'enemy')
         newMap.renderArray()
@@ -347,5 +349,5 @@ if __name__ == "__main__":
 
         #newMap.mapArray = list(newMap.mapArray)
 
-        newMap.saveMap("mapwPG")
+        newMap.saveMap("mapwPIE")
     

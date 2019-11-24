@@ -17,8 +17,6 @@ from qQuest.lib.monsterLib import MONSTERS
 
 '''
 TODO:  
-- Finish map loading, including player & monster location
-    - expand to generally load things from the libraries
 - Camera stuff
 - Fixed piece sooms
 - Save & load games
@@ -28,6 +26,7 @@ TODO:
 - New monster AIs
 - Area effect spells
 - Directional facing of character, monsters?
+- Refine map loading (set pieces, named npcs, items.)
 '''
 '''
 Needed external packages (on pip):  pygame, tcod
@@ -44,22 +43,18 @@ def gameHandleKeys():
             return "QUIT"
 
         if event.type == pygame.KEYDOWN:
-            # arrow key up -> move player up
             if event.key == pygame.K_UP:
                 GAME.player.move(0, -1)
                 return "player-moved"
 
-            # arrow key down -> move player down
             if event.key == pygame.K_DOWN:
                 GAME.player.move(0, 1)
                 return "player-moved"
 
-            # arrow key left -> move player left
             if event.key == pygame.K_LEFT:
                 GAME.player.move(-1, 0)
                 return "player-moved"
 
-            # arrow key right -> move player right
             if event.key == pygame.K_RIGHT:
                 GAME.player.move(1, 0)
                 return "player-moved"
@@ -118,20 +113,12 @@ def gameInitialize():
     #level1 = Level("newMap1")
     #level1 = Level("mapWithPlayer")
     #level1 = Level("mapwPG")
-    level1 = Level("testMap")
+    #level1 = Level("testMap")
+    level1 = Level("mapwPIE")
+
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
-    # init hero
-    #level1.addPlayer(15,2)
-
-    # init the enemy
-    #level1.addEnemy(15,4,"jelly", uniqueName="frank")
-
-    #level1.addItem(16,2,"goggles")
-    #level1.addItem(17,2,"healingPotion")
-
-    #level1.addEnemy(15,10,"demon", uniqueName="Mephisto, lord of terror")
 
 
 if __name__ == "__main__":
