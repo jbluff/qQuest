@@ -73,7 +73,6 @@ class Menu:
     def redrawMenuBody(self):
         raise NotImplementedError("redrawMenuBody must be implemented by child class")
 
-
 # This is a rather pointless thing, at present.
 class PauseMenu(Menu):
     def __init__(self, parentSurface):
@@ -95,88 +94,90 @@ class PauseMenu(Menu):
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE]])
 
+# class InventoryMenu(Menu):
+#     def __init__(self, parentSurface, actor):
+#         self.actor = actor
+#         self.selected = 0
+#         super().__init__(parentSurface)
 
-class InventoryMenu(Menu):
-    def __init__(self, parentSurface, actor):
-        self.actor = actor
-        self.selected = 0
-        super().__init__(parentSurface)
+#     def restartLoop(self):
+#         self.invList = [["Inventory:", constants.COLOR_WHITE],]
+#         self.invList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
+#         self.updateSelected() #this really only needs to be called in the init
 
-    def restartLoop(self):
-        self.invList = [["Inventory:", constants.COLOR_WHITE],]
-        self.invList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
-        self.updateSelected() #this really only needs to be called in the init
+#         self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
 
-        self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
+#     def finishLoop(self):
+#         #self.updateSelected()
+#         pass
 
-    def finishLoop(self):
-        #self.updateSelected()
-        pass
+#     def parseEvent(self, event):
 
-    def parseEvent(self, event):
-
-        if event.type != pygame.KEYDOWN:
-            return
+#         if event.type != pygame.KEYDOWN:
+#             return
                     
-        if event.key == pygame.K_i or event.key == pygame.K_q:
-            self.breakLoop = True
-            return
+#         if event.key == pygame.K_i or event.key == pygame.K_q:
+#             self.breakLoop = True
+#             return
 
-        if len(self.invList) == 1: #empty inventory
-            return 
+#         if len(self.invList) == 1: #empty inventory
+#             return 
 
-        if event.key == pygame.K_DOWN:
-            self.incrementSelected()
+#         if event.key == pygame.K_DOWN:
+#             self.incrementSelected()
 
-        elif event.key == pygame.K_UP:
-            self.decrementSelected()
+#         elif event.key == pygame.K_UP:
+#             self.decrementSelected()
             
-        elif event.key == pygame.K_d:
-            self.actor.container.inventory[self.selected].drop() #fix this nonsense.
-            del self.invList[self.selected+1]
-            self.decrementSelected()
-            self.redrawGame = True
+#         elif event.key == pygame.K_d:
+#             self.actor.container.inventory[self.selected].drop() #fix this nonsense.
+#             del self.invList[self.selected+1]
+#             self.decrementSelected()
+#             self.redrawGame = True
 
-        elif event.key == pygame.K_u:
-            invObj = self.actor.container.inventory[self.selected] # selected item's Actor.
+#         elif event.key == pygame.K_u:
+#             invObj = self.actor.container.inventory[self.selected] # selected item's Actor.
             
-            success = invObj.use(self.actor)
+#             success = invObj.use(self.actor)
 
-            if success:
-                GAME.addMessage(self.actor.name + " uses " + invObj.name )
-                if invObj.deleted:
-                    del self.invList[self.selected+1] #delete from menu list -- doesn't really work.
-                    self.decrementSelected()
-            self.redrawGame = True
+#             if success:
+#                 GAME.addMessage(self.actor.name + " uses " + invObj.name )
+#                 if invObj.deleted:
+#                     del self.invList[self.selected+1] #delete from menu list -- doesn't really work.
+#                     self.decrementSelected()
+#             self.redrawGame = True
 
-    def redrawMenuBody(self):
-        graphics.drawTextList(self.menuSurface, self.invList)
+#     def redrawMenuBody(self):
+#         graphics.drawTextList(self.menuSurface, self.invList)
 
-    def updateSelected(self):
-        numItems = len(self.invList)-1
-        for idx in range(1,numItems+1):
-            if idx == self.selected+1:
-                self.invList[idx][1] = constants.COLOR_RED
-            else:
-                self.invList[idx][1] = constants.COLOR_GREY
+#     def updateSelected(self):
+#         numItems = len(self.invList)-1
+#         for idx in range(1,numItems+1):
+#             if idx == self.selected+1:
+#                 self.invList[idx][1] = constants.COLOR_RED
+#             else:
+#                 self.invList[idx][1] = constants.COLOR_GREY
 
-    def decrementSelected(self):
-        if self.selected > 0:
-            self.selected -= 1
-        self.updateSelected()
+#     def decrementSelected(self):
+#         if self.selected > 0:
+#             self.selected -= 1
+#         self.updateSelected()
 
-    def incrementSelected(self):
-        if self.selected < len(self.invList) - 2:
-            self.selected += 1
-        self.updateSelected()
+#     def incrementSelected(self):
+#         if self.selected < len(self.invList) - 2:
+#             self.selected += 1
+#         self.updateSelected()
 
-class SaveLoadMenu(Menu):
+class TextListMenu(Menu):
     def __init__(self, parentSurface):
         self.selected = 0
         super().__init__(parentSurface)
 
+    def initTextList(self):
+        raise NotImplemented("initTextList must be overwritten by children")
+
     def restartLoop(self):
-        self.textList = [["Save", constants.COLOR_WHITE],["Load", constants.COLOR_WHITE]]
+        self.initTextList()
         self.updateSelected() #this really only needs to be called in the init
         self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
 
@@ -193,15 +194,17 @@ class SaveLoadMenu(Menu):
         self.updateSelected()
 
     def incrementSelected(self):
-        if self.selected < len(self.textList) - 2:
+        if self.selected < len(self.textList) - 1:
             self.selected += 1
         self.updateSelected()
 
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, self.textList)
 
-    def parseEvent(self, event):
+    def finishLoop(self):
+        pass
 
+    def parseEvent(self, event):
         if event.type != pygame.KEYDOWN:
             return
                     
@@ -215,14 +218,19 @@ class SaveLoadMenu(Menu):
         elif event.key == pygame.K_UP:
             self.decrementSelected()
 
-        elif event.key == pygame.K_RETURN:
+        
+
+class SaveLoadMenu(TextListMenu):
+
+    def initTextList(self):
+        self.textList = [["Save", constants.COLOR_WHITE],["Load", constants.COLOR_WHITE]]
+ 
+    def parseEvent(self, event):
+        super().parseEvent(event)
+
+        if event.key == pygame.K_RETURN:
             if self.selected == 0:
                 self.gameSave()
-
-    
-    def finishLoop(self):
-        #self.updateSelected()
-        pass
 
     def gameSave(self, saveName='default'):
         dt = datetime.datetime.now()
@@ -232,6 +240,41 @@ class SaveLoadMenu(Menu):
         filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
         print(filePath)
         with open(filePath, 'wb') as f:
-            # pickle.dump(GAME, f)
             dill.dump(GAME, f)
         pass
+
+class InventoryMenu(TextListMenu):
+    def __init__(self, parentSurface, actor):
+        self.actor = actor
+        self.selected = 0
+        super().__init__(parentSurface)
+
+    def initTextList(self):
+        self.textList = [["Inventory:", constants.COLOR_WHITE],]
+        self.textList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
+
+    def parseEvent(self, event):
+
+        super().parseEvent(event)
+
+        if len(self.textList) == 1: #empty inventory
+            return 
+
+        elif event.key == pygame.K_d:
+            self.actor.container.inventory[self.selected].drop() #fix this nonsense.
+            del self.textList[self.selected+1]
+            self.decrementSelected()
+            self.redrawGame = True
+
+        elif event.key == pygame.K_u:
+            invObj = self.actor.container.inventory[self.selected] # selected item's Actor.
+            
+            success = invObj.use(self.actor)
+            if success:
+                GAME.addMessage(self.actor.name + " uses " + invObj.name )
+                if invObj.deleted:
+                    del self.textList[self.selected+1] #delete from menu list -- doesn't really work.
+                    self.decrementSelected()
+            self.redrawGame = True
+
+
