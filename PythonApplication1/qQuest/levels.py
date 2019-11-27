@@ -8,7 +8,7 @@ import numpy as np
 #from qQuest import map_util
 from qQuest import ai
 
-from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal
+from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal, PlayerClass, Viewer
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 
@@ -71,7 +71,8 @@ class Level:
 
     def reinitializeFovMaps(self):
         for obj in self.objects:
-            if getattr(obj,"fovMap",False):
+            #if getattr(obj,"fovMap",False):
+            if isinstance(obj, (Viewer, PlayerClass)):
                 obj.initializeFovMap(self.map)
                 
     def checkForCreature(self, x, y, exclude_object = None):
@@ -104,14 +105,16 @@ class Level:
         enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
                         ai=getattr(ai,monsterDict['ai'])(), 
                         container=inventory, deathFunction=monsterDict['deathFunction'],
-                        fovMap=None, level=self)    
+                        level=self)    
         self.objects.append(enemy)
 
     def addPlayer(self, x,y):
         if GAME.player is None:
             playerInventory = Container()
-            GAME.player = Creature( (x,y), "hero", "a_player",
-                    fovMap=True, container=playerInventory, level=self)
+            GAME.player = PlayerClass((x,y), "hero", "a_player",
+                                      container=playerInventory, level=self)
+            # GAME.player = Creature( (x,y), "hero", "a_player",
+            #         fovMap=True, container=playerInventory, level=self)
         else:
             GAME.player.x = x
             GAME.player.y = y

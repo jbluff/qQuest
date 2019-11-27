@@ -31,8 +31,8 @@ Basic object structure:
 '''
 TODO:  
 
-- menus w/ text input
-- Save & load games
+- Viewer() class -- and Player(Creature,Viewer) class?
+- Portals and switching levels.
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
 - Fixed piece rooms
@@ -43,8 +43,9 @@ TODO:
 - Directional facing of character, monsters?
 - Refine map loading (set pieces, named npcs, items.)
 '''
+
 '''
-Needed external packages (on pip):  pygame, tcod, dill
+Needed external packages (on pip):  pygame, tcod, dill, numpy
 '''
 
 def handleMainLoopEvents():

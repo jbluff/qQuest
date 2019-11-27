@@ -74,15 +74,13 @@ class Actor():
 Creatures are actor attributes which represent actors that can move, fight, die
 '''
 class Creature(Actor):
-    def __init__(self, *args, hp=10, deathFunction=None, fovMap=None, **kwargs):
+    def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
         self.creature = True
 
-        self.fovMap = fovMap
-        self.doRecaculateFov = not (fovMap is None)
 
     def takeDamage(self, damage):
         self.hp -= damage
@@ -98,6 +96,7 @@ class Creature(Actor):
         pass
 
     def move(self, dx, dy):
+        print(f'creature moving')
         tileIsWall = GAME.currentLevel.map[self.y + dy][self.x + dx].blockPath 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
 
@@ -109,13 +108,20 @@ class Creature(Actor):
             self.x += dx
             self.y += dy
 
-        if self.fovMap is not None:
-            self.doRecaculateFov = True
-
     def pickupObjects(self):
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
         [obj.pickup(self) for obj in objs if obj.item]
 
+
+  
+class Viewer(Actor):
+    """
+    As an Actor instance, it has reference to a level and a position
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.doRecaculateFov = True
+        
     def initializeFovMap(self, mapIn):
         mapHeight, mapWidth = np.array(mapIn).shape
 
@@ -135,8 +141,14 @@ class Creature(Actor):
 
         self.doRecaculateFov = False
 
-  
 
+class PlayerClass(Creature, Viewer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def move(self, dx, dy):
+        super().move(dx, dy)
+        self.doRecaculateFov = True
 
 '''
 Items are an actor attribute.
