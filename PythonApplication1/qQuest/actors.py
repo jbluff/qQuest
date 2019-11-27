@@ -7,14 +7,10 @@ All drawn things which are not floor ties.  May reflect player, NPCs, items
 '''
 
 class Actor():
-
-    # def __init__(self, pos, name, animation, ai=None, container=None, item=None, **kwargs):
     def __init__(self, pos, name, animationName, ai=None, container=None, item=None, **kwargs):
-        #fovMap shouldn't be here.
 
         self.x, self.y = pos
         self.name = name
-        # self.animation = animation
         self.animationName = animationName
         self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
 
@@ -50,13 +46,9 @@ class Actor():
         if not isVisible:
               return
 
-        #animation = getattr(ASSETS,self.animationName)
         if len(self.animation) == 1:
             SURFACE_MAIN.blit(self.animation[0], (self.x * constants.CELL_WIDTH,
                                                   self.y * constants.CELL_HEIGHT))
-        # if len(animation) == 1:
-        #     SURFACE_MAIN.blit(animation[0], (self.x * constants.CELL_WIDTH,
-        #                                      self.y * constants.CELL_HEIGHT))
         else:
             if CLOCK.get_fps() > 0.0:
                 '''update the animation's timer.  Note draw() is called once per frame.'''
@@ -67,13 +59,8 @@ class Actor():
                 self.spriteImageNum += 1
                     
                 #TODO, use remainder division
-                # if self.spriteImageNum >= len(animation):
                 if self.spriteImageNum >= len(self.animation):
-                
                     self.spriteImageNum = 0
-
-            # SURFACE_MAIN.blit(animation[self.spriteImageNum], (self.x * constants.CELL_WIDTH,
-            #                                                    self.y * constants.CELL_HEIGHT))
 
             SURFACE_MAIN.blit(self.animation[self.spriteImageNum], (self.x * constants.CELL_WIDTH,
                                                                     self.y * constants.CELL_HEIGHT))
@@ -106,12 +93,8 @@ class Creature(Actor):
         pass
 
     def move(self, dx, dy):
-        # tileIsWall = (GAME.currentLevel.map[self.x + dx]
-        #                 [self.y + dy].blockPath == True)
         tileIsWall = (GAME.currentLevel.map[self.y + dy]
                         [self.x + dx].blockPath == True)
-
-        # target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
 
         if target:
@@ -124,6 +107,13 @@ class Creature(Actor):
 
         if not (self.fovMap is None):
             self.fovCalculate = True
+
+    def pickupObjects(self):
+        objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
+        for obj in objs:
+            if obj.item:
+                obj.pickup(self)
+
 
 
 '''

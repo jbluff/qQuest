@@ -109,7 +109,6 @@ class Level:
                         fovMap=None)#map_util.createFovMap(self.map))    
         self.objects.append(enemy)
 
-
     def addPlayer(self, x,y):
         playerFovMap = map_util.createFovMap(self.map) 
         if GAME.player is None:
@@ -145,3 +144,7 @@ class Level:
 
         self.objects.append(item)
 
+    def takeNPCturns(self):
+        for gameObj in self.objects:
+            if gameObj.ai:
+                gameObj.ai.takeTurn()

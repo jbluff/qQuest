@@ -1,7 +1,7 @@
 import pygame
 import numpy as np
 
-from qQuest import constants
+from qQuest import constants, map_util
 
 CLOCK = pygame.time.Clock()
 
@@ -22,13 +22,6 @@ class Game:
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color))
 
-    # def updateSurfaceSize(self):
-    #     pygame.display.set_mode((self.mapWidth*constants.CELL_WIDTH,
-    #                              self.mapHeight*constants.CELL_HEIGHT))
-
-    def saveGame(self):
-        raise NotImplementedError
-
     def switchLevel(self):
         self.currentLevel = False
         raise NotImplementedError
@@ -48,8 +41,11 @@ class Game:
                     break
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
-        #self.updateSurfaceSize()
         updateSurfaceSize(self)
+
+    def recalculateFov(self):
+        map_util.mapCalculateFov(self.viewer)
+
 
 
 GAME = Game()

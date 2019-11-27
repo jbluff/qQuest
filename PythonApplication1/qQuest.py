@@ -1,6 +1,6 @@
 import pygame
 
-from qQuest import constants, graphics, map_util, menus
+from qQuest import constants, graphics,  menus 
 from qQuest.levels import Level
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 
@@ -24,54 +24,47 @@ TODO:
 Needed external packages (on pip):  pygame, tcod
 '''
 
-def gameHandleKeys():
+def handleMainLoopEvents():
 
-    # get player input
     eventsList = pygame.event.get()
 
-    # process input
     for event in eventsList:
         if event.type == pygame.QUIT:
             return "QUIT"
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                GAME.player.move(0, -1)
-                return "player-moved"
+        if event.type != pygame.KEYDOWN:
+            continue
 
-            if event.key == pygame.K_DOWN:
-                GAME.player.move(0, 1)
-                return "player-moved"
+        if event.key == pygame.K_UP:
+            GAME.player.move(0, -1)
+            return "player-moved"
 
-            if event.key == pygame.K_LEFT:
-                GAME.player.move(-1, 0)
-                return "player-moved"
+        if event.key == pygame.K_DOWN:
+            GAME.player.move(0, 1)
+            return "player-moved"
 
-            if event.key == pygame.K_RIGHT:
-                GAME.player.move(1, 0)
-                return "player-moved"
+        if event.key == pygame.K_LEFT:
+            GAME.player.move(-1, 0)
+            return "player-moved"
 
-            # pickup objects
-            # TODO:  break this into a subroutine
-            if event.key == pygame.K_g:
-                objs = GAME.currentLevel.objectsAtCoords(GAME.player.x, GAME.player.y)
-                for obj in objs:
-                    if obj.item:
-                        obj.pickup(GAME.player)
+        if event.key == pygame.K_RIGHT:
+            GAME.player.move(1, 0)
+            return "player-moved"
 
-            # pause menu
-            if event.key == pygame.K_p:
-                menus.PauseMenu(SURFACE_MAIN)
+        if event.key == pygame.K_g:
+            GAME.player.pickupObjects()
 
-            # inventory menu
-            if event.key == pygame.K_i:
-                menus.InventoryMenu(SURFACE_MAIN, GAME.player)
-            
-            if event.key == pygame.K_s:
-                menus.SaveLoadMenu(SURFACE_MAIN)
+        if event.key == pygame.K_p:
+            menus.PauseMenu(SURFACE_MAIN)
 
-            if event.key == pygame.K_q:
-                return "QUIT"
+        if event.key == pygame.K_i:
+            menus.InventoryMenu(SURFACE_MAIN, GAME.player)
+        
+        if event.key == pygame.K_s:
+            menus.SaveLoadMenu(SURFACE_MAIN)
+
+        if event.key == pygame.K_q:
+            return "QUIT"
 
     return "no-action"
 
@@ -80,21 +73,18 @@ def gameExit():
     quit()
 
 def gameMainLoop():
-
     playerAction = "no-action"
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    map_util.mapCalculateFov(GAME.viewer)
+    GAME.recalculateFov()
 
     while playerAction != "QUIT":
        
-        playerAction = gameHandleKeys()
+        playerAction = handleMainLoopEvents()
             
         if playerAction == "player-moved":
-            map_util.mapCalculateFov(GAME.viewer)
-            for gameObj in GAME.currentLevel.objects:
-                if gameObj.ai:
-                    gameObj.ai.takeTurn()
+            GAME.recalculateFov()
+            GAME.currentLevel.takeNPCturns()
 
         graphics.drawGame(GAME.viewer.fovMap)
         CLOCK.tick(constants.GAME_FPS)
