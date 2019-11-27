@@ -2,7 +2,7 @@ import pygame
 
 from qQuest import constants, graphics,  menus 
 from qQuest.levels import Level
-from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 
 
 '''
@@ -21,7 +21,7 @@ TODO:
 - Refine map loading (set pieces, named npcs, items.)
 '''
 '''
-Needed external packages (on pip):  pygame, tcod
+Needed external packages (on pip):  pygame, tcod, dill
 '''
 
 def handleMainLoopEvents():
@@ -76,14 +76,14 @@ def gameMainLoop():
     playerAction = "no-action"
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    GAME.recalculateFov()
+    GAME.viewer.recalculateFov()
 
     while playerAction != "QUIT":
        
         playerAction = handleMainLoopEvents()
             
         if playerAction == "player-moved":
-            GAME.recalculateFov()
+            GAME.viewer.recalculateFov()
             GAME.currentLevel.takeNPCturns()
 
         graphics.drawGame(GAME.viewer.fovMap)

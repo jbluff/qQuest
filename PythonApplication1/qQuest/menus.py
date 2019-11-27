@@ -6,7 +6,7 @@ import pygame
 
 from qQuest import constants
 from qQuest import graphics
-from qQuest.qqGlobal import CLOCK, GAME 
+from qQuest.game import CLOCK, GAME 
 
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
 SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")

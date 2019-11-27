@@ -1,6 +1,7 @@
 
-from qQuest.qqGlobal import GAME, SURFACE_MAIN
 from qQuest import graphics
+from qQuest.game import GAME, SURFACE_MAIN
+
 
 '''
 Target is a Creature

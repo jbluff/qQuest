@@ -4,7 +4,7 @@ import pygame
 import numpy as np
 
 from qQuest import constants
-from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 
 class objSpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations '''
@@ -56,22 +56,28 @@ def drawMap(mapToDraw, fovMap):
     surface = SURFACE_MAIN
 
     mapHeight, mapWidth = fovMap.transparent.shape
-    # these GAME references are pointless
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-        isVisible = fovMap.fov[y, x]
-        if isVisible:
-            mapToDraw[y][x].explored = True
-            if mapToDraw[y][x].blockPath == True: 
-                surface.blit(ASSETS.s_wall, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
-            else:
-                surface.blit(ASSETS.s_floor, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+        tileIsVisible = fovMap.fov[y][x]
+        tileIsWall = mapToDraw[y][x].blockPath
+        tileIsAlreadyExplored = mapToDraw[y][x].explored
 
-        elif mapToDraw[y][x].explored == True:
-            if mapToDraw[y][x].blockPath == True: 
-                surface.blit(ASSETS.s_wall_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+        tileGraphic = None
+        if tileIsVisible:
+            mapToDraw[y][x].explored = True
+            if tileIsWall: 
+                tileGraphic = ASSETS.s_wall
             else:
-                surface.blit(ASSETS.s_floor_dark, (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT))
+                tileGraphic = ASSETS.s_floor
+        elif tileIsAlreadyExplored:
+            if tileIsWall: 
+                tileGraphic = ASSETS.s_wall_dark
+            else:
+                tileGraphic = ASSETS.s_floor_dark
+        
+        if tileGraphic is not None:
+            tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
+            surface.blit(tileGraphic, tilePosition)
 
 def drawGameMessages():
     numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)

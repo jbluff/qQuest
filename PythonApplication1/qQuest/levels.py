@@ -9,7 +9,7 @@ from qQuest import map_util
 from qQuest import ai
 
 from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal
-from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 
 from qQuest.lib.itemLib import ITEMS

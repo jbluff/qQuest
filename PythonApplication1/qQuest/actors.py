@@ -1,5 +1,6 @@
 from qQuest import constants
-from qQuest.qqGlobal import GAME, SURFACE_MAIN, CLOCK
+from qQuest import map_util
+from qQuest.game import GAME, SURFACE_MAIN, CLOCK
 from qQuest.graphics import ASSETS
 
 '''
@@ -113,7 +114,9 @@ class Creature(Actor):
         for obj in objs:
             if obj.item:
                 obj.pickup(self)
-
+                
+    def recalculateFov(self):
+        map_util.mapCalculateFov(self)
 
 
 '''
