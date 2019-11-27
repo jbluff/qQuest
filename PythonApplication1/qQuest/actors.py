@@ -1,5 +1,9 @@
+import itertools
+
+import numpy as np
+import tcod as libtcod
+
 from qQuest import constants
-#from qQuest import map_util
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
 from qQuest.graphics import ASSETS
 
@@ -27,7 +31,6 @@ class Actor():
         if self.container:
             self.container.owner = self
 
-
         self.creature = None #overwritten by Creature.__init__
         self.item = None #overwritten by Item.__init__
         self.deleted = False
@@ -37,19 +40,18 @@ class Actor():
         return getattr(ASSETS,self.animationName)
 
     def draw(self, fovMap):
-        
         '''
         This generality sets up some flexibility, e.g. if we want to see from an
-        NPCs point of view, later
+        NPCs point of view, later.
         '''
 
         isVisible = fovMap.fov[self.y, self.x]
         if not isVisible:
-              return
+            return 
 
         if len(self.animation) == 1:
-            SURFACE_MAIN.blit(self.animation[0], (self.x * constants.CELL_WIDTH,
-                                                  self.y * constants.CELL_HEIGHT))
+            currentSprite = self.animation[0]
+ 
         else:
             if CLOCK.get_fps() > 0.0:
                 '''update the animation's timer.  Note draw() is called once per frame.'''
@@ -62,9 +64,10 @@ class Actor():
                 #TODO, use remainder division
                 if self.spriteImageNum >= len(self.animation):
                     self.spriteImageNum = 0
+            currentSprite = self.animation[self.spriteImageNum]
 
-            SURFACE_MAIN.blit(self.animation[self.spriteImageNum], (self.x * constants.CELL_WIDTH,
-                                                                    self.y * constants.CELL_HEIGHT))
+        shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT)
+        SURFACE_MAIN.blit(currentSprite, shapeTuple)
 
 '''
 Creatures are actor attributes which represent actors that can move, fight, die
@@ -94,29 +97,34 @@ class Creature(Actor):
         pass
 
     def move(self, dx, dy):
-        tileIsWall = (GAME.currentLevel.map[self.y + dy]
-                        [self.x + dx].blockPath == True)
+        tileIsWall = GAME.currentLevel.map[self.y + dy][self.x + dx].blockPath 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
 
         if target:
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
 
-        if not tileIsWall and target is None:
+        elif not tileIsWall:
             self.x += dx
             self.y += dy
 
-        if not (self.fovMap is None):
+        if self.fovMap is not None:
             self.doRecaculateFov = True
 
     def pickupObjects(self):
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
-        for obj in objs:
-            if obj.item:
-                obj.pickup(self)
+        [obj.pickup(self) for obj in objs if obj.item]
+
+    def initializeFovMap(self, mapIn):
+        mapHeight, mapWidth = np.array(mapIn).shape
+
+        self.fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
+        for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
+            self.fovMap.transparent[y][x] = not mapIn[y][x].blockPath
+
                 
-    def recalculateFov(self):
-        if not self.doRecaculateFov:
+    def recalculateFov(self, force=False):
+        if not self.doRecaculateFov and not force:
             return None
 
         self.fovMap.compute_fov(self.x,self.y,
