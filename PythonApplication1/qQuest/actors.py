@@ -12,7 +12,7 @@ All drawn things which are not floor ties.  May reflect player, NPCs, items
 '''
 
 class Actor():
-    def __init__(self, pos, name, animationName, ai=None, container=None, item=None, **kwargs):
+    def __init__(self, pos, name, animationName, ai=None, container=None, item=None, level=None, **kwargs):
 
         self.x, self.y = pos
         self.name = name
@@ -34,6 +34,7 @@ class Actor():
         self.creature = None #overwritten by Creature.__init__
         self.item = None #overwritten by Item.__init__
         self.deleted = False
+        self.level = level
 
     @property
     def animation(self):

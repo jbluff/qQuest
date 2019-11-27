@@ -104,14 +104,14 @@ class Level:
         enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
                         ai=getattr(ai,monsterDict['ai'])(), 
                         container=inventory, deathFunction=monsterDict['deathFunction'],
-                        fovMap=None)    
+                        fovMap=None, level=self)    
         self.objects.append(enemy)
 
     def addPlayer(self, x,y):
         if GAME.player is None:
             playerInventory = Container()
             GAME.player = Creature( (x,y), "hero", "a_player",
-                    fovMap=True, container=playerInventory)
+                    fovMap=True, container=playerInventory, level=self)
         else:
             GAME.player.x = x
             GAME.player.y = y
@@ -125,16 +125,16 @@ class Level:
         itemDict = ITEMS[name]
         if 'equipment' in itemDict.keys():
             item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                        **itemDict['kwargs'])
+                        **itemDict['kwargs'], level=self)
         else:
             item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                        useFunction=itemDict['useFunction'], **itemDict['kwargs'])
+                        useFunction=itemDict['useFunction'], **itemDict['kwargs'], level=self)
 
         self.objects.append(item)
 
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
-        item = Portal( (coordX, coordY), itemDict['name'], itemDict['animation'])
+        item = Portal( (coordX, coordY), itemDict['name'], itemDict['animation'], level=self)
 
         self.objects.append(item)
 

@@ -6,6 +6,30 @@ from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 
 
 '''
+Basic object structure:
+    - Game type contains
+        - Levels
+        - Player 
+        - Viewer (generally player)
+        and is the principal thing that supports saving, loading, and changing levels
+
+    - Level type contains
+        - Actor objects, which are graphical things
+        - Include Creatures, which can move, and Items, which cannot
+            - the Player is a particular Creature, which is both an object in the Level and specially known by Game
+          
+    - Actors contain a refereence back to the Level they exist in.
+
+    - Creatures can have, as attributes
+        - Containers, which are collections of Items
+        - AI objects, which can tell Creatures how to move
+       
+
+    - Items (and subclass Equipment), can contain Magic
+'''
+
+
+'''
 TODO:  
 
 - menus w/ text input
