@@ -25,8 +25,9 @@ class Level:
     def __init__(self, levelName):
         self.levelName = levelName
 
-        self.fovMap = None
+        #self.fovMap = None
         self.objects = []
+        self.portals = []
 
         self.loadLevelFile()
         self.parseLevelDict()
@@ -63,6 +64,11 @@ class Level:
 
             if tileType in MONSTERS.keys():
                 self.addEnemy(j, i, tileType)
+                continue
+
+            if tileType in TILES.keys():
+                self.addPortal(j, i, tileType)
+                #self.addItem(j, i, tileType) #should not be Item.
                 continue
 
             raise Exception("Failed at adding item during level parsing.")
@@ -136,7 +142,7 @@ class Level:
 
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
-        item = Portal( (coordX, coordY), itemDict['name'], itemDict['animation'], level=self)
+        item = Portal( (coordX, coordY), "portalA", itemDict['animation'], level=self)
         self.objects.append(item)
 
     def takeNPCturns(self):

@@ -123,7 +123,8 @@ def initializeGame():
     #level1 = Level("mapWithPlayer")
     #level1 = Level("mapwPG")
     #level1 = Level("testMap")
-    level1 = Level("mapwPIE")
+    #level1 = Level("mapwPIE")
+    level1 = Level("mapwPIES")
 
     GAME.levels.append(level1)
     GAME.currentLevel = 0

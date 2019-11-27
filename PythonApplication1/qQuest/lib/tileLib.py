@@ -1,4 +1,4 @@
 
 TILES = {}
-TILES['stairs'] = {'animation' : "s_stairs_down",
+TILES['stairs'] = {'animation' : "s_ladder",
                     'kwargs' : {}}

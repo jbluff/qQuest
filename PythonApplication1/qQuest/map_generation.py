@@ -333,7 +333,7 @@ if __name__ == "__main__":
         newMap.renderArray()
         newMap.plot()
         newMap.addEntity('p', 'player', rmIdx=0)
-        newMap.addEntity('h', 'healingPotion', rmIdx=0)
+        #newMap.addEntity('h', 'healingPotion', rmIdx=0)
         for _ in range(3):
             newMap.addEntity('h', 'healingPotion')
 
@@ -342,6 +342,8 @@ if __name__ == "__main__":
             newMap.addEntity('j', 'jelly')
 
             newMap.addEntity('d', 'demon')
+
+        newMap.addEntity('s', 'stairs', rmIdx=0)
         #for _ in range(10):
         #    newMap.addEntity('e', 'enemy')
         newMap.renderArray()
@@ -349,5 +351,5 @@ if __name__ == "__main__":
 
         #newMap.mapArray = list(newMap.mapArray)
 
-        newMap.saveMap("mapwPIE")
+        newMap.saveMap("mapwPIES2")
     

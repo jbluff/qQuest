@@ -293,7 +293,7 @@ class Portal(Actor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.item = False
+        #self.item = False
 
     def pickup(self, actor):
         return
