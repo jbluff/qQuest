@@ -82,9 +82,9 @@ class Level:
         target = None
         for obj in self.objects:
             if (obj is not exclude_object and
-                obj.x == x and #sub objectAtCoords into here
-                obj.y == y and
-                obj.creature):
+                    obj.x == x and #sub objectAtCoords into here
+                    obj.y == y and
+                    isinstance(obj, (Creature, PlayerClass))):
                 return obj
         return None
 

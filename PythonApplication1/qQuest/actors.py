@@ -31,8 +31,8 @@ class Actor():
         if self.container:
             self.container.owner = self
 
-        self.creature = None #overwritten by Creature.__init__
-        self.item = None #overwritten by Item.__init__
+        #self.creature = None #overwritten by Creature.__init__
+        #self.item = None #overwritten by Item.__init__
         self.deleted = False
         self.level = level
 
@@ -81,22 +81,7 @@ class Creature(Actor):
         self.deathFunction = deathFunction
         self.creature = True
 
-
-    def takeDamage(self, damage):
-        self.hp -= damage
-        GAME.addMessage(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
-
-        if self.hp <= 0:
-            if self.deathFunction:
-                self.deathFunction(self)
-
-    def heal(self, deltaHp):
-        #TODO!
-        assert deltaHp >= 0
-        pass
-
     def move(self, dx, dy):
-        print(f'creature moving')
         tileIsWall = GAME.currentLevel.map[self.y + dy][self.x + dx].blockPath 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
 
@@ -110,9 +95,20 @@ class Creature(Actor):
 
     def pickupObjects(self):
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
-        [obj.pickup(self) for obj in objs if obj.item]
+        [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
 
+    def takeDamage(self, damage):
+        self.hp -= damage
+        GAME.addMessage(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
 
+        if self.hp <= 0:
+            if self.deathFunction:
+                self.deathFunction(self)
+
+    def heal(self, deltaHp):
+        #TODO!
+        assert deltaHp >= 0
+        pass
   
 class Viewer(Actor):
     """

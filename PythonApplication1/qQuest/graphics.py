@@ -112,9 +112,8 @@ def drawGame(fovMap=None):
 
 def drawObjects(fovMap):
     for gameObj in GAME.currentLevel.objects:
-        if gameObj.item:
-            if gameObj.deleted:# or gameObj.currentContainer:
-                return
+        if getattr(gameObj, "deleted", False):# or gameObj.currentContainer:
+            return
         gameObj.draw(fovMap)
 
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
