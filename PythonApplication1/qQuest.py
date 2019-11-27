@@ -104,7 +104,6 @@ def gameInitialize():
 
     GAME.levels.append(level1)
     GAME.currentLevel = 0
-    #GAME.currentLevelIdx = 0 # = level1
 
     #level1.addPortal(1,1,"stairs_down")
 

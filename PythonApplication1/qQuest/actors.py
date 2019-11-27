@@ -1,5 +1,5 @@
 from qQuest import constants
-from qQuest import map_util
+#from qQuest import map_util
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
 from qQuest.graphics import ASSETS
 
@@ -78,7 +78,7 @@ class Creature(Actor):
         self.creature = True
 
         self.fovMap = fovMap
-        self.fovCalculate = not (fovMap is None)
+        self.doRecaculateFov = not (fovMap is None)
 
     def takeDamage(self, damage):
         self.hp -= damage
@@ -107,7 +107,7 @@ class Creature(Actor):
             self.y += dy
 
         if not (self.fovMap is None):
-            self.fovCalculate = True
+            self.doRecaculateFov = True
 
     def pickupObjects(self):
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
@@ -116,7 +116,17 @@ class Creature(Actor):
                 obj.pickup(self)
                 
     def recalculateFov(self):
-        map_util.mapCalculateFov(self)
+        if not self.doRecaculateFov:
+            return None
+
+        self.fovMap.compute_fov(self.x,self.y,
+            radius = constants.FOV_RADIUS,
+            light_walls = constants.FOV_LIGHT_WALLS,
+            algorithm = constants.FOV_ALGO)
+
+        self.doRecaculateFov = False
+
+  
 
 
 '''
