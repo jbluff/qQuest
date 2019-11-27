@@ -129,13 +129,11 @@ class Level:
         else:
             item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
                         useFunction=itemDict['useFunction'], **itemDict['kwargs'], level=self)
-
         self.objects.append(item)
 
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
         item = Portal( (coordX, coordY), itemDict['name'], itemDict['animation'], level=self)
-
         self.objects.append(item)
 
     def takeNPCturns(self):

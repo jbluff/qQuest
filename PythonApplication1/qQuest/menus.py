@@ -45,7 +45,7 @@ class Menu:
             self.finishLoop()
 
             if self.redrawGame:
-                graphics.drawGame(fovMap=GAME.viewer.fovMap)#fovMap=GAME.player.fovMap) # should be viewer
+                graphics.drawGame(fovMap=GAME.viewer.fovMap)
                 redrawGame = False
 
             self.redrawMenu()

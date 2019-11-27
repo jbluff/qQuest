@@ -18,13 +18,12 @@ Basic object structure:
         - Include Creatures, which can move, and Items, which cannot
             - the Player is a particular Creature, which is both an object in the Level and specially known by Game
           
-    - Actors contain a refereence back to the Level they exist in.
+    - Actors contain a reference back to the Level they exist in.
 
     - Creatures can have, as attributes
         - Containers, which are collections of Items
         - AI objects, which can tell Creatures how to move
        
-
     - Items (and subclass Equipment), can contain Magic
 '''
 
@@ -92,18 +91,17 @@ def handleMainLoopEvents():
 
     return "no-action"
 
-def gameExit():
+def exitGame():
     pygame.quit()
     quit()
 
-def gameMainLoop():
+def mainGameLoop():
     playerAction = "no-action"
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    GAME.viewer.recalculateFov()
+    GAME.viewer.recalculateFov(force=True)
 
     while playerAction != "QUIT":
-       
         playerAction = handleMainLoopEvents()
             
         if playerAction == "player-moved":
@@ -113,10 +111,10 @@ def gameMainLoop():
         graphics.drawGame(GAME.viewer.fovMap)
         CLOCK.tick(constants.GAME_FPS)
 
-    gameExit()
+    exitGame()
 
 
-def gameInitialize():
+def initializeGame():
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
@@ -133,8 +131,8 @@ def gameInitialize():
 
 
 if __name__ == "__main__":
-    gameInitialize()
-    gameMainLoop()
+    initializeGame()
+    mainGameLoop()
 
     
 
