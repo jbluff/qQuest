@@ -1,11 +1,13 @@
-import os, datetime, pickle, dill
+import os, datetime, dill
 import pygame
 
 from qQuest import constants
 from qQuest import graphics
-from qQuest.qqGlobal import CLOCK, SURFACE_MAIN, GAME
+from qQuest.qqGlobal import CLOCK, GAME 
 
-#TODO:  create general text selection menu class
+#Todo:  make MenuListItem class
+# selected or not
+# selectable or not
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -94,80 +96,6 @@ class PauseMenu(Menu):
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE]])
 
-# class InventoryMenu(Menu):
-#     def __init__(self, parentSurface, actor):
-#         self.actor = actor
-#         self.selected = 0
-#         super().__init__(parentSurface)
-
-#     def restartLoop(self):
-#         self.invList = [["Inventory:", constants.COLOR_WHITE],]
-#         self.invList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
-#         self.updateSelected() #this really only needs to be called in the init
-
-#         self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
-
-#     def finishLoop(self):
-#         #self.updateSelected()
-#         pass
-
-#     def parseEvent(self, event):
-
-#         if event.type != pygame.KEYDOWN:
-#             return
-                    
-#         if event.key == pygame.K_i or event.key == pygame.K_q:
-#             self.breakLoop = True
-#             return
-
-#         if len(self.invList) == 1: #empty inventory
-#             return 
-
-#         if event.key == pygame.K_DOWN:
-#             self.incrementSelected()
-
-#         elif event.key == pygame.K_UP:
-#             self.decrementSelected()
-            
-#         elif event.key == pygame.K_d:
-#             self.actor.container.inventory[self.selected].drop() #fix this nonsense.
-#             del self.invList[self.selected+1]
-#             self.decrementSelected()
-#             self.redrawGame = True
-
-#         elif event.key == pygame.K_u:
-#             invObj = self.actor.container.inventory[self.selected] # selected item's Actor.
-            
-#             success = invObj.use(self.actor)
-
-#             if success:
-#                 GAME.addMessage(self.actor.name + " uses " + invObj.name )
-#                 if invObj.deleted:
-#                     del self.invList[self.selected+1] #delete from menu list -- doesn't really work.
-#                     self.decrementSelected()
-#             self.redrawGame = True
-
-#     def redrawMenuBody(self):
-#         graphics.drawTextList(self.menuSurface, self.invList)
-
-#     def updateSelected(self):
-#         numItems = len(self.invList)-1
-#         for idx in range(1,numItems+1):
-#             if idx == self.selected+1:
-#                 self.invList[idx][1] = constants.COLOR_RED
-#             else:
-#                 self.invList[idx][1] = constants.COLOR_GREY
-
-#     def decrementSelected(self):
-#         if self.selected > 0:
-#             self.selected -= 1
-#         self.updateSelected()
-
-#     def incrementSelected(self):
-#         if self.selected < len(self.invList) - 2:
-#             self.selected += 1
-#         self.updateSelected()
-
 class TextListMenu(Menu):
     def __init__(self, parentSurface):
         self.selected = 0
@@ -206,27 +134,28 @@ class TextListMenu(Menu):
 
     def parseEvent(self, event):
         if event.type != pygame.KEYDOWN:
-            return
+            return 'continue'
                     
         if event.key == pygame.K_q:
             self.breakLoop = True
-            return
+            return ''
 
         if event.key == pygame.K_DOWN:
             self.incrementSelected()
+            return 'continue'
 
         elif event.key == pygame.K_UP:
-            self.decrementSelected()
-
-        
+            self.decrementSelected()      
+            return 'continue'
 
 class SaveLoadMenu(TextListMenu):
-
     def initTextList(self):
         self.textList = [["Save", constants.COLOR_WHITE],["Load", constants.COLOR_WHITE]]
  
     def parseEvent(self, event):
-        super().parseEvent(event)
+        ret = super().parseEvent(event)
+        if ret == 'continue':
+            return None
 
         if event.key == pygame.K_RETURN:
             if self.selected == 0:
@@ -234,7 +163,7 @@ class SaveLoadMenu(TextListMenu):
 
     def gameSave(self, saveName='default'):
         dt = datetime.datetime.now()
-        dtString = dt.strftime('%Y%H%M%M')
+        dtString = dt.strftime('%Y%m%d%H%M%S')
 
         fileName = dtString + '_' + saveName + '.sav'
         filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
@@ -254,26 +183,28 @@ class InventoryMenu(TextListMenu):
         self.textList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
 
     def parseEvent(self, event):
-
-        super().parseEvent(event)
+        ret = super().parseEvent(event)
+        if ret == 'continue':
+            return None
 
         if len(self.textList) == 1: #empty inventory
             return 
 
         elif event.key == pygame.K_d:
-            self.actor.container.inventory[self.selected].drop() #fix this nonsense.
-            del self.textList[self.selected+1]
+            print('dropping')
+            self.actor.container.inventory[self.selected-1].drop() #fix this nonsense.
+            del self.textList[self.selected]
             self.decrementSelected()
             self.redrawGame = True
 
         elif event.key == pygame.K_u:
-            invObj = self.actor.container.inventory[self.selected] # selected item's Actor.
+            invObj = self.actor.container.inventory[self.selected-1] # selected item's Actor.
             
             success = invObj.use(self.actor)
             if success:
                 GAME.addMessage(self.actor.name + " uses " + invObj.name )
                 if invObj.deleted:
-                    del self.textList[self.selected+1] #delete from menu list -- doesn't really work.
+                    del self.textList[self.selected] #delete from menu list -- doesn't really work.
                     self.decrementSelected()
             self.redrawGame = True
 

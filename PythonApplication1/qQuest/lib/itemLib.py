@@ -1,5 +1,4 @@
 from qQuest import magic
-from qQuest.graphics import ASSETS
 
 ITEMS = {}
 ITEMS['goggles'] = {'name' : 'Goggles!',

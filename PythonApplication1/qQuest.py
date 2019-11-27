@@ -115,6 +115,8 @@ def gameInitialize():
     GAME.levels.append(level1)
     GAME.currentLevel = level1
 
+    #level1.addPortal(1,1,"stairs_down")
+
 
 if __name__ == "__main__":
     gameInitialize()

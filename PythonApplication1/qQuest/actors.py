@@ -267,3 +267,13 @@ def creatureToItems(creature, **kwargs):
         GAME.currentLevel.objects.append(el)
 
     GAME.currentLevel.objects.remove(creature)
+
+#  pos, name, animationName, 
+class Portal(Actor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.item = False
+
+    def pickup(self, actor):
+        return

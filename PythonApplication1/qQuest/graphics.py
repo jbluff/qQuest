@@ -159,4 +159,9 @@ class structAssets():
         self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
         self.a_demon_dead = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
 
+        # self.stairsDownSpriteSheet = objSpriteSheet(root+'32x32figs/stone_stairs_down.png',
+        #                                                 imageUnitX=32, imageUnitY=32)
+        # self.a_stairs_down = self.stairsDownSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1,scale=(0.5,0.5))
+        
+
 ASSETS = structAssets()

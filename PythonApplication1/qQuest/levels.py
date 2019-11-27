@@ -4,13 +4,14 @@ import numpy as np
 from qQuest import map_util
 from qQuest import ai
 #from qQuest import actors, magic
-from qQuest.actors import Actor, Creature, Item, Container, Equipment
+from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal
 
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS, NAMES
+from qQuest.lib.tileLib import TILES
 
 class structTile:
     def __init__(self, blockPath):
@@ -132,6 +133,12 @@ class Level:
         else:
             item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
                         useFunction=itemDict['useFunction'], **itemDict['kwargs'])
+
+        self.objects.append(item)
+
+    def addPortal(self, coordX, coordY, name):
+        itemDict = TILES[name]
+        item = Portal( (coordX, coordY), itemDict['name'], itemDict['animation'])
 
         self.objects.append(item)
 
