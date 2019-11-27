@@ -1,11 +1,14 @@
-import json, os, itertools, random
+import json
+import os
+import itertools
+import random
+
 import numpy as np
 
 from qQuest import map_util
 from qQuest import ai
-#from qQuest import actors, magic
-from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal
 
+from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS
 

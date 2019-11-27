@@ -83,20 +83,20 @@ def gameMainLoop():
 
     playerAction = "no-action"
 
-    viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    map_util.mapCalculateFov(viewer)
+    GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
+    map_util.mapCalculateFov(GAME.viewer)
 
     while playerAction != "QUIT":
        
         playerAction = gameHandleKeys()
             
         if playerAction == "player-moved":
-            map_util.mapCalculateFov(viewer)
+            map_util.mapCalculateFov(GAME.viewer)
             for gameObj in GAME.currentLevel.objects:
                 if gameObj.ai:
                     gameObj.ai.takeTurn()
 
-        graphics.drawGame(viewer.fovMap)
+        graphics.drawGame(GAME.viewer.fovMap)
         CLOCK.tick(constants.GAME_FPS)
 
     gameExit()
@@ -113,7 +113,8 @@ def gameInitialize():
     level1 = Level("mapwPIE")
 
     GAME.levels.append(level1)
-    GAME.currentLevel = level1
+    GAME.currentLevel = 0
+    #GAME.currentLevelIdx = 0 # = level1
 
     #level1.addPortal(1,1,"stairs_down")
 

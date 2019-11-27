@@ -1,6 +1,8 @@
+import itertools
+
 import pygame
 import numpy as np
-import itertools
+
 from qQuest import constants
 from qQuest.qqGlobal import SURFACE_MAIN, CLOCK, GAME
 

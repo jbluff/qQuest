@@ -1,9 +1,15 @@
-import os, datetime, dill
+import os
+import datetime
+
+import dill
 import pygame
 
 from qQuest import constants
 from qQuest import graphics
 from qQuest.qqGlobal import CLOCK, GAME 
+
+DATETIME_FORMAT = '%Y%m%d%H%M%S'
+SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")
 
 #Todo:  make MenuListItem class
 # selected or not
@@ -161,12 +167,17 @@ class SaveLoadMenu(TextListMenu):
             if self.selected == 0:
                 self.gameSave()
 
+            if self.selected == 1:
+                LoadMenu(self.parentSurface)
+                self.breakLoop = True
+
+
     def gameSave(self, saveName='default'):
         dt = datetime.datetime.now()
-        dtString = dt.strftime('%Y%m%d%H%M%S')
+        dtString = dt.strftime(DATETIME_FORMAT)
 
         fileName = dtString + '_' + saveName + '.sav'
-        filePath = os.path.join(os.path.dirname(__file__),"..","saves",fileName)
+        filePath = os.path.join(SAVEPATH,fileName)
         print(filePath)
         with open(filePath, 'wb') as f:
             dill.dump(GAME, f)
@@ -208,4 +219,44 @@ class InventoryMenu(TextListMenu):
                     self.decrementSelected()
             self.redrawGame = True
 
+class LoadMenu(TextListMenu):
+    def initTextList(self):
+        allFiles = listSavedGames()
 
+        self.textList = [[f, constants.COLOR_WHITE] for f in allFiles]
+ 
+    def parseEvent(self, event):
+        ret = super().parseEvent(event)
+        if ret == 'continue':
+            return None
+
+        if event.key == pygame.K_RETURN:
+            fname = self.textList[self.selected][0]
+            print(f'loading {fname}')
+            loadGame(fname)
+            self.breakLoop = True
+
+def loadGame(fname):
+    global GAME
+
+    filePath = os.path.join(SAVEPATH,fname)
+    print(filePath)
+    with open(filePath, 'rb') as f:
+        newGame = dill.load(f)
+    
+    GAME.levels = newGame.levels
+    GAME.currentLevelIdx = newGame.currentLevelIdx
+    GAME.player = newGame.player
+    GAME.messageHistory = newGame.messageHistory
+    GAME.viewer = newGame.viewer
+
+def listSavedGames():
+    #datetime.strptime(date_string, format).
+    saveFiles = []
+    for f in os.listdir(SAVEPATH):
+        name = os.path.join(SAVEPATH, f)
+        if not os.path.isfile(name):
+            continue
+        if name.endswith(".sav"):
+            saveFiles.append(f)
+    return saveFiles

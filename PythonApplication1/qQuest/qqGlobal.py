@@ -11,7 +11,7 @@ SURFACE_MAIN = pygame.display.set_mode((100,100))
 class Game:
     def __init__(self):
         
-        self.currentObjects = []
+        #self.currentObjects = []
         self.messageHistory = []
 
         self.currentLevelIdx = None
