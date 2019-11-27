@@ -121,7 +121,7 @@ class Creature(Actor):
         self.fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
         for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
             self.fovMap.transparent[y][x] = not mapIn[y][x].blockPath
-
+        self.recalculateFov(force=True)
                 
     def recalculateFov(self, force=False):
         if not self.doRecaculateFov and not force:

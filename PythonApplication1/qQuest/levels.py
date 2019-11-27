@@ -65,20 +65,14 @@ class Level:
                 self.addEnemy(j, i, tileType)
                 continue
 
-
             raise Exception("Failed at adding item during level parsing.")
 
-        #GAME.player.
-        #GAME.player.recalculateFov(force=True)
         self.reinitializeFovMaps() #needs to be done after all walls placed.
 
     def reinitializeFovMaps(self):
         for obj in self.objects:
             if getattr(obj,"fovMap",False):
                 obj.initializeFovMap(self.map)
-                obj.recalculateFov(force=True)
-                #obj.fovMap = map_util.initializeFovMap(self.map)
-                #obj.doRecaculateFov = True
                 
     def checkForCreature(self, x, y, exclude_object = None):
         '''
@@ -114,22 +108,14 @@ class Level:
         self.objects.append(enemy)
 
     def addPlayer(self, x,y):
-        #initializeFovMap
-        #playerFovMap = map_util.initializeFovMap(self.map) 
         if GAME.player is None:
             playerInventory = Container()
-            GAME.player = Creature( (x,y), "hero", "a_player",#ASSETS.a_player, 
-                    fovMap=True,
-                    container=playerInventory)
+            GAME.player = Creature( (x,y), "hero", "a_player",
+                    fovMap=True, container=playerInventory)
         else:
             GAME.player.x = x
             GAME.player.y = y
        
-        #self.fovMap = playerFovMap
-        #GAME.viewer = GAME.player #really don't want this harcoded here.  
-        # GAME.player.initializeFovMap(self.map)
-        # GAME.player.recalculateFov(force=True)
-        #map_util.recalculateFov(GAME.player)
         self.objects.append(GAME.player)
 
     '''
