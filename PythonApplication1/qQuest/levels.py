@@ -153,8 +153,7 @@ class Level:
         self.objects.append(item)
         self.portals.append(item)
 
-    def placePlayerAtPortal(self, portalID):
-        portal = self.portals[portalID]
+    def placePlayerAtPortal(self, portal):
         self.addPlayer(portal.x, portal.y)
         #raise NotImplementedError
 

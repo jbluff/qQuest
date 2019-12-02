@@ -97,7 +97,13 @@ def handleMainLoopEvents():
             if entryPortal is None:
                 return "no-action"
             print(f'yer on a portal, Harry!')
+
             destinationPortal = entryPortal.destinationPortal
+            newLevel = destinationPortal.level
+            
+            GAME.currentLevel = newLevel
+            newLevel.placePlayerAtPortal(destinationPortal)
+            return "player-moved"
             # change level, replace portal, update currentLevel,  redraw everything
 
     return "no-action"
@@ -147,7 +153,7 @@ def initializeGame():
     GAME.levels.append(level1)
     #GAME.currentLevel = 0
     GAME.currentLevel = level1
-    level1.placePlayerAtPortal(0)
+    level1.placePlayerAtPortal(level1.portals[0])
 
     level2 = Level("portalTest2", initPlayer=False)
     GAME.levels.append(level1)
