@@ -17,6 +17,7 @@ class Game:
 
         self.currentLevelIdx = None
         self.levels = []
+        #self.gamePortals = []
 
         self.player = None
 

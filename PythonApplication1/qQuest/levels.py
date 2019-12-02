@@ -22,8 +22,9 @@ class structTile:
         self.explored = False
 
 class Level:
-    def __init__(self, levelName):
+    def __init__(self, levelName, initPlayer=True):
         self.levelName = levelName
+        self.initPlayer= initPlayer
 
         #self.fovMap = None
         self.objects = []
@@ -55,7 +56,8 @@ class Level:
                 continue
             
             if tileType == "player":
-                self.addPlayer(j, i)
+                if self.initPlayer:
+                    self.addPlayer(j, i)
                 continue
 
             if tileType in ITEMS.keys():
@@ -67,8 +69,7 @@ class Level:
                 continue
 
             if tileType in TILES.keys():
-                self.addPortal(j, i, tileType)
-                #self.addItem(j, i, tileType) #should not be Item.
+                self.addPortal(j, i, tileType) #this construction is erroneous.
                 continue
 
             raise Exception("Failed at adding item during level parsing.")
@@ -142,8 +143,13 @@ class Level:
 
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
-        item = Portal( (coordX, coordY), "portalA", itemDict['animation'], level=self)
+        # add class variable
+        item = Portal( (coordX, coordY), name, itemDict['animation'], level=self)
         self.objects.append(item)
+        self.portals.append(item)
+
+    def placePlayerAtPortal(self, portalID):
+        raise NotImplementedError
 
     def takeNPCturns(self):
         for gameObj in self.objects:

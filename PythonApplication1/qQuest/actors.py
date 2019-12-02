@@ -289,11 +289,16 @@ def creatureToItems(creature, **kwargs):
     GAME.currentLevel.objects.remove(creature)
 
 #  pos, name, animationName, 
+#
 class Portal(Actor):
-    def __init__(self, *args, **kwargs):
+    numPortals = 0
+
+    def __init__(self, *args, portal2, **kwargs):
+        Portal.numPortals += 1
+        self.uniqueID = Portal.numPortals
+
         super().__init__(*args, **kwargs)
-
-        #self.item = False
-
+        self.portal2 = portal2
+         
     def pickup(self, actor):
         return

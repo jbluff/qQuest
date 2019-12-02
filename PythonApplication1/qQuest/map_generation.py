@@ -327,7 +327,7 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 1:
+    if 0:
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
         newMap.renderArray()
@@ -351,5 +351,27 @@ if __name__ == "__main__":
 
         #newMap.mapArray = list(newMap.mapArray)
 
-        newMap.saveMap("mapwPIES2")
+        newMap.saveMap("mapwPIES3")
     
+
+
+
+    if 0:
+        newRoom = makeMapObject(4,4)
+        newRoom.x = 6
+        newRoom.y = -2
+        print(newMap.checkRoomOverlaps(newRoom))
+        newMap.placeMapObject(newRoom)#, x=6, y=5)
+        newMap.renderArray()
+        newMap.plot()
+        
+
+    if 1:
+        newMap.closeMapEdges()
+        newMap.renderArray()
+        newMap.plot()
+        #newMap.addEntity('p', 'player', rmIdx=0)
+        newMap.addEntity('s', 'stairs', rmIdx=0)
+        newMap.renderArray()
+        newMap.plot()
+        newMap.saveMap("portalTest2")

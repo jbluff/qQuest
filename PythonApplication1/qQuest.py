@@ -30,8 +30,9 @@ Basic object structure:
 
 '''
 TODO:  
-
-- Viewer() class -- and Player(Creature,Viewer) class?
+- Clean up entire graphics section
+- Refactoring menu list items
+    - adding text-entry menu list items
 - Portals and switching levels.
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
@@ -99,9 +100,6 @@ def exitGame():
 def mainGameLoop():
     playerAction = "no-action"
 
-    GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    GAME.viewer.recalculateFov(force=True)
-
     while playerAction != "QUIT":
         playerAction = handleMainLoopEvents()
             
@@ -124,13 +122,21 @@ def initializeGame():
     #level1 = Level("mapwPG")
     #level1 = Level("testMap")
     #level1 = Level("mapwPIE")
-    level1 = Level("mapwPIES")
+    
+    # level1 = Level("mapwPIES", initPlayer=True)
+    # GAME.levels.append(level1)
+    # GAME.currentLevel = 0
 
-    GAME.levels.append(level1)
-    GAME.currentLevel = 0
+    # GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
+    # GAME.viewer.recalculateFov(force=True)
 
-    #level1.addPortal(1,1,"stairs_down")
+    # level2 = Level("mapwPIES3", initPlayer=False)
+    # GAME.levels.append(level2)
 
+
+
+    GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
+    GAME.viewer.recalculateFov(force=True)
 
 if __name__ == "__main__":
     initializeGame()
