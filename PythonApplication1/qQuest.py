@@ -122,7 +122,7 @@ def initializeGame():
     #level1 = Level("mapwPG")
     #level1 = Level("testMap")
     #level1 = Level("mapwPIE")
-    
+
     # level1 = Level("mapwPIES", initPlayer=True)
     # GAME.levels.append(level1)
     # GAME.currentLevel = 0
@@ -133,7 +133,17 @@ def initializeGame():
     # level2 = Level("mapwPIES3", initPlayer=False)
     # GAME.levels.append(level2)
 
+    # level1 = Level("portalTest1", initPlayer=True)
+    level1 = Level("portalTest1", initPlayer=False)
+    GAME.levels.append(level1)
+    GAME.currentLevel = 0
+    level1.placePlayerAtPortal(0)
 
+    level2 = Level("portalTest2", initPlayer=False)
+    GAME.levels.append(level1)
+
+    level1.portals[0].destinationPotal = level2.portals[0]
+    level2.portals[0].destinationPotal = level1.portals[0]
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
     GAME.viewer.recalculateFov(force=True)

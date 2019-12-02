@@ -74,7 +74,7 @@ class Level:
 
             raise Exception("Failed at adding item during level parsing.")
 
-        self.reinitializeFovMaps() #needs to be done after all walls placed.
+        self.reinitializeFovMaps() #needs to be done after all walls AND PLAYER placed.
 
     def reinitializeFovMaps(self):
         for obj in self.objects:
@@ -116,6 +116,7 @@ class Level:
         self.objects.append(enemy)
 
     def addPlayer(self, x,y):
+
         if GAME.player is None:
             playerInventory = Container()
             GAME.player = PlayerClass((x,y), "hero", "a_player",
@@ -125,8 +126,12 @@ class Level:
         else:
             GAME.player.x = x
             GAME.player.y = y
+            GAME.player.level = self
        
-        self.objects.append(GAME.player)
+        if GAME.player not in self.objects:
+            self.objects.append(GAME.player)
+
+        self.reinitializeFovMaps() #needs to be done after all walls AND PLAYER placed.
 
     '''
         Creates Items by type, looking up info in a library file.
@@ -144,12 +149,14 @@ class Level:
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
         # add class variable
-        item = Portal( (coordX, coordY), name, itemDict['animation'], level=self)
+        item = Portal( (coordX, coordY), name, itemDict['animation'], level=self, destinationPortal=None)
         self.objects.append(item)
         self.portals.append(item)
 
     def placePlayerAtPortal(self, portalID):
-        raise NotImplementedError
+        portal = self.portals[portalID]
+        self.addPlayer(portal.x, portal.y)
+        #raise NotImplementedError
 
     def takeNPCturns(self):
         for gameObj in self.objects:

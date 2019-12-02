@@ -17,8 +17,6 @@ class Game:
 
         self.currentLevelIdx = None
         self.levels = []
-        #self.gamePortals = []
-
         self.player = None
 
     def addMessage(self, messageText, color=constants.COLOR_WHITE):

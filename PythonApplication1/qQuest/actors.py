@@ -293,12 +293,12 @@ def creatureToItems(creature, **kwargs):
 class Portal(Actor):
     numPortals = 0
 
-    def __init__(self, *args, portal2, **kwargs):
+    def __init__(self, *args, destinationPortal=None, **kwargs):
         Portal.numPortals += 1
         self.uniqueID = Portal.numPortals
 
         super().__init__(*args, **kwargs)
-        self.portal2 = portal2
+        self.destinationPortal = destinationPortal
          
     def pickup(self, actor):
         return
