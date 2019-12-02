@@ -15,7 +15,7 @@ class Game:
     def __init__(self):
         self.messageHistory = []
 
-        self.currentLevelIdx = None
+        # self.currentLevelIdx = None
         self.levels = []
         self.player = None
 
@@ -28,18 +28,20 @@ class Game:
 
     @property
     def currentLevel(self):
-        return self.levels[self.currentLevelIdx]
+        return self._currentLevel
 
     @currentLevel.setter
     def currentLevel(self, value):
-        if type(value) == int:
-            self.currentLevelIdx = value
-        else:
-            # this is dumb.  
-            for idx, level in enumerate(self.levels):
-                if level == value:
-                    self.currentLevelIdx = idx
-                    break
+        self._currentLevel = value
+        # if type(value) == int:
+        #     self.currentLevelIdx = value
+        # else:
+        #     # this is dumb.  
+        #     for idx, level in enumerate(self.levels):
+        #         if level is value:
+        #             self.currentLevelIdx = idx
+        #             break
+        #     raise Exception("currentLevel set is wrong")
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
         updateSurfaceSize(self)

@@ -109,6 +109,12 @@ class Creature(Actor):
         #TODO!
         assert deltaHp >= 0
         pass
+
+    def isOnPortal(self):
+        for portal in self.level.portals:
+            if self.x == portal.x and self.y == portal.y:
+                return portal
+        return None
   
 class Viewer(Actor):
     """

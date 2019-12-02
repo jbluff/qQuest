@@ -91,6 +91,15 @@ def handleMainLoopEvents():
         if event.key == pygame.K_q:
             return "QUIT"
 
+        if event.key == pygame.K_y:
+            entryPortal = GAME.player.isOnPortal()
+            
+            if entryPortal is None:
+                return "no-action"
+            print(f'yer on a portal, Harry!')
+            destinationPortal = entryPortal.destinationPortal
+            # change level, replace portal, update currentLevel,  redraw everything
+
     return "no-action"
 
 def exitGame():
@@ -136,14 +145,15 @@ def initializeGame():
     # level1 = Level("portalTest1", initPlayer=True)
     level1 = Level("portalTest1", initPlayer=False)
     GAME.levels.append(level1)
-    GAME.currentLevel = 0
+    #GAME.currentLevel = 0
+    GAME.currentLevel = level1
     level1.placePlayerAtPortal(0)
 
     level2 = Level("portalTest2", initPlayer=False)
     GAME.levels.append(level1)
 
-    level1.portals[0].destinationPotal = level2.portals[0]
-    level2.portals[0].destinationPotal = level1.portals[0]
+    level1.portals[0].destinationPortal = level2.portals[0]
+    level2.portals[0].destinationPortal = level1.portals[0]
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
     GAME.viewer.recalculateFov(force=True)
