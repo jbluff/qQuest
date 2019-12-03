@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-import tcod as libtcod
+# import tcod as libtcod
 
 from qQuest import constants
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
@@ -40,13 +40,15 @@ class Actor():
     def animation(self):
         return getattr(ASSETS,self.animationName)
 
-    def draw(self, fovMap):
+    def draw(self):#, fov):#visibilityMap):
         '''
         This generality sets up some flexibility, e.g. if we want to see from an
         NPCs point of view, later.
         '''
 
-        isVisible = fovMap.fov[self.y, self.x]
+        #isVisible = visibilityMap.fov[self.y, self.x]
+        isVisible = GAME.viewer.fov[self.y][self.x]
+
         if not isVisible:
             return 
 
@@ -124,23 +126,25 @@ class Viewer(Actor):
         super().__init__(*args, **kwargs)
         self.doRecaculateFov = True
         
-    def initializeFovMap(self, mapIn):
-        mapHeight, mapWidth = np.array(mapIn).shape
+    # def initializeVisibilityMap(self, mapIn):
+    #     mapHeight, mapWidth = np.array(mapIn).shape
 
-        self.fovMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
-        for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
-            self.fovMap.transparent[y][x] = not mapIn[y][x].blockPath
-        self.recalculateFov(force=True)
+    #     self.visibilityMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
+    #     for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
+    #         self.visibilityMap.transparent[y][x] = not mapIn[y][x].blockPath
+    #     self.recalculateFov(force=True)
                 
     def recalculateFov(self, force=False):
         if not self.doRecaculateFov and not force:
             return None
 
-        self.fovMap.compute_fov(self.x,self.y,
-            radius = constants.FOV_RADIUS,
-            light_walls = constants.FOV_LIGHT_WALLS,
-            algorithm = constants.FOV_ALGO)
+        # self.visibilityMap.compute_fov(self.x,self.y,
+        #     radius = constants.FOV_RADIUS,
+        #     light_walls = constants.FOV_LIGHT_WALLS,
+        #     algorithm = constants.FOV_ALGO)
 
+        self.fov = self.level.computeFov(self.x, self.y)
+        
         self.doRecaculateFov = False
 
 
@@ -300,8 +304,9 @@ class Portal(Actor):
     numPortals = 0
 
     def __init__(self, *args, destinationPortal=None, **kwargs):
-        Portal.numPortals += 1
+        
         self.uniqueID = Portal.numPortals
+        Portal.numPortals += 1
 
         super().__init__(*args, **kwargs)
         self.destinationPortal = destinationPortal

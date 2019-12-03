@@ -128,7 +128,7 @@ def mainGameLoop():
             GAME.viewer.recalculateFov()
             GAME.currentLevel.takeNPCturns()
 
-        graphics.drawGame()#GAME.viewer.fovMap)
+        graphics.drawGame()
         CLOCK.tick(constants.GAME_FPS)
 
     exitGame()

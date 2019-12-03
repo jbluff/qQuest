@@ -244,7 +244,8 @@ def loadGame(fname):
         newGame = dill.load(f)
     
     GAME.levels = newGame.levels
-    GAME.currentLevelIdx = newGame.currentLevelIdx
+    #GAME.currentLevelIdx = newGame.currentLevelIdx
+    GAME.currentLevel = newGame.currentLevel
     GAME.player = newGame.player
     GAME.messageHistory = newGame.messageHistory
     GAME.viewer = newGame.viewer

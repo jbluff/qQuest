@@ -55,16 +55,25 @@ def helperTextObjects(text, textColor, bgColor=None):
 '''
 This construction is BAD.  By decoupling the "previously-seen-state" into the underlying map, and not the FovMap, 
 we don't really support multiple or independent viewers.   
+We'd also like the viewing history to be more than "explored" or "not explored".
+    - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
+    - that's a change for down the road, but decoupling to a viewer's personal history will help
 '''
-def drawMap(mapToDraw, viewer=None):# fovMap):
+def drawLevelTiles(viewer=None):
     if viewer is None:
         viewer = GAME.viewer
+
+    level = GAME.currentLevel
+    mapToDraw = level.map
     surface = SURFACE_MAIN
 
-    mapHeight, mapWidth = viewer.fovMap.transparent.shape
+    #mapHeight, mapWidth = viewer.visibilityMap.transparent.shape
+    mapHeight, mapWidth = np.array(mapToDraw).shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-        tileIsVisible = viewer.fovMap.fov[y][x]
+        #tileIsVisible = viewer.visibilityMap.fov[y][x]
+        tileIsVisible = viewer.fov[y][x]
+
         tileIsWall = mapToDraw[y][x].blockPath
         tileIsAlreadyExplored = mapToDraw[y][x].explored
 
@@ -103,27 +112,25 @@ def drawFPS():
     drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-#TODO:  make the fovMap an actor substitutable thing
-def drawGame():#fovMap=None):
-    #if fovMap is None:
-    #fovMap = GAME.viewer.fovMap
+def drawGame():
+
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
 
-    drawMap(GAME.currentLevel.map)#, viewer=None)
-    drawObjects()#viewer=None)#fovMap)
+    drawLevelTiles()
+    drawObjects()
     drawGameMessages()
     drawDebug()
 
     pygame.display.flip()
 
-def drawObjects(viewer=None):#fovMap):
-    if viewer is None:
-        viewer = GAME.viewer
+def drawObjects():#viewer=None):#fovMap):
+    #if viewer is None:
+    #    viewer = GAME.viewer
 
     for gameObj in GAME.currentLevel.objects:
         if getattr(gameObj, "deleted", False):# or gameObj.currentContainer:
             return
-        gameObj.draw(viewer.fovMap)
+        gameObj.draw()#viewer.fov)#visibilityMap)
 
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
