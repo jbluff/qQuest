@@ -67,19 +67,19 @@ def drawLevelTiles(viewer=None):
     mapToDraw = level.map
     surface = SURFACE_MAIN
 
-    #mapHeight, mapWidth = viewer.visibilityMap.transparent.shape
     mapHeight, mapWidth = np.array(mapToDraw).shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-        #tileIsVisible = viewer.visibilityMap.fov[y][x]
         tileIsVisible = viewer.fov[y][x]
 
-        tileIsWall = mapToDraw[y][x].blockPath
-        tileIsAlreadyExplored = mapToDraw[y][x].explored
+        tileIsWall = mapToDraw[y][x].blockPath #dumb as shit.
+
+        tileIsAlreadyExplored = viewer.getTileExplored(x,y)#mapToDraw[y][x].explored
 
         tileGraphic = None
         if tileIsVisible:
-            mapToDraw[y][x].explored = True
+            viewer.setTileExplored(x, y)
+            #mapToDraw[y][x].explored = True
             if tileIsWall: 
                 tileGraphic = ASSETS.s_wall
             else:
@@ -123,14 +123,11 @@ def drawGame():
 
     pygame.display.flip()
 
-def drawObjects():#viewer=None):#fovMap):
-    #if viewer is None:
-    #    viewer = GAME.viewer
-
+def drawObjects():
     for gameObj in GAME.currentLevel.objects:
-        if getattr(gameObj, "deleted", False):# or gameObj.currentContainer:
+        if getattr(gameObj, "deleted", False):
             return
-        gameObj.draw()#viewer.fov)#visibilityMap)
+        gameObj.draw()
 
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)

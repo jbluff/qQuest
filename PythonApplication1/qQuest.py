@@ -151,12 +151,12 @@ def initializeGame():
     # level2 = Level("mapwPIES3", initPlayer=False)
     # GAME.levels.append(level2)
 
-    level1 = Level("mapwPIES3", initPlayer=False)
+    level1 = Level("mapwPIES3")#, initPlayer=False)
     GAME.levels.append(level1)
     GAME.currentLevel = level1
     level1.placePlayerAtPortal(level1.portals[0])
 
-    level2 = Level("mapwPIES2", initPlayer=False)
+    level2 = Level("mapwPIES2")#, initPlayer=False)
     GAME.levels.append(level1)
 
     level1.portals[0].destinationPortal = level2.portals[0]

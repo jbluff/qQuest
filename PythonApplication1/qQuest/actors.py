@@ -120,32 +120,34 @@ class Creature(Actor):
   
 class Viewer(Actor):
     """
-    As an Actor instance, it has reference to a level and a position
+    As an Actor instance, it has reference to a level and a position.
+    For each level it's been to, it keeps a history of what it has previously seen (for fog of war/fov)
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.doRecaculateFov = True
-        
-    # def initializeVisibilityMap(self, mapIn):
-    #     mapHeight, mapWidth = np.array(mapIn).shape
-
-    #     self.visibilityMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
-    #     for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
-    #         self.visibilityMap.transparent[y][x] = not mapIn[y][x].blockPath
-    #     self.recalculateFov(force=True)
+        self.explorationHistory = {}
                 
     def recalculateFov(self, force=False):
         if not self.doRecaculateFov and not force:
             return None
 
-        # self.visibilityMap.compute_fov(self.x,self.y,
-        #     radius = constants.FOV_RADIUS,
-        #     light_walls = constants.FOV_LIGHT_WALLS,
-        #     algorithm = constants.FOV_ALGO)
-
-        self.fov = self.level.computeFov(self.x, self.y)
-        
+        self.fov = self.level.computeFov(self.x, self.y)        
         self.doRecaculateFov = False
+
+    def initLevelExplorationHistory(self):
+        levelID = self.level.uniqueID
+        if levelID not in self.explorationHistory.keys(): #first time visiting a level
+            self.explorationHistory[levelID] = np.zeros_like(self.level.map, dtype=np.bool).tolist()
+
+    def setTileExplored(self, x, y):
+        levelID = self.level.uniqueID
+        self.explorationHistory[levelID][y][x] = True
+    
+    def getTileExplored(self, x, y):
+        levelID = self.level.uniqueID
+        return self.explorationHistory[levelID][y][x]
+
 
 
 class PlayerClass(Creature, Viewer):

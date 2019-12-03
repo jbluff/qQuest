@@ -20,27 +20,26 @@ from qQuest.lib.tileLib import TILES
 class structTile:
     def __init__(self, blockPath):
         self.blockPath = blockPath
-        self.explored = False
+        #self.explored = False
 
 class Level:
     numLevels = 0
 
-    def __init__(self, levelName, initPlayer=True):
+    def __init__(self, levelName):#, initPlayer=True):
         self.levelName = levelName
-        self.initPlayer= initPlayer
+        #self.initPlayer= initPlayer
 
-        #self.fovMap = None
         self.objects = []
         self.portals = []
 
         self.loadLevelFile()
         self.parseLevelDict()
 
-        self.uniqueID = Level.numLevels
+        self.uniqueID = f'level{Level.numLevels}'
         Level.numLevels += 1
         
 
-    def loadLevelFile(self):#,levelName):
+    def loadLevelFile(self):
         filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")
         with open(filePath, "r") as levelFile:
             self.levelDict = json.load(levelFile)
@@ -82,23 +81,20 @@ class Level:
 
             raise Exception("Failed at adding item during level parsing.")
 
-        #self.reinitializeVisibilityMaps() #needs to be done after all walls AND PLAYER placed.
         self.initializeVisibilityMap()
 
-    def initializeVisibilityMap(self):#, mapIn):
+    def initializeVisibilityMap(self):
         mapHeight, mapWidth = np.array(self.map).shape
 
         self.visibilityMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
         for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
             self.visibilityMap.transparent[y][x] = not self.map[y][x].blockPath
-        #self.recalculateFov(force=True)
         self.recalculateViewerFovs()
 
     def recalculateViewerFovs(self):
         for obj in self.objects:
             if isinstance(obj, (Viewer, PlayerClass)):
                 obj.recalculateFov(force=True)
-                #obj.initializeVisibilityMap(self.map)
 
     def computeFov(self, x, y):
         self.visibilityMap.compute_fov(x, y,
@@ -106,11 +102,6 @@ class Level:
             light_walls = constants.FOV_LIGHT_WALLS,
             algorithm = constants.FOV_ALGO)
         return self.visibilityMap.fov
-    # def reinitializeVisibilityMaps(self):
-    #     for obj in self.objects:
-    #         #if getattr(obj,"fovMap",False):
-    #         if isinstance(obj, (Viewer, PlayerClass)):
-    #             obj.initializeVisibilityMap(self.map)
                 
     def checkForCreature(self, x, y, exclude_object = None):
         '''
@@ -159,6 +150,7 @@ class Level:
         if GAME.player not in self.objects:
             self.objects.append(GAME.player)
 
+        GAME.player.initLevelExplorationHistory()
         self.recalculateViewerFovs()
         #self.reinitializeVisibilityMaps() #needs to be done after all walls AND PLAYER placed.
 
