@@ -30,24 +30,36 @@ Basic object structure:
 
 '''
 TODO:  
-- Clean up entire graphics section
+- Separate the "explored" functionality of the level map-- should be associated with the Viewer
+    (e.g. something more like the "fovMap") rather than the level.
+    - take care to make sure this isn't forgotten-- recalculating the fovMap shouldn't reset the explored status
+    - the names are bad.  the "fovMap" is used to calcuate the current fov, but it's not reflective of the current fov.
+    - the 'fovmap' on the other hand, might as well be associated with the level, assuming that all viewers treat
+        the same things as transparent or opaque.
+    - this isn't a pointless idea-- later when we want monsters to have more intelligent AIs we'll treat them as real viewers
+    - DrawMap() should respond directly to the "explored status" of GAME.viewer 
+- Clean up entire graphics section.  Lots of unnecssary complexity there.  Be smarter about storate and separation of assets.
 - Refactoring menu list items
     - adding text-entry menu list items
-- Portals and switching levels.
+
+- Camera stuff
+- Image processing on procGen rooms for rounding etc.
+
+- Make this faster, damnit.  Why is the FPS dropping?  
+    - will camera stuff fix it?  do we need to use a reduced FOVmap?  why slow.  
+- Give Monsters a "properties" section.  Not quite sure how that should work, yet.
+
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
 - Fixed piece rooms
-- Camera stuff
-- Image processing on procGen rooms for rounding etc.
-- New monster AIs
-- Area effect spells
 - Directional facing of character, monsters?
 - Refine map loading (set pieces, named npcs, items.)
-'''
+- New monster AIs
+- Area effect spells
 
 '''
-Needed external packages (on pip):  pygame, tcod, dill, numpy
-'''
+
+
 
 def handleMainLoopEvents():
 
@@ -96,15 +108,9 @@ def handleMainLoopEvents():
             
             if entryPortal is None:
                 return "no-action"
-            print(f'yer on a portal, Harry!')
 
-            destinationPortal = entryPortal.destinationPortal
-            newLevel = destinationPortal.level
-            
-            GAME.currentLevel = newLevel
-            newLevel.placePlayerAtPortal(destinationPortal)
+            GAME.transitPortal(entryPortal)
             return "player-moved"
-            # change level, replace portal, update currentLevel,  redraw everything
 
     return "no-action"
 
@@ -122,7 +128,7 @@ def mainGameLoop():
             GAME.viewer.recalculateFov()
             GAME.currentLevel.takeNPCturns()
 
-        graphics.drawGame(GAME.viewer.fovMap)
+        graphics.drawGame()#GAME.viewer.fovMap)
         CLOCK.tick(constants.GAME_FPS)
 
     exitGame()
@@ -142,20 +148,15 @@ def initializeGame():
     # GAME.levels.append(level1)
     # GAME.currentLevel = 0
 
-    # GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    # GAME.viewer.recalculateFov(force=True)
-
     # level2 = Level("mapwPIES3", initPlayer=False)
     # GAME.levels.append(level2)
 
-    # level1 = Level("portalTest1", initPlayer=True)
-    level1 = Level("portalTest1", initPlayer=False)
+    level1 = Level("mapwPIES3", initPlayer=False)
     GAME.levels.append(level1)
-    #GAME.currentLevel = 0
     GAME.currentLevel = level1
     level1.placePlayerAtPortal(level1.portals[0])
 
-    level2 = Level("portalTest2", initPlayer=False)
+    level2 = Level("mapwPIES2", initPlayer=False)
     GAME.levels.append(level1)
 
     level1.portals[0].destinationPortal = level2.portals[0]

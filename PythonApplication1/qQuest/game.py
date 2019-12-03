@@ -33,18 +33,26 @@ class Game:
     @currentLevel.setter
     def currentLevel(self, value):
         self._currentLevel = value
-        # if type(value) == int:
-        #     self.currentLevelIdx = value
-        # else:
-        #     # this is dumb.  
-        #     for idx, level in enumerate(self.levels):
-        #         if level is value:
-        #             self.currentLevelIdx = idx
-        #             break
-        #     raise Exception("currentLevel set is wrong")
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
         updateSurfaceSize(self)
+
+    '''
+    Look at the entry portal, 
+    see what level it points to, 
+    switch the current level to that level, 
+        - this triggers resizing the main surface
+    place the player in the new level at the new portal. 
+        - this also triggers recalculating the fovMap 
+    '''
+    def transitPortal(self, entryPortal):
+        print(f'yer goin thru a portal, Harry!')
+
+        destinationPortal = entryPortal.destinationPortal
+        newLevel = destinationPortal.level
+
+        self.currentLevel = newLevel
+        newLevel.placePlayerAtPortal(destinationPortal)
 
 GAME = Game()
 

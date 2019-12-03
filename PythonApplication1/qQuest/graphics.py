@@ -52,13 +52,19 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawMap(mapToDraw, fovMap):
+'''
+This construction is BAD.  By decoupling the "previously-seen-state" into the underlying map, and not the FovMap, 
+we don't really support multiple or independent viewers.   
+'''
+def drawMap(mapToDraw, viewer=None):# fovMap):
+    if viewer is None:
+        viewer = GAME.viewer
     surface = SURFACE_MAIN
 
-    mapHeight, mapWidth = fovMap.transparent.shape
+    mapHeight, mapWidth = viewer.fovMap.transparent.shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-        tileIsVisible = fovMap.fov[y][x]
+        tileIsVisible = viewer.fovMap.fov[y][x]
         tileIsWall = mapToDraw[y][x].blockPath
         tileIsAlreadyExplored = mapToDraw[y][x].explored
 
@@ -98,23 +104,26 @@ def drawFPS():
              bgColor=constants.COLOR_BLACK)
 
 #TODO:  make the fovMap an actor substitutable thing
-def drawGame(fovMap=None):
-    if fovMap is None:
-        fovMap = GAME.viewer.fovMap
+def drawGame():#fovMap=None):
+    #if fovMap is None:
+    #fovMap = GAME.viewer.fovMap
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
 
-    drawMap(GAME.currentLevel.map, fovMap)
-    drawObjects(fovMap)
+    drawMap(GAME.currentLevel.map)#, viewer=None)
+    drawObjects()#viewer=None)#fovMap)
     drawGameMessages()
     drawDebug()
 
     pygame.display.flip()
 
-def drawObjects(fovMap):
+def drawObjects(viewer=None):#fovMap):
+    if viewer is None:
+        viewer = GAME.viewer
+
     for gameObj in GAME.currentLevel.objects:
         if getattr(gameObj, "deleted", False):# or gameObj.currentContainer:
             return
-        gameObj.draw(fovMap)
+        gameObj.draw(viewer.fovMap)
 
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)

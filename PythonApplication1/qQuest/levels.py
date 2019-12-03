@@ -121,8 +121,6 @@ class Level:
             playerInventory = Container()
             GAME.player = PlayerClass((x,y), "hero", "a_player",
                                       container=playerInventory, level=self)
-            # GAME.player = Creature( (x,y), "hero", "a_player",
-            #         fovMap=True, container=playerInventory, level=self)
         else:
             GAME.player.x = x
             GAME.player.y = y
@@ -148,14 +146,12 @@ class Level:
 
     def addPortal(self, coordX, coordY, name):
         itemDict = TILES[name]
-        # add class variable
         item = Portal( (coordX, coordY), name, itemDict['animation'], level=self, destinationPortal=None)
         self.objects.append(item)
         self.portals.append(item)
 
     def placePlayerAtPortal(self, portal):
         self.addPlayer(portal.x, portal.y)
-        #raise NotImplementedError
 
     def takeNPCturns(self):
         for gameObj in self.objects:
