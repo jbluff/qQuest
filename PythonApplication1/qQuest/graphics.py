@@ -53,46 +53,34 @@ def helperTextObjects(text, textColor, bgColor=None):
     return textSurface, textSurface.get_rect()
 
 '''
-This construction is BAD.  By decoupling the "previously-seen-state" into the underlying map, and not the FovMap, 
-we don't really support multiple or independent viewers.   
-We'd also like the viewing history to be more than "explored" or "not explored".
+We'd like to the viewing history to be more than "explored" or "not explored".
     - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
     - that's a change for down the road, but decoupling to a viewer's personal history will help
 '''
 def drawLevelTiles(viewer=None):
     if viewer is None:
         viewer = GAME.viewer
-
     level = GAME.currentLevel
-    mapToDraw = level.map
     surface = SURFACE_MAIN
 
-    mapHeight, mapWidth = np.array(mapToDraw).shape
+    mapHeight, mapWidth = np.array(level.map).shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
+        tile = level.map[y][x]
+        tileSprite = None
 
-        tileIsVisible = viewer.fov[y][x]
-
-        tileIsWall = mapToDraw[y][x].blockPath #dumb as shit.
-
-        tileIsAlreadyExplored = viewer.getTileExplored(x,y)#mapToDraw[y][x].explored
-
-        tileGraphic = None
-        if tileIsVisible:
-            viewer.setTileExplored(x, y)
-            #mapToDraw[y][x].explored = True
-            if tileIsWall: 
-                tileGraphic = ASSETS.s_wall
-            else:
-                tileGraphic = ASSETS.s_floor
-        elif tileIsAlreadyExplored:
-            if tileIsWall: 
-                tileGraphic = ASSETS.s_wall_dark
-            else:
-                tileGraphic = ASSETS.s_floor_dark
+        tileIsVisible = viewer.getTileIsVisible(x, y)
+        tileIsExplored = viewer.getTileIsExplored(x, y)
         
-        if tileGraphic is not None:
+        if tileIsVisible:
+            viewer.setTileIsExplored(x, y)
+            tileSprite = getattr(ASSETS, tile.inFovSpriteName)
+
+        elif tileIsExplored:
+            tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
+        
+        if tileSprite is not None:
             tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
-            surface.blit(tileGraphic, tilePosition)
+            surface.blit(tileSprite, tilePosition)
 
 def drawGameMessages():
     numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
@@ -147,11 +135,10 @@ def drawTextList(surface, messages, startX=0, startY=0):
 class structAssets():
     '''
     Container class for spriteSheets, sprites, animations
+    This super-duper needs to get refactored.  Kinda weird.
     '''
     def __init__(self):
 
-        #import os
-        #print(os.getcwd())
         root = "pythonApplication1/" #fix this!
         #root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        

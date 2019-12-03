@@ -84,14 +84,14 @@ class Creature(Actor):
         self.creature = True
 
     def move(self, dx, dy):
-        tileIsWall = GAME.currentLevel.map[self.y + dy][self.x + dx].blockPath 
+        tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
 
         if target:
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
 
-        elif not tileIsWall:
+        elif not tileIsBlocking:
             self.x += dx
             self.y += dy
 
@@ -135,18 +135,23 @@ class Viewer(Actor):
         self.fov = self.level.computeFov(self.x, self.y)        
         self.doRecaculateFov = False
 
+    def getTileIsVisible(self, x, y):
+        return self.fov[y][x]
+        
     def initLevelExplorationHistory(self):
         levelID = self.level.uniqueID
         if levelID not in self.explorationHistory.keys(): #first time visiting a level
             self.explorationHistory[levelID] = np.zeros_like(self.level.map, dtype=np.bool).tolist()
 
-    def setTileExplored(self, x, y):
+    def setTileIsExplored(self, x, y):
         levelID = self.level.uniqueID
         self.explorationHistory[levelID][y][x] = True
     
-    def getTileExplored(self, x, y):
+    def getTileIsExplored(self, x, y):
         levelID = self.level.uniqueID
         return self.explorationHistory[levelID][y][x]
+
+
 
 
 

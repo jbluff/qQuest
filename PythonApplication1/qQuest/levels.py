@@ -17,17 +17,20 @@ from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS, NAMES
 from qQuest.lib.tileLib import TILES
 
-class structTile:
-    def __init__(self, blockPath):
-        self.blockPath = blockPath
-        #self.explored = False
+# the tile Sprites will change with level, eventually.
+# like caves vs dungeon vs whatever
+class Tile:
+    def __init__(self, inFovSpriteName, outOfFovSpriteName, blocking=False, seeThru=True):
+        self.inFovSpriteName = inFovSpriteName
+        self.outOfFovSpriteName = outOfFovSpriteName
+        self.blocking = blocking
+        self.seeThru = seeThru
 
 class Level:
     numLevels = 0
 
-    def __init__(self, levelName):#, initPlayer=True):
+    def __init__(self, levelName):
         self.levelName = levelName
-        #self.initPlayer= initPlayer
 
         self.objects = []
         self.portals = []
@@ -50,7 +53,9 @@ class Level:
         decoder = self.levelDict["decoderRing"]
 
         self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
-        self.map = [[structTile(False) for x in range(0, self.mapWidth )] for y in range(0, self.mapHeight)]
+
+        floorTile = Tile("s_floor", "s_floor_dark", blocking=False, seeThru=True)
+        self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
             tileType = decoder[self.levelArray[i][j]]
@@ -58,13 +63,11 @@ class Level:
                 continue
 
             if tileType == "wall":
-                self.map[i][j].blockPath = True
+                self.map[i][j] = Tile("s_wall", "s_wall_dark", blocking=True, seeThru=False)
                 continue
             
             if tileType == "player":
                 # don't use this.  always add player at portal.
-                #if self.initPlayer:
-                #    self.addPlayer(j, i)
                 continue
 
             if tileType in ITEMS.keys():
@@ -83,12 +86,15 @@ class Level:
 
         self.initializeVisibilityMap()
 
+    '''
+    the visibilityMap is a libtcod object for calculating the field of view from any position.
+    '''
     def initializeVisibilityMap(self):
         mapHeight, mapWidth = np.array(self.map).shape
 
         self.visibilityMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
         for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
-            self.visibilityMap.transparent[y][x] = not self.map[y][x].blockPath
+            self.visibilityMap.transparent[y][x] = self.map[y][x].seeThru
         self.recalculateViewerFovs()
 
     def recalculateViewerFovs(self):
