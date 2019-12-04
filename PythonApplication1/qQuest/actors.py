@@ -5,24 +5,20 @@ import numpy as np
 
 from qQuest import constants
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
-from qQuest.graphics import ASSETS
+from qQuest.graphics import Actor
 
+
+
+'''Creatures are Actor children which represent actors that can move, fight, die
 '''
-All drawn things which are not floor ties.  May reflect player, NPCs, items
-'''
-
-class Actor():
-    def __init__(self, pos, name, animationName, ai=None, container=None, item=None, level=None, **kwargs):
-
-        self.x, self.y = pos
-        self.name = name
-        self.animationName = animationName
-        self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
-
-        self.flickerSpeed = self.animationSpeed / len(self.animation)
-        self.flickerTimer = 0
-        self.spriteImageNum = 0
-
+class Creature(Actor):
+    def __init__(self, *args, hp=10, deathFunction=None, ai=None, container=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.hp = hp  
+        self.maxHp = hp
+        self.deathFunction = deathFunction
+        self.creature = True
+ 
         self.ai = ai
         if self.ai:
             self.ai.owner = self
@@ -30,58 +26,6 @@ class Actor():
         self.container = container
         if self.container:
             self.container.owner = self
-
-        #self.creature = None #overwritten by Creature.__init__
-        #self.item = None #overwritten by Item.__init__
-        self.deleted = False
-        self.level = level
-
-    @property
-    def animation(self):
-        return getattr(ASSETS,self.animationName)
-
-    def draw(self):#, fov):#visibilityMap):
-        '''
-        This generality sets up some flexibility, e.g. if we want to see from an
-        NPCs point of view, later.
-        '''
-
-        #isVisible = visibilityMap.fov[self.y, self.x]
-        isVisible = GAME.viewer.fov[self.y][self.x]
-
-        if not isVisible:
-            return 
-
-        if len(self.animation) == 1:
-            currentSprite = self.animation[0]
- 
-        else:
-            if CLOCK.get_fps() > 0.0:
-                '''update the animation's timer.  Note draw() is called once per frame.'''
-                self.flickerTimer += 1/CLOCK.get_fps() 
-
-            if self.flickerTimer > self.flickerSpeed:
-                self.flickerTimer = 0
-                self.spriteImageNum += 1
-                    
-                #TODO, use remainder division
-                if self.spriteImageNum >= len(self.animation):
-                    self.spriteImageNum = 0
-            currentSprite = self.animation[self.spriteImageNum]
-
-        shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT)
-        SURFACE_MAIN.blit(currentSprite, shapeTuple)
-
-'''
-Creatures are actor attributes which represent actors that can move, fight, die
-'''
-class Creature(Actor):
-    def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.hp = hp  
-        self.maxHp = hp
-        self.deathFunction = deathFunction
-        self.creature = True
 
     def move(self, dx, dy):
         tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
@@ -137,7 +81,7 @@ class Viewer(Actor):
 
     def getTileIsVisible(self, x, y):
         return self.fov[y][x]
-        
+
     def initLevelExplorationHistory(self):
         levelID = self.level.uniqueID
         if levelID not in self.explorationHistory.keys(): #first time visiting a level
@@ -183,8 +127,10 @@ class Item(Actor):
         #if depleteFunction is None:
         #    depleteFunction = lambda x: self.__del__
         self.depleteFunction = depleteFunction
-        self.item = True
+        #self.item = True
         #self.currentContainer = None
+
+        self.deleted = False
         
     def pickup(self, actor):
         if actor.container:

@@ -184,5 +184,7 @@ class Level:
 
     def takeNPCturns(self):
         for gameObj in self.objects:
-            if gameObj.ai:
+            #if gameObj.ai:
+            #if isinstance(gameObj, Creature): #this isn't perfect.
+            if getattr(gameObj, "ai", None):
                 gameObj.ai.takeTurn()

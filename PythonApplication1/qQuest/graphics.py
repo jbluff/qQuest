@@ -52,8 +52,7 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-'''
-We'd like to the viewing history to be more than "explored" or "not explored".
+'''We'd like to the viewing history to be more than "explored" or "not explored".
     - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
     - that's a change for down the road, but decoupling to a viewer's personal history will help
 '''
@@ -68,10 +67,10 @@ def drawLevelTiles(viewer=None):
         tile = level.map[y][x]
         tileSprite = None
 
-        tileIsVisible = viewer.getTileIsVisible(x, y)
+        tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
         
-        if tileIsVisible:
+        if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
             tileSprite = getattr(ASSETS, tile.inFovSpriteName)
 
@@ -117,6 +116,52 @@ def drawObjects():
             return
         gameObj.draw()
 
+'''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
+class Actor():
+    def __init__(self, pos, name, animationName, level=None, **kwargs):
+
+        self.x, self.y = pos
+        self.name = name
+        self.animationName = animationName
+        self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
+
+        self.flickerSpeed = self.animationSpeed / len(self.animation)
+        self.flickerTimer = 0
+        self.spriteImageNum = 0
+
+        self.level = level
+
+    @property
+    def animation(self):
+        return getattr(ASSETS,self.animationName)
+
+    def draw(self):
+        isVisible = GAME.viewer.fov[self.y][self.x]
+
+        if not isVisible:
+            return 
+
+        if len(self.animation) == 1:
+            currentSprite = self.animation[0]
+ 
+        else:
+            if CLOCK.get_fps() > 0.0:
+                '''update the animation's timer.  Note draw() is called once per frame.'''
+                self.flickerTimer += 1/CLOCK.get_fps() 
+
+            if self.flickerTimer > self.flickerSpeed:
+                self.flickerTimer = 0
+                self.spriteImageNum += 1
+                    
+                #TODO, use remainder division
+                if self.spriteImageNum >= len(self.animation):
+                    self.spriteImageNum = 0
+            currentSprite = self.animation[self.spriteImageNum]
+
+        shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT)
+        SURFACE_MAIN.blit(currentSprite, shapeTuple)
+
+
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
     textRect.topleft = coords
@@ -150,10 +195,10 @@ class structAssets():
         self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
 
        
-        self.s_wall = pygame.image.load(root+'16x16figs/wall.png')
-        self.s_wall_dark = pygame.image.load(root+'16x16figs/wall_dark.png')
-        self.s_floor = pygame.image.load(root+'16x16figs/floor.png')
-        self.s_floor_dark = pygame.image.load(root+'16x16figs/floor_dark.png')
+        self.s_wall = pygame.image.load(root+'16x16figs/wall.png').convert()
+        self.s_wall_dark = pygame.image.load(root+'16x16figs/wall_dark.png').convert()
+        self.s_floor = pygame.image.load(root+'16x16figs/floor.png').convert()
+        self.s_floor_dark = pygame.image.load(root+'16x16figs/floor_dark.png').convert()
 
         self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
         self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
