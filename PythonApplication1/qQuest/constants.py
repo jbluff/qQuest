@@ -7,6 +7,9 @@ pygame.init()
 CELL_WIDTH = 16
 CELL_HEIGHT = 16
 
+CAMERA_WIDTH =  15# 20 # in cells
+CAMERA_HEIGHT = 7# 15 # in cells
+
 ''' Color definitions '''
 COLOR_BLACK = (0, 0, 0)
 COLOR_WHITE = (255, 255, 255)

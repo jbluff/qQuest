@@ -9,7 +9,9 @@ from qQuest import constants
 #from qQuest import map_util
 
 CLOCK = pygame.time.Clock()
-SURFACE_MAIN = pygame.display.set_mode((100,100))
+#SURFACE_MAIN = pygame.display.set_mode((100,100))
+SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
+                                        constants.CAMERA_HEIGHT*constants.CELL_HEIGHT))
 
 class Game:
     def __init__(self):
@@ -57,5 +59,8 @@ class Game:
 GAME = Game()
 
 def updateSurfaceSize(game):
-    pygame.display.set_mode((game.mapWidth*constants.CELL_WIDTH,
-                             game.mapHeight*constants.CELL_HEIGHT))
+    return None
+    # pygame.display.set_mode((game.mapWidth*constants.CELL_WIDTH,
+    #                          game.mapHeight*constants.CELL_HEIGHT))
+    #pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
+    #                         constants.CAMERA_HEIGHT*constants.CELL_HEIGHT))

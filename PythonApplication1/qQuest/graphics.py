@@ -6,6 +6,34 @@ import numpy as np
 from qQuest import constants
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 
+class Camera:
+    def __init__(self, viewer=None):
+        self.viewer = viewer
+        self.updatePositionFromViewer()
+
+    
+    def updatePositionFromViewer(self):
+        if self.viewer is not None:
+            self.x = self.viewer.x
+            self.y = self.viewer.y
+
+    def canSee(self, x, y):
+        w = constants.CAMERA_WIDTH
+        h = constants.CAMERA_HEIGHT
+
+        isVisisble = (x < self.x+w/2) and (x > self.x-w/2) and (y < self.y+h/2) and (y > self.y-h/2)
+
+        #if self.viewer is not None:
+
+        return isVisisble
+
+    def drawPosition(self, x, y):
+        w = constants.CAMERA_WIDTH
+        h = constants.CAMERA_HEIGHT
+
+        return (x - self.x + w/2, y - self.y + h/2)
+        
+
 class objSpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations '''
     def __init__(self, fileName, imageUnitX=constants.CELL_WIDTH, imageUnitY=constants.CELL_HEIGHT):
@@ -69,16 +97,22 @@ def drawLevelTiles(viewer=None):
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
+
+        if not GAME.camera.canSee(x, y):
+            continue
         
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
-            tileSprite = getattr(ASSETS, tile.inFovSpriteName)
+            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
 
         elif tileIsExplored:
             tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
         
         if tileSprite is not None:
-            tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
+            drawX, drawY = GAME.camera.drawPosition(x, y)
+
+            #tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
+            tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
             surface.blit(tileSprite, tilePosition)
 
 def drawGameMessages():
@@ -136,10 +170,13 @@ class Actor():
         return getattr(ASSETS,self.animationName)
 
     def draw(self):
-        isVisible = GAME.viewer.fov[self.y][self.x]
-
-        if not isVisible:
+        #isInViewerFov = GAME.viewer.fov[self.y][self.x]
+        isInViewerFov = GAME.viewer.getTileIsVisible(self.x, self.y)
+        if not isInViewerFov:
             return 
+
+        if not GAME.camera.canSee(self.x, self.y):
+            return
 
         if len(self.animation) == 1:
             currentSprite = self.animation[0]
@@ -158,7 +195,10 @@ class Actor():
                     self.spriteImageNum = 0
             currentSprite = self.animation[self.spriteImageNum]
 
-        shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT)
+        drawX, drawY = GAME.camera.drawPosition(self.x, self.y)
+        shapeTuple = (drawX * constants.CELL_WIDTH, drawY * constants.CELL_HEIGHT) #really position, not shape
+
+        # shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT) #really position, not shape
         SURFACE_MAIN.blit(currentSprite, shapeTuple)
 
 

@@ -127,6 +127,7 @@ def mainGameLoop():
         if playerAction == "player-moved":
             GAME.viewer.recalculateFov()
             GAME.currentLevel.takeNPCturns()
+            GAME.camera.updatePositionFromViewer()
 
         graphics.drawGame()
         CLOCK.tick(constants.GAME_FPS)
@@ -164,6 +165,8 @@ def initializeGame():
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
     GAME.viewer.recalculateFov(force=True)
+
+    GAME.camera = graphics.Camera(viewer=GAME.player)
 
 if __name__ == "__main__":
     initializeGame()

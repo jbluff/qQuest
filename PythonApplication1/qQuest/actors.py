@@ -1,7 +1,6 @@
 import itertools
 
 import numpy as np
-# import tcod as libtcod
 
 from qQuest import constants
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
@@ -63,9 +62,12 @@ class Creature(Actor):
         return None
   
 class Viewer(Actor):
-    """
-    As an Actor instance, it has reference to a level and a position.
-    For each level it's been to, it keeps a history of what it has previously seen (for fog of war/fov)
+    """As an Actor instance, it has reference to a level and a position.
+    Viewers introduce the functionality of having a field of view, and we can calculate what they can see.
+    They also keep a history of what they have seen (think fog of war.) for each level they've interacted with
+
+    Note:  Viewers are not (generally) Cameras.  We might care about what an NPC can see, but we often
+        won't use it to reflect what's drawn in the game. 
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,9 +98,9 @@ class Viewer(Actor):
         return self.explorationHistory[levelID][y][x]
 
 
-
-
-
+""" This class is a Creature, with a field of view -- this name needs to change once we use NPC
+AIs that care about FOV.   It'll be used for more than just the player(s).  
+"""
 class PlayerClass(Creature, Viewer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -107,13 +109,16 @@ class PlayerClass(Creature, Viewer):
         super().move(dx, dy)
         self.doRecaculateFov = True
 
-'''
-Items are an actor attribute.
+"""Items are an Actor child which 
+- don't move
+- can be picked up
+- may have perform some function when 'used'
+
 useFunction : called when the item is used, passed self
 numCharges : number of items item is used before..
 depleteFunction : called (passed self) when charges run out.
     defaults to delete self.  Allows for e.g. turning into an empty bottle
-'''
+"""
 class Item(Actor):
     def __init__(self, *args, weight=0.0, volume=0.0, 
                  useFunction=None, numCharges=1, depleteFunction=None, **kwargs):
@@ -230,6 +235,7 @@ Destroys a creature, turns it into a corpse and drops its inventory items.
 > also want the ability to change the graphic
 > also kwargs can have e.g. weight, useFunction
 '''
+"""TODO:  make this a method in the Creature class.  self=Item(...)"""
 def creatureToItems(creature, **kwargs):
 
     itemList = []

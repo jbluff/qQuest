@@ -6,7 +6,7 @@ import random
 import numpy as np
 import tcod as libtcod
 
-#from qQuest import map_util
+
 from qQuest import ai, constants
 
 from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal, PlayerClass, Viewer
@@ -26,13 +26,16 @@ class Tile:
         self.blocking = blocking
         self.seeThru = seeThru
 
+    def doDraw(self, viewer=None, camera=None):
+        raise NotImplementedError
+
 class Level:
     numLevels = 0
 
     def __init__(self, levelName):
         self.levelName = levelName
 
-        self.objects = []
+        self.objects = [] #should this be a set?   would it simplify deletion?
         self.portals = []
 
         self.loadLevelFile()
