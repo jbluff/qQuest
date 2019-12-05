@@ -27,11 +27,15 @@ class Camera:
 
         return isVisisble
 
+    '''Converts a game map position to a draw position, both still in units of cells'''
     def drawPosition(self, x, y):
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
 
-        return (x - self.x + w/2, y - self.y + h/2)
+        #dx = constants.CELL_WIDTH
+        #dy = constants.CELL_HEIGHT
+
+        return (x - self.x + w/2 - 0.5, y - self.y + h/2 - 0.5)
         
 
 class objSpriteSheet:
@@ -70,85 +74,6 @@ class objSpriteSheet:
             imageList.append(image)
         return imageList
  
-def helperTextDims(text='a',font=constants.FONT_DEBUG):
-    fontObject = font.render(text, False, (0,0,0))
-    fontRect = fontObject.get_rect()
-    return fontRect.width, fontRect.height
-
-def helperTextObjects(text, textColor, bgColor=None):
-    ''' Render text, return surface and bounding geometry '''
-    textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
-    return textSurface, textSurface.get_rect()
-
-'''We'd like to the viewing history to be more than "explored" or "not explored".
-    - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
-    - that's a change for down the road, but decoupling to a viewer's personal history will help
-'''
-def drawLevelTiles(viewer=None):
-    if viewer is None:
-        viewer = GAME.viewer
-    level = GAME.currentLevel
-    surface = SURFACE_MAIN
-
-    mapHeight, mapWidth = np.array(level.map).shape
-    for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
-        tile = level.map[y][x]
-        tileSprite = None
-
-        tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
-        tileIsExplored = viewer.getTileIsExplored(x, y)
-
-        if not GAME.camera.canSee(x, y):
-            continue
-        
-        if tileIsVisibleToViewer:
-            viewer.setTileIsExplored(x, y)
-            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
-
-        elif tileIsExplored:
-            tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
-        
-        if tileSprite is not None:
-            drawX, drawY = GAME.camera.drawPosition(x, y)
-
-            #tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
-            tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
-            surface.blit(tileSprite, tilePosition)
-
-def drawGameMessages():
-    numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
-    if(numMessages==0):
-        return 0
-    messages = GAME.messageHistory[-numMessages:]
-
-    _, height = helperTextDims()
-    startY = SURFACE_MAIN.get_height() - numMessages*height
-
-    drawTextList(SURFACE_MAIN, messages, startX=0, startY=startY)
-
-def drawDebug():
-    drawFPS()
-
-def drawFPS():
-    drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
-             bgColor=constants.COLOR_BLACK)
-
-def drawGame():
-
-    SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
-
-    drawLevelTiles()
-    drawObjects()
-    drawGameMessages()
-    drawDebug()
-
-    pygame.display.flip()
-
-def drawObjects():
-    for gameObj in GAME.currentLevel.objects:
-        if getattr(gameObj, "deleted", False):
-            return
-        gameObj.draw()
 
 '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
 class Actor():
@@ -202,12 +127,92 @@ class Actor():
         SURFACE_MAIN.blit(currentSprite, shapeTuple)
 
 
+'''We'd like to the viewing history to be more than "explored" or "not explored".
+    - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
+    - that's a change for down the road, but decoupling to a viewer's personal history will help
+'''
+def drawLevelTiles(viewer=None):
+    if viewer is None:
+        viewer = GAME.viewer
+    level = GAME.currentLevel
+    surface = SURFACE_MAIN
+
+    mapHeight, mapWidth = np.array(level.map).shape
+    for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
+        tile = level.map[y][x]
+        tileSprite = None
+
+        tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
+        tileIsExplored = viewer.getTileIsExplored(x, y)
+
+        if not GAME.camera.canSee(x, y):
+            continue
+        
+        if tileIsVisibleToViewer:
+            viewer.setTileIsExplored(x, y)
+            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
+
+        elif tileIsExplored:
+            tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
+        
+        if tileSprite is not None:
+            drawX, drawY = GAME.camera.drawPosition(x, y)
+
+            #tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
+            tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
+            surface.blit(tileSprite, tilePosition)
+
+
+def helperTextDims(text='a',font=constants.FONT_DEBUG):
+    fontObject = font.render(text, False, (0,0,0))
+    fontRect = fontObject.get_rect()
+    return fontRect.width, fontRect.height
+
+def helperTextObjects(text, textColor, bgColor=None):
+    ''' Render text, return surface and bounding geometry '''
+    textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
+    return textSurface, textSurface.get_rect()
+
+def drawGameMessages():
+    numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
+    if(numMessages==0):
+        return 0
+    messages = GAME.messageHistory[-numMessages:]
+
+    _, height = helperTextDims()
+    startY = SURFACE_MAIN.get_height() - numMessages*height
+
+    drawTextList(SURFACE_MAIN, messages, startX=0, startY=startY)
+
+def drawDebug():
+    drawFPS()
+
+def drawFPS():
+    drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
+             bgColor=constants.COLOR_BLACK)
+
+def drawGame():
+
+    SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+
+    drawLevelTiles()
+    drawObjects()
+    drawGameMessages()
+    drawDebug()
+
+    pygame.display.flip()
+
+def drawObjects():
+    for gameObj in GAME.currentLevel.objects:
+        if getattr(gameObj, "deleted", False):
+            return
+        gameObj.draw()
+
 def drawText(displaySurface, text, coords, textColor, bgColor=None):
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
     textRect.topleft = coords
     displaySurface.blit(textSurf, textRect)
  
-
 def drawTextList(surface, messages, startX=0, startY=0):
     '''
     Draw a list of text.  
@@ -257,5 +262,4 @@ class structAssets():
         #                                                 imageUnitX=32, imageUnitY=32)
         self.s_ladder = self.dungeon_ss.getAnimation(colIdx=9, rowIdx=3, numSprites=1)
         
-
 ASSETS = structAssets()
