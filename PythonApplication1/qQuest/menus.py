@@ -14,6 +14,19 @@ SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")
 #Todo:  make MenuListItem class
 # selected or not
 # selectable or not
+class MenuListItem():
+    def __init__(self, text,
+                       textColorUnsel=constants.COLOR_WHITE, 
+                       bgColorUnsel=constants.COLOR_BLACK, 
+                       selectable=True, 
+                       textColorSel=constants.COLOR_RED, 
+                       bgColorSel=constants.COLOR_DGREY):
+        self.text = text
+        self.textColorUnsel = textColorUnsel
+        self.bgColorUnsel = bgColorUnsel
+        self.selectable = selectable
+        self.textColorSel = textColorSel
+        self.bgColorSel = bgColorSel
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -99,7 +112,7 @@ class PauseMenu(Menu):
             self.breakLoop = True
 
     def redrawMenuBody(self):
-        graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE]])
+        graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE,constants.COLOR_BLACK]])
 
 class TextListMenu(Menu):
     def __init__(self, parentSurface):
@@ -155,7 +168,8 @@ class TextListMenu(Menu):
 
 class SaveLoadMenu(TextListMenu):
     def initTextList(self):
-        self.textList = [["Save", constants.COLOR_WHITE],["Load", constants.COLOR_WHITE]]
+        self.textList = [["Save", constants.COLOR_WHITE,constants.COLOR_BLACK],
+                         ["Load", constants.COLOR_WHITE,constants.COLOR_BLACK]]
  
     def parseEvent(self, event):
         ret = super().parseEvent(event)
@@ -189,8 +203,8 @@ class InventoryMenu(TextListMenu):
         super().__init__(parentSurface)
 
     def initTextList(self):
-        self.textList = [["Inventory:", constants.COLOR_WHITE],]
-        self.textList.extend([[obj.name,constants.COLOR_GREY] for obj in self.actor.container.inventory if not obj.deleted])
+        self.textList = [["Inventory:", constants.COLOR_WHITE,constants.COLOR_BLACK]]
+        self.textList.extend([[obj.name,constants.COLOR_GREY,constants.COLOR_BLACK] for obj in self.actor.container.inventory if not obj.deleted])
 
     def parseEvent(self, event):
         ret = super().parseEvent(event)
@@ -222,7 +236,7 @@ class LoadMenu(TextListMenu):
     def initTextList(self):
         allFiles = listSavedGames()
 
-        self.textList = [[f, constants.COLOR_WHITE] for f in allFiles]
+        self.textList = [[f, constants.COLOR_WHITE,constants.COLOR_BLACK] for f in allFiles]
  
     def parseEvent(self, event):
         ret = super().parseEvent(event)

@@ -11,6 +11,7 @@ Basic object structure:
         - Levels
         - Player 
         - Viewer (generally player)
+        - Camera
         and is the principal thing that supports saving, loading, and changing levels
 
     - Level type contains
@@ -42,11 +43,10 @@ TODO:
 - Refactoring menu list items
     - adding text-entry menu list items
 
-- Camera stuff
 - Image processing on procGen rooms for rounding etc.
 
 - Make this faster, damnit.  Why is the FPS dropping?  
-    - will camera stuff fix it?  do we need to use a reduced FOVmap?  why slow.  
+    - Change camera structure?  Limit updating rectangles?
 - Give Monsters a "properties" section.  Not quite sure how that should work, yet.
 
 - Support for non-square roomes 
@@ -171,9 +171,9 @@ def initializeGame():
 if __name__ == "__main__":
     initializeGame()
 
-    #import cProfile
-    #cProfile.run('mainGameLoop()')
-    mainGameLoop()
+    import cProfile
+    cProfile.run('mainGameLoop()')
+    #mainGameLoop()
 
     
 

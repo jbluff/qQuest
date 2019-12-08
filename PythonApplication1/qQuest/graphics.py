@@ -219,8 +219,8 @@ def drawTextList(surface, messages, startX=0, startY=0):
     StartX and startY show upper left coordinate of textList on surface.
     '''
     _, height = helperTextDims()
-    for idx, (message, color) in enumerate(messages):
-        drawText(surface,message, (startX, startY+idx*height),color,constants.COLOR_BLACK)  
+    for idx, (message, textColor, bgColor) in enumerate(messages):
+        drawText(surface,message, (startX, startY+idx*height),textColor,bgColor)  
 
 class structAssets():
     '''

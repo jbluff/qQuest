@@ -3,15 +3,20 @@ Covers the Game class, as well as the global singletons GAME, CLOCK, and SURFACE
 """
 
 import pygame
+from pygame.locals import DOUBLEBUF
 import numpy as np
 
 from qQuest import constants
 #from qQuest import map_util
 
+
+#flags = FULLSCREEN | DOUBLEBUF
+#screen = pygame.display.set_mode(resolution, flags, bpp)
+
 CLOCK = pygame.time.Clock()
-#SURFACE_MAIN = pygame.display.set_mode((100,100))
 SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
-                                        constants.CAMERA_HEIGHT*constants.CELL_HEIGHT))
+                                        constants.CAMERA_HEIGHT*constants.CELL_HEIGHT),
+                                        DOUBLEBUF)
 
 class Game:
     def __init__(self):
@@ -22,11 +27,7 @@ class Game:
         self.player = None
 
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
-        self.messageHistory.append((messageText, color))
-
-    def switchLevel(self):
-        self.currentLevel = False
-        raise NotImplementedError
+        self.messageHistory.append((messageText, color, constants.COLOR_BLACK))
 
     @property
     def currentLevel(self):
@@ -37,7 +38,7 @@ class Game:
         self._currentLevel = value
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
-        updateSurfaceSize(self)
+        # updateSurfaceSize(self) # I think is no longer needed after the camera addition?
 
     '''
     Look at the entry portal, 
@@ -48,8 +49,6 @@ class Game:
         - this also triggers recalculating the fovMap 
     '''
     def transitPortal(self, entryPortal):
-        print(f'yer goin thru a portal, Harry!')
-
         destinationPortal = entryPortal.destinationPortal
         newLevel = destinationPortal.level
 
