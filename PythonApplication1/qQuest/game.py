@@ -17,6 +17,10 @@ CLOCK = pygame.time.Clock()
 SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
                                         constants.CAMERA_HEIGHT*constants.CELL_HEIGHT),
                                         DOUBLEBUF)
+# SURFACE_FOG = pygame.Surface((int(constants.CAMERA_WIDTH*constants.CELL_WIDTH),
+#                               int(constants.CAMERA_HEIGHT*constants.CELL_HEIGHT)))
+# SURFACE_FOG.set_alpha(100)
+
 
 class Game:
     def __init__(self):

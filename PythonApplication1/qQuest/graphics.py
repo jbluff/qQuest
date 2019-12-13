@@ -141,6 +141,7 @@ def drawLevelTiles(viewer=None):
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
         tile = level.map[y][x]
         tileSprite = None
+        fogRect = None
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
@@ -153,14 +154,37 @@ def drawLevelTiles(viewer=None):
             tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
 
         elif tileIsExplored:
-            tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
-        
+
+            #tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
+            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
+            # drawX, drawY = GAME.camera.drawPosition(x, y)
+            # tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
+
+            # fogRect = pygame.Rect(0,#drawX*constants.CELL_WIDTH,
+            #                       0,#drawY*constants.CELL_HEIGHT,
+            #                       constants.CELL_WIDTH,
+            #                       constants.CELL_HEIGHT)
+            # SURFACE_FOG.blit
+            pass
+
         if tileSprite is not None:
             drawX, drawY = GAME.camera.drawPosition(x, y)
 
             #tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
             tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
             surface.blit(tileSprite, tilePosition)
+
+            if tileIsExplored and not tileIsVisibleToViewer:
+
+                #tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
+                #tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
+                #drawX, drawY = GAME.camera.drawPosition(x, y)
+                #tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
+
+                fogSurface = pygame.Surface((constants.CELL_WIDTH,
+                                             constants.CELL_HEIGHT))
+                fogSurface.set_alpha(200)
+                surface.blit(fogSurface, tilePosition)
 
 
 def helperTextDims(text='a',font=constants.FONT_DEBUG):
@@ -199,6 +223,8 @@ def drawGame():
     drawObjects()
     drawGameMessages()
     drawDebug()
+
+    #SURFACE_MAIN.blit(SURFACE_FOG, (0,0))
 
     pygame.display.flip()
 
