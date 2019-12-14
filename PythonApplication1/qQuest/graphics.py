@@ -21,19 +21,34 @@ class Camera:
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
 
-        isVisisble = (x < self.x+w/2) and (x > self.x-w/2) and (y < self.y+h/2) and (y > self.y-h/2)
+        #isVisisble = (x < self.x+w/2) and (x > self.x-w/2) and (y < self.y+h/2) and (y > self.y-h/2)
+        #xVisible = (x < self.x+w/2) and (x > self.x-w/2) 
+        xVisible = (x < self.x+w) and (x > self.x-w) 
+        yVisible = (y < self.y+h) and (y > self.y-h)
 
-        #if self.viewer is not None:
+        return xVisible and yVisible
 
-        return isVisisble
+    def getUpperLeftCorner(self):
+        w = constants.CAMERA_WIDTH
+        h = constants.CAMERA_HEIGHT 
+
+        # the -w/2 and -h/2 are to center the camera,
+        # the +w and +h are to deal with the map buffer
+        return (self.x-w/2+w)*constants.CELL_WIDTH, (self.y-h/2+h)*constants.CELL_HEIGHT
+
+
+    def getViewingRect(self):
+        w = constants.CAMERA_WIDTH
+        h = constants.CAMERA_HEIGHT
+        map_rect = pygame.Rect(*self.getUpperLeftCorner(),
+                               w*constants.CELL_WIDTH,
+                               h*constants.CELL_HEIGHT)
+        return map_rect
 
     '''Converts a game map position to a draw position, both still in units of cells'''
     def drawPosition(self, x, y):
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
-
-        #dx = constants.CELL_WIDTH
-        #dy = constants.CELL_HEIGHT
 
         return (x - self.x + w/2 - 0.5, y - self.y + h/2 - 0.5)
         
@@ -126,65 +141,69 @@ class Actor():
         # shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT) #really position, not shape
         SURFACE_MAIN.blit(currentSprite, shapeTuple)
 
-
-'''We'd like to the viewing history to be more than "explored" or "not explored".
-    - if the map changes out-of-sight, the fog of war needs to reflect the tiles before they changes.
-    - that's a change for down the road, but decoupling to a viewer's personal history will help
+''' Blits together all of the images that make up the background of a given map.
+This only needs to be called roughly once, when a level is first instantiated.
 '''
-def drawLevelTiles(viewer=None):
+def drawAllLevelTiles(level=None) -> pygame.Surface:
+    if level is None:
+        level = GAME.currentLevel
+
+    mapHeight, mapWidth = np.array(level.map).shape
+    camWidth, camHeight = constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT
+
+    # note the +/- camWidth and camHeight buffer regions.
+    level_surface = pygame.Surface(((mapWidth+2*camWidth)*constants.CELL_WIDTH,
+                                    (mapHeight+2*camHeight)*constants.CELL_HEIGHT))
+    #level_surface.fill(constants.COLOR_BLACK)
+
+    for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
+        tile = level.map[y][x]
+
+        tileSprite = getattr(ASSETS, tile.inFovSpriteName) 
+        tilePosition = ((x+camWidth)*constants.CELL_WIDTH, 
+                        (y+camHeight)*constants.CELL_HEIGHT)
+        level_surface.blit(tileSprite, tilePosition)
+
+    return level_surface
+
+
+''' The draws the game map.  Everything other than objects and menus and text. '''
+def drawLevel(viewer=None):
     if viewer is None:
         viewer = GAME.viewer
     level = GAME.currentLevel
     surface = SURFACE_MAIN
 
+    map_rect = GAME.camera.getViewingRect()
+    map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
+    map_subsurface = map_surface.subsurface(map_rect)
+    surface.blit(map_subsurface, (-0.5*constants.CELL_WIDTH,-0.5*constants.CELL_HEIGHT))
+
+    # this looping is dumb, we should be looping over the camera range instead of
+    # the whole map.
     mapHeight, mapWidth = np.array(level.map).shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
-        tile = level.map[y][x]
-        tileSprite = None
-        fogRect = None
+
+        if not GAME.camera.canSee(x, y):
+            continue
+        drawX, drawY = GAME.camera.drawPosition(x, y)
+        tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
 
-        if not GAME.camera.canSee(x, y):
-            continue
-        
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
-            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
 
-        elif tileIsExplored:
+        else: 
+            blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
+            blankTile.fill(constants.COLOR_BLACK)
 
-            #tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
-            tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
-            # drawX, drawY = GAME.camera.drawPosition(x, y)
-            # tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
+            # seen it before tho -- fog of war.
+            if tileIsExplored:
+                blankTile.set_alpha(200)
+            surface.blit(blankTile, tilePosition)
 
-            # fogRect = pygame.Rect(0,#drawX*constants.CELL_WIDTH,
-            #                       0,#drawY*constants.CELL_HEIGHT,
-            #                       constants.CELL_WIDTH,
-            #                       constants.CELL_HEIGHT)
-            # SURFACE_FOG.blit
-            pass
-
-        if tileSprite is not None:
-            drawX, drawY = GAME.camera.drawPosition(x, y)
-
-            #tilePosition = (x*constants.CELL_WIDTH, y*constants.CELL_HEIGHT)
-            tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
-            surface.blit(tileSprite, tilePosition)
-
-            if tileIsExplored and not tileIsVisibleToViewer:
-
-                #tileSprite = getattr(ASSETS, tile.outOfFovSpriteName)
-                #tileSprite = getattr(ASSETS, tile.inFovSpriteName) #bad bad bad
-                #drawX, drawY = GAME.camera.drawPosition(x, y)
-                #tilePosition = (drawX*constants.CELL_WIDTH, drawY*constants.CELL_HEIGHT)
-
-                fogSurface = pygame.Surface((constants.CELL_WIDTH,
-                                             constants.CELL_HEIGHT))
-                fogSurface.set_alpha(200)
-                surface.blit(fogSurface, tilePosition)
 
 
 def helperTextDims(text='a',font=constants.FONT_DEBUG):
@@ -217,9 +236,13 @@ def drawFPS():
 
 def drawGame():
 
-    SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
+    SURFACE_MAIN.fill(constants.COLOR_BLACK)
 
-    drawLevelTiles()
+    # TEST
+    #SURFACE_MAIN.blit(ASSETS.compiledLevelMaps[GAME.levels[0].uniqueID], (0,0))
+
+
+    drawLevel()
     drawObjects()
     drawGameMessages()
     drawDebug()
@@ -254,6 +277,8 @@ class structAssets():
     This super-duper needs to get refactored.  Kinda weird.
     '''
     def __init__(self):
+
+        self.compiledLevelMaps = {}
 
         root = "pythonApplication1/" #fix this!
         #root = ""

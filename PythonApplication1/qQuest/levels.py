@@ -11,7 +11,7 @@ from qQuest import ai, constants
 
 from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal, PlayerClass, Viewer
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
-from qQuest.graphics import ASSETS
+from qQuest.graphics import ASSETS, drawAllLevelTiles
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS, NAMES
@@ -43,7 +43,14 @@ class Level:
 
         self.uniqueID = f'level{Level.numLevels}'
         Level.numLevels += 1
-        
+
+        self.compileMapGraphic()
+
+    def compileMapGraphic(self, force=False):
+        if (self.uniqueID not in ASSETS.compiledLevelMaps) and (not force):
+            levelSurface = drawAllLevelTiles(level=self)
+            ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
+
 
     def loadLevelFile(self):
         filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")

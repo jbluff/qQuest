@@ -171,10 +171,10 @@ def initializeGame():
 if __name__ == "__main__":
     initializeGame()
 
-    #import cProfile
-    #cProfile.run('mainGameLoop()')
+    # import cProfile
+    # cProfile.run('mainGameLoop()')
+
     mainGameLoop()
 
-    
 
 

@@ -16,17 +16,12 @@ from qQuest import constants
 CLOCK = pygame.time.Clock()
 SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
                                         constants.CAMERA_HEIGHT*constants.CELL_HEIGHT),
-                                        DOUBLEBUF)
-# SURFACE_FOG = pygame.Surface((int(constants.CAMERA_WIDTH*constants.CELL_WIDTH),
-#                               int(constants.CAMERA_HEIGHT*constants.CELL_HEIGHT)))
-# SURFACE_FOG.set_alpha(100)
+                                        pygame.FULLSCREEN)
 
 
 class Game:
     def __init__(self):
         self.messageHistory = []
-
-        # self.currentLevelIdx = None
         self.levels = []
         self.player = None
 
@@ -42,7 +37,6 @@ class Game:
         self._currentLevel = value
 
         self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
-        # updateSurfaceSize(self) # I think is no longer needed after the camera addition?
 
     '''
     Look at the entry portal, 
@@ -61,9 +55,3 @@ class Game:
 
 GAME = Game()
 
-def updateSurfaceSize(game):
-    return None
-    # pygame.display.set_mode((game.mapWidth*constants.CELL_WIDTH,
-    #                          game.mapHeight*constants.CELL_HEIGHT))
-    #pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
-    #                         constants.CAMERA_HEIGHT*constants.CELL_HEIGHT))
