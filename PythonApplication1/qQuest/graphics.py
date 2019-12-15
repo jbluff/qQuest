@@ -1,4 +1,5 @@
 import itertools
+import copy
 
 import pygame
 import numpy as np
@@ -9,13 +10,13 @@ from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 class Camera:
     def __init__(self, viewer=None):
         self.viewer = viewer
-        self.updatePositionFromViewer()
+        self.updatePositionFromViewer() # in cells
 
     
     def updatePositionFromViewer(self):
         if self.viewer is not None:
-            self.x = self.viewer.x
-            self.y = self.viewer.y
+            self.x = self.viewer.graphicX # x
+            self.y = self.viewer.graphicY # y
 
     def canSee(self, x, y):
         w = constants.CAMERA_WIDTH
@@ -34,7 +35,10 @@ class Camera:
 
         # the -w/2 and -h/2 are to center the camera,
         # the +w and +h are to deal with the map buffer
-        return (self.x-w/2+w)*constants.CELL_WIDTH, (self.y-h/2+h)*constants.CELL_HEIGHT
+        # return (self.x-w/2+w)*constants.CELL_WIDTH, (self.y-h/2+h)*constants.CELL_HEIGHT
+        xDrawingPos = (self.x-w/2+w)*constants.CELL_WIDTH
+        yDrawingPos = (self.y-h/2+h)*constants.CELL_HEIGHT
+        return (xDrawingPos, yDrawingPos)
 
 
     def getViewingRect(self):
@@ -95,6 +99,11 @@ class Actor():
     def __init__(self, pos, name, animationName, level=None, **kwargs):
 
         self.x, self.y = pos
+
+        # X and Y are ints annd represent grid locations for most logic purposes
+        # graphicX and graphicY are where the sprite is drawn, and can be floats.
+        self.graphicX, self.graphicY = copy.copy(pos)
+
         self.name = name
         self.animationName = animationName
         self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
@@ -120,22 +129,20 @@ class Actor():
 
         if len(self.animation) == 1:
             currentSprite = self.animation[0]
- 
         else:
             if CLOCK.get_fps() > 0.0:
-                '''update the animation's timer.  Note draw() is called once per frame.'''
                 self.flickerTimer += 1/CLOCK.get_fps() 
 
             if self.flickerTimer > self.flickerSpeed:
                 self.flickerTimer = 0
                 self.spriteImageNum += 1
                     
-                #TODO, use remainder division
-                if self.spriteImageNum >= len(self.animation):
+                if self.spriteImageNum >= len(self.animation): #modulo
                     self.spriteImageNum = 0
             currentSprite = self.animation[self.spriteImageNum]
 
-        drawX, drawY = GAME.camera.drawPosition(self.x, self.y)
+        #drawX, drawY = GAME.camera.drawPosition(self.x, self.y)
+        drawX, drawY = GAME.camera.drawPosition(self.graphicX, self.graphicY)
         shapeTuple = (drawX * constants.CELL_WIDTH, drawY * constants.CELL_HEIGHT) #really position, not shape
 
         # shapeTuple = (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT) #really position, not shape

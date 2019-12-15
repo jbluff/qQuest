@@ -11,13 +11,12 @@ from qQuest import constants
 
 
 #flags = FULLSCREEN | DOUBLEBUF
-#screen = pygame.display.set_mode(resolution, flags, bpp)
 
 CLOCK = pygame.time.Clock()
-SURFACE_MAIN = pygame.display.set_mode((constants.CAMERA_WIDTH*constants.CELL_WIDTH,
-                                        constants.CAMERA_HEIGHT*constants.CELL_HEIGHT),
+cameraWidthInPix = constants.CAMERA_WIDTH*constants.CELL_WIDTH
+cameraHeightInPix = constants.CAMERA_HEIGHT*constants.CELL_HEIGHT
+SURFACE_MAIN = pygame.display.set_mode((cameraWidthInPix, cameraHeightInPix),
                                         pygame.FULLSCREEN)
-
 
 class Game:
     def __init__(self):
@@ -52,6 +51,6 @@ class Game:
 
         self.currentLevel = newLevel
         newLevel.placePlayerAtPortal(destinationPortal)
-
+        self.viewer.recalculateFov()
 GAME = Game()
 

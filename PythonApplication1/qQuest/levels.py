@@ -9,7 +9,8 @@ import tcod as libtcod
 
 from qQuest import ai, constants
 
-from qQuest.actors import Actor, Creature, Item, Container, Equipment, Portal, PlayerClass, Viewer
+from qQuest.actors import Actor, Creature, Portal, PlayerClass, Viewer
+from qQuest.items import Item, Equipment, Container
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS, drawAllLevelTiles
 
@@ -20,14 +21,10 @@ from qQuest.lib.tileLib import TILES
 # the tile Sprites will change with level, eventually.
 # like caves vs dungeon vs whatever
 class Tile:
-    def __init__(self, inFovSpriteName, outOfFovSpriteName, blocking=False, seeThru=True):
+    def __init__(self, inFovSpriteName, blocking=False, seeThru=True):
         self.inFovSpriteName = inFovSpriteName
-        self.outOfFovSpriteName = outOfFovSpriteName
         self.blocking = blocking
         self.seeThru = seeThru
-
-    def doDraw(self, viewer=None, camera=None):
-        raise NotImplementedError
 
 class Level:
     numLevels = 0
@@ -51,7 +48,6 @@ class Level:
             levelSurface = drawAllLevelTiles(level=self)
             ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
 
-
     def loadLevelFile(self):
         filePath = os.path.join(os.path.dirname(__file__),"..","levels",self.levelName+".lvl")
         with open(filePath, "r") as levelFile:
@@ -64,7 +60,7 @@ class Level:
 
         self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
 
-        floorTile = Tile("s_floor", "s_floor_dark", blocking=False, seeThru=True)
+        floorTile = Tile("s_floor", blocking=False, seeThru=True)
         self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
@@ -73,7 +69,7 @@ class Level:
                 continue
 
             if tileType == "wall":
-                self.map[i][j] = Tile("s_wall", "s_wall_dark", blocking=True, seeThru=False)
+                self.map[i][j] = Tile("s_wall", blocking=True, seeThru=False)
                 continue
             
             if tileType == "player":
@@ -96,8 +92,9 @@ class Level:
 
         self.initializeVisibilityMap()
 
-    '''
-    the visibilityMap is a libtcod object for calculating the field of view from any position.
+    ''' The visibilityMap is a libtcod object for calculating the field of view 
+    from any position.  This is for the level as a whole.  computeFov() uses
+    this map to generate a Viewer-specific fov from its location.
     '''
     def initializeVisibilityMap(self):
         mapHeight, mapWidth = np.array(self.map).shape
@@ -109,9 +106,11 @@ class Level:
 
     def recalculateViewerFovs(self):
         for obj in self.objects:
-            if isinstance(obj, (Viewer, PlayerClass)):
-                obj.recalculateFov(force=True)
+            if isinstance(obj, Viewer):  
+                obj.recalculateFov()
 
+    ''' Using the boolean visibility map of the level, return the boolean 
+     field of view may from a specific (x,y) position. '''
     def computeFov(self, x, y):
         self.visibilityMap.compute_fov(x, y,
             radius = constants.FOV_RADIUS,
@@ -135,9 +134,6 @@ class Level:
     def objectsAtCoords(self,x,y):
         return [obj for obj in self.objects if obj.x == x and obj.y == y]
 
-    '''
-        Creates NPC characters by type, looking qp info in a library file.
-    '''
     def addEnemy(self, coordX, coordY, name, uniqueName=None):
         monsterDict = MONSTERS[name]
         name = monsterDict['name']
@@ -168,11 +164,7 @@ class Level:
 
         GAME.player.initLevelExplorationHistory()
         self.recalculateViewerFovs()
-        #self.reinitializeVisibilityMaps() #needs to be done after all walls AND PLAYER placed.
 
-    '''
-        Creates Items by type, looking up info in a library file.
-    '''
     def addItem(self, coordX, coordY, name):
         itemDict = ITEMS[name]
         if 'equipment' in itemDict.keys():
@@ -192,9 +184,10 @@ class Level:
     def placePlayerAtPortal(self, portal):
         self.addPlayer(portal.x, portal.y)
 
-    def takeNPCturns(self):
+    def takeCreatureTurns(self):
         for gameObj in self.objects:
-            #if gameObj.ai:
-            #if isinstance(gameObj, Creature): #this isn't perfect.
+            if isinstance(gameObj, Creature):
+                gameObj.resolveQueueTick()
+
             if getattr(gameObj, "ai", None):
                 gameObj.ai.takeTurn()

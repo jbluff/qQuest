@@ -1,4 +1,5 @@
 import itertools
+import collections
 
 import numpy as np
 
@@ -8,15 +9,16 @@ from qQuest.graphics import Actor
 
 
 
-'''Creatures are Actor children which represent actors that can move, fight, die
+''' Creatures are Actor children which can move, fight, die
 '''
 class Creature(Actor):
-    def __init__(self, *args, hp=10, deathFunction=None, ai=None, container=None, **kwargs):
+    def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
+                              container=None, speed=0.1, **kwargs):
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
-        self.creature = True
+        #self.creature = True
  
         self.ai = ai
         if self.ai:
@@ -26,17 +28,55 @@ class Creature(Actor):
         if self.container:
             self.container.owner = self
 
-    def move(self, dx, dy):
-        tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
-        target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
+        self.creatureQueue = collections.deque()
+        self.ticksPerMove = 1/speed
+        self.moving = False
 
+    def resolveQueueTick(self):
+        if len(self.creatureQueue) == 0:
+            return 
+
+        eventType, remainingDuration, argsTuple = self.creatureQueue.popleft()
+        remainingDuration -= 1
+
+        if eventType == 'move':
+            self.executeMove(*argsTuple)
+
+            if remainingDuration == 0:
+                self.terminateMovement()
+
+        if remainingDuration > 0:
+            queueEntry = (eventType, remainingDuration, argsTuple)
+            self.creatureQueue.append(queueEntry)
+
+    # dx, dy in units of cells.
+    def scheduleMove(self, dx, dy):
+        if self.moving:
+            return 
+
+        target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
         if target:
+            #this will also become a queud thing later.
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
+            return 
 
-        elif not tileIsBlocking:
-            self.x += dx
-            self.y += dy
+        tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
+        if not tileIsBlocking:
+            # (action type, duration in ticks, argsTuple)
+            moveTuple = (dx/self.ticksPerMove, dy/self.ticksPerMove)
+            queueEntry = ('move', self.ticksPerMove, moveTuple)
+            self.creatureQueue.append(queueEntry)
+
+    def executeMove(self, dx, dy):
+        self.moving = True
+        self.graphicX += dx
+        self.graphicY += dy    
+
+    def terminateMovement(self):
+        self.x = round(self.graphicX)
+        self.y = round(self.graphicY)
+        self.moving = False
 
     def pickupObjects(self):
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
@@ -71,15 +111,10 @@ class Viewer(Actor):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.doRecaculateFov = True
         self.explorationHistory = {}
                 
-    def recalculateFov(self, force=False):
-        if not self.doRecaculateFov and not force:
-            return None
-
+    def recalculateFov(self):
         self.fov = self.level.computeFov(self.x, self.y)        
-        self.doRecaculateFov = False
 
     def getTileIsVisible(self, x, y):
         return self.fov[y][x]
@@ -98,167 +133,19 @@ class Viewer(Actor):
         return self.explorationHistory[levelID][y][x]
 
 
-""" This class is a Creature, with a field of view -- this name needs to change once we use NPC
+''' This class is a Creature, with a field of view -- this name needs to change once we use NPC
 AIs that care about FOV.   It'll be used for more than just the player(s).  
-"""
+'''
 class PlayerClass(Creature, Viewer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def move(self, dx, dy):
-        super().move(dx, dy)
-        self.doRecaculateFov = True
-
-"""Items are an Actor child which 
-- don't move
-- can be picked up
-- may have perform some function when 'used'
-
-useFunction : called when the item is used, passed self
-numCharges : number of items item is used before..
-depleteFunction : called (passed self) when charges run out.
-    defaults to delete self.  Allows for e.g. turning into an empty bottle
-"""
-class Item(Actor):
-    def __init__(self, *args, weight=0.0, volume=0.0, 
-                 useFunction=None, numCharges=1, depleteFunction=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.weight = weight
-        self.volume = volume 
-        self.useFunction = useFunction
-        self.numCharges = numCharges
-        self.maxNumCharges = numCharges
-        
-        #if depleteFunction is None:
-        #    depleteFunction = lambda x: self.__del__
-        self.depleteFunction = depleteFunction
-        #self.item = True
-        #self.currentContainer = None
-
-        self.deleted = False
-        
-    def pickup(self, actor):
-        if actor.container:
-            if actor.container.volume + self.volume > actor.container.max_volume:
-                GAME.addMessage(actor.name + "doesn't have enough room")
-            else:
-                GAME.addMessage(actor.name + " picked up " + self.name)
-                actor.container.inventory.append(self)
-                GAME.currentLevel.objects.remove(self)
-                self.currentContainer = actor.container
-
-    def drop(self):
-        actor = self.currentContainer.owner
-        GAME.currentLevel.objects.append(self) #clunky AF
-        self.currentContainer.inventory.remove(self)
-        #self.currentContainer = None
-        self.x = actor.x  
-        self.y = actor.y 
-        GAME.addMessage("item " + self.name + " dropped!")
-
-    def use(self, target):
-        print("use was called")
-        print(self.useFunction)
-        if self.useFunction is None:
-            return
-        print("found useFunction")
-        success = self.useFunction(target)
-        if not success:
-            return 
-
-        self.numCharges -= 1
-        if self.numCharges <= 0:
-            if self.depleteFunction is None:
-                self.currentContainer.inventory.remove(self)
-                self.deleted = True
-            #self.depleteFunction(self)
-
-# let's be serious, this should use inheritance.
-class Equipment(Item):
-
-    def __init__(self, *args, slot=None, attackBonus=0, 
-                 defenseBonus=0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.slot = slot
-        self.attackBonus = attackBonus
-        self.defenseBonus = defenseBonus
-        self.equipped = False
-        self.equipment = True
-
-    def toggleEquip(self):
-        if self.eqipped:
-            self.unequip()
-        else:
-            self.eqipp()
-
-    def unequip(self):
-        #slot stuff
-        GAME.addMessage("item unequipped")
-        
-    def equip(self):
-        #slot stuff
-        GAME.addMessage("item equipped")
-        
-
-'''
-Containers represent actor attributes which can contain in game items
-e.g. player inventory is a container.  Chest items have containers.  etc.
-'''
-class Container:
-    def __init__(self, volume=10.0, inventory=[], **kwargs):
-        self.max_volume = volume
-        self.inventory = inventory
-        #todo:   subtract volume of initialy added items
-
-    @property
-    def volume(self):
-        ''' free volume '''
-        #todo:  subtract stufff
-        return self.max_volume 
-    ## TODO: get names of things in inventory
-    ## TODO: get weight?
-
-            
-def deathMonster(monster):
-    '''
-    What happens when a non-player character dies?
-    Monster is actor class instance.
-    '''
-    GAME.addMessage(monster.name + " has been slain!")
-    
-    creatureToItems(monster)
-
-
-'''
-Destroys a creature, turns it into a corpse and drops its inventory items.
-> inventory item feature unadded
-> also want the ability to change the graphic
-> also kwargs can have e.g. weight, useFunction
-'''
-"""TODO:  make this a method in the Creature class.  self=Item(...)"""
-def creatureToItems(creature, **kwargs):
-
-    itemList = []
-
-    #inventory = creature.container.inventory
-    #if inventory:
-    #    itemList.extend(inventory)
-
-    corpse = Item((creature.x, creature.y),
-                  creature.name+"'s corpse",
-                  creature.animationName+"_dead",
-                  #[creature.animation[0],],  #this is kinda broke.  
-                  **kwargs)
-    
-    itemList.append(corpse)
-
-    for el in itemList:
-        GAME.currentLevel.objects.append(el)
-
-    GAME.currentLevel.objects.remove(creature)
+    def terminateMovement(self):
+        super().terminateMovement()
+        self.recalculateFov()
 
 #  pos, name, animationName, 
-#
+#  These will move to their own place..
 class Portal(Actor):
     numPortals = 0
 

@@ -31,22 +31,14 @@ Basic object structure:
 
 '''
 TODO:  
-- Separate the "explored" functionality of the level map-- should be associated with the Viewer
-    (e.g. something more like the "fovMap") rather than the level.
-    - take care to make sure this isn't forgotten-- recalculating the fovMap shouldn't reset the explored status
-    - the names are bad.  the "fovMap" is used to calcuate the current fov, but it's not reflective of the current fov.
-    - the 'fovmap' on the other hand, might as well be associated with the level, assuming that all viewers treat
-        the same things as transparent or opaque.
-    - this isn't a pointless idea-- later when we want monsters to have more intelligent AIs we'll treat them as real viewers
-    - DrawMap() should respond directly to the "explored status" of GAME.viewer 
-- Clean up entire graphics section.  Lots of unnecssary complexity there.  Be smarter about storate and separation of assets.
+- floating movement -- this requires a real change in how actors and time work
+- "smart" wall and fov sprite selections-- choice of sprite depends on neighbors
+- Clean up assets section.  Lots of unnecssary complexity there.  Be smarter about storate and separation of assets.
 - Refactoring menu list items
     - adding text-entry menu list items
 
 - Image processing on procGen rooms for rounding etc.
 
-- Make this faster, damnit.  Why is the FPS dropping?  
-    - Change camera structure?  Limit updating rectangles?
 - Give Monsters a "properties" section.  Not quite sure how that should work, yet.
 
 - Support for non-square roomes 
@@ -56,13 +48,9 @@ TODO:
 - Refine map loading (set pieces, named npcs, items.)
 - New monster AIs
 - Area effect spells
-
 '''
 
-
-
-def handleMainLoopEvents():
-
+def handleInputEvents():
     eventsList = pygame.event.get()
 
     for event in eventsList:
@@ -73,20 +61,16 @@ def handleMainLoopEvents():
             continue
 
         if event.key == pygame.K_UP:
-            GAME.player.move(0, -1)
-            return "player-moved"
+            GAME.player.scheduleMove(0, -1)
 
         if event.key == pygame.K_DOWN:
-            GAME.player.move(0, 1)
-            return "player-moved"
+            GAME.player.scheduleMove(0, 1)
 
         if event.key == pygame.K_LEFT:
-            GAME.player.move(-1, 0)
-            return "player-moved"
+            GAME.player.scheduleMove(-1, 0)
 
         if event.key == pygame.K_RIGHT:
-            GAME.player.move(1, 0)
-            return "player-moved"
+            GAME.player.scheduleMove(1, 0)
 
         if event.key == pygame.K_g:
             GAME.player.pickupObjects()
@@ -105,12 +89,9 @@ def handleMainLoopEvents():
 
         if event.key == pygame.K_y:
             entryPortal = GAME.player.isOnPortal()
-            
             if entryPortal is None:
-                return "no-action"
-
+                return
             GAME.transitPortal(entryPortal)
-            return "player-moved"
 
     return "no-action"
 
@@ -119,15 +100,13 @@ def exitGame():
     quit()
 
 def mainGameLoop():
-    playerAction = "no-action"
+    playerAction = ""
 
     while playerAction != "QUIT":
-        playerAction = handleMainLoopEvents()
+        playerAction = handleInputEvents()
             
-        if playerAction == "player-moved":
-            GAME.viewer.recalculateFov()
-            GAME.currentLevel.takeNPCturns()
-            GAME.camera.updatePositionFromViewer()
+        GAME.currentLevel.takeCreatureTurns()
+        GAME.camera.updatePositionFromViewer()
 
         graphics.drawGame()
         CLOCK.tick(constants.GAME_FPS)
@@ -164,7 +143,7 @@ def initializeGame():
     level2.portals[0].destinationPortal = level1.portals[0]
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    GAME.viewer.recalculateFov(force=True)
+    #GAME.viewer.recalculateFov(force=True)
 
     GAME.camera = graphics.Camera(viewer=GAME.player)
 
