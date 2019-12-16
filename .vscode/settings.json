@@ -1,4 +1,7 @@
 {
     "python.pythonPath": "/Users/jacobblumoff/opt/anaconda3/bin/python",
-    "editor.rulers" : [80]
+    "editor.rulers": [
+        80
+    ],
+    "python.linting.enabled": true
 }

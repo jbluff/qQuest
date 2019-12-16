@@ -6,7 +6,7 @@ import numpy as np
 from qQuest import constants
 from qQuest.game import GAME, SURFACE_MAIN, CLOCK
 from qQuest.graphics import Actor
-
+from qQuest.items import Item
 
 
 ''' Creatures are Actor children which can move, fight, die
@@ -114,7 +114,7 @@ class Viewer(Actor):
         self.explorationHistory = {}
                 
     def recalculateFov(self):
-        self.fov = self.level.computeFov(self.x, self.y)        
+        self.fov = self.level.computeFov(self.x, self.y).tolist()   
 
     def getTileIsVisible(self, x, y):
         return self.fov[y][x]

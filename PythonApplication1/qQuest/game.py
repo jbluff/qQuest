@@ -51,6 +51,9 @@ class Game:
 
         self.currentLevel = newLevel
         newLevel.placePlayerAtPortal(destinationPortal)
+        
         self.viewer.recalculateFov()
+        self.camera.updatePositionFromViewer()
+
 GAME = Game()
 
