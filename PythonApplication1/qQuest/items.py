@@ -47,6 +47,7 @@ class Item(Actor):
         #self.currentContainer = None
         self.x = actor.x  
         self.y = actor.y 
+        self.resyncGraphicPosition()
         GAME.addMessage("item " + self.name + " dropped!")
 
     def use(self, target):
