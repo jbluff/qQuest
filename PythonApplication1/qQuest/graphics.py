@@ -30,7 +30,8 @@ class Camera:
 
         return xVisible and yVisible
 
-    def getUpperLeftCorner(self):
+    def getUpperLeftCorner(self) -> tuple:
+        ''' Returned in pixels '''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT 
 

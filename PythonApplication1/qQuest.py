@@ -112,6 +112,7 @@ def mainGameLoop(debugMode=None):
             graphics.drawGame()
         elif debugMode == 'spriteList':
             graphics.spriteDebugger()
+            
         CLOCK.tick(constants.GAME_FPS)
 
     exitGame()

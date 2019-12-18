@@ -30,21 +30,24 @@ class MenuListItem():
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
+        ''' Menu size is (x,y) in pixels '''
+
         self.parentSurface = parentSurface
         self.menuWidth, self.menuHeight = menuSize
-
-        windowWidth = constants.CELL_WIDTH*GAME.mapWidth
-        windowHeight = constants.CELL_HEIGHT*GAME.mapHeight
-
-        self.coordY = (windowHeight-self.menuHeight)/2
-        self.coordX = (windowWidth-self.menuWidth)/2
-        
         self.menuSurface = pygame.Surface((self.menuWidth, self.menuHeight))
 
+        self.calculateDrawPosition()
+               
         self.breakLoop = False
         self.redrawGame = True
 
         self.mainLoop()
+
+    def calculateDrawPosition(self):
+        windowWidth = constants.CELL_WIDTH*constants.CAMERA_WIDTH
+        windowHeight = constants.CELL_HEIGHT*constants.CAMERA_HEIGHT
+        self.coordY = (windowHeight-self.menuHeight)/2
+        self.coordX = (windowWidth-self.menuWidth)/2
 
     def mainLoop(self):
         
