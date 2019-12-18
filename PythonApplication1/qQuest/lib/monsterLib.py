@@ -15,4 +15,4 @@ MONSTERS['demon'] = {'name' : 'demon',
                     'kwargs' : {}}
 
 NAMES = ['frank', 'james', 'Mephisto, lord of terror',
-         'janet', 'juliette', 'Andariel, queen suof the succubi']
+         'janet', 'juliette', 'Andariel, queen of the succubi']

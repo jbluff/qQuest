@@ -344,3 +344,4 @@ healthchecksdb
 .saves/
 *.sav
 *.DS_Store
+*.xcf

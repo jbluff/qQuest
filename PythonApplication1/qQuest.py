@@ -99,7 +99,7 @@ def exitGame():
     pygame.quit()
     quit()
 
-def mainGameLoop():
+def mainGameLoop(debugMode=None):
     playerAction = ""
 
     while playerAction != "QUIT":
@@ -108,7 +108,10 @@ def mainGameLoop():
         GAME.currentLevel.takeCreatureTurns()
         GAME.camera.updatePositionFromViewer()
 
-        graphics.drawGame()
+        if debugMode is None:
+            graphics.drawGame()
+        elif debugMode == 'spriteList':
+            graphics.spriteDebugger()
         CLOCK.tick(constants.GAME_FPS)
 
     exitGame()
@@ -153,7 +156,7 @@ if __name__ == "__main__":
     # import cProfile
     # cProfile.run('mainGameLoop()')
 
-    mainGameLoop()
+    mainGameLoop()#debugMode = 'spriteList')
 
 
 

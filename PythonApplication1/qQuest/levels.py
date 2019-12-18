@@ -9,7 +9,7 @@ import tcod as libtcod
 
 from qQuest import ai, constants
 
-from qQuest.actors import Actor, Creature, Portal, PlayerClass, Viewer
+from qQuest.actors import Creature, Portal, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 from qQuest.graphics import ASSETS, compileBackgroundTiles
@@ -127,7 +127,7 @@ class Level:
             if (obj is not exclude_object and
                     obj.x == x and #sub objectAtCoords into here
                     obj.y == y and
-                    isinstance(obj, (Creature, PlayerClass))):
+                    isinstance(obj, Creature)): #playerclsdd
                 return obj
         return None
 

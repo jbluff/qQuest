@@ -7,6 +7,7 @@ import numpy as np
 from qQuest import constants
 from qQuest.game import SURFACE_MAIN, CLOCK, GAME
 
+
 class Camera:
     def __init__(self, viewer=None):
         self.viewer = viewer
@@ -80,14 +81,23 @@ class objSpriteSheet:
         width, height = spanX * self.imageUnitX, spanY * self.imageUnitY
 
         imageList = []
-        for idx in range(numSprites):
-            
-            image = pygame.Surface([width, height]).convert()
 
+        for idx in range(numSprites):
+            if (colIdx==4):
+                print("colIdx=4")
+                print(f'startX={startX+idx*width}')
+                print(f'width={width}')
+                print(f'startY={startY}')
+                print(f'height={height}')
+
+
+            image = pygame.Surface([width, height])#.convert()
+            #print(f'modstartX={startX+idx*width}')
             image.blit(self.spriteSheet, (0,0), (startX+idx*width, startY, width, height))
             image.set_colorkey(constants.COLOR_BLACK)
 
             if scale:
+                raise NotImplementedError
                 newWidth = self.imageUnitX*spanX*scale[0]
                 newHeight = self.imageUnitY*spanY*scale[1]
                 image = pygame.transform.scale(image, (newWidth, newHeight))
@@ -175,7 +185,10 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
     return level_surface
 
 # draws the pre-compiled background tiles (walls, floor, etc)
-def drawBackground(surface, level):    
+def drawBackground():    
+    level = GAME.currentLevel
+    surface = SURFACE_MAIN
+
     map_rect = GAME.camera.getViewingRect()
     map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
     map_subsurface = map_surface.subsurface(map_rect)
@@ -183,14 +196,12 @@ def drawBackground(surface, level):
     pos = (round(-0.5*constants.CELL_WIDTH),round(-0.5*constants.CELL_HEIGHT))
     surface.blit(map_subsurface, pos)
 
-''' The draws the game map.  Everything other than objects and menus and text. '''
-def drawLevel(viewer=None):
+
+def drawFogOfWar(viewer=None):
     if viewer is None:
         viewer = GAME.viewer
     level = GAME.currentLevel
     surface = SURFACE_MAIN
-
-    drawBackground(surface, level)
 
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
@@ -209,45 +220,94 @@ def drawLevel(viewer=None):
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
 
+            fowSprite = drawFowEdges(viewer, x, y, (mapWidth, mapHeight))
+            if fowSprite is None:
+                continue
+            fowSprite.set_alpha(200)
+            surface.blit(fowSprite, tilePosition)
         else: 
-            # blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
-            # blankTile.fill(constants.COLOR_BLACK)
+            blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
+            blankTile.fill(constants.COLOR_BLACK)
 
-            blankTile = getNeighborDependentTile(viewer, x, y, (mapWidth, mapHeight))
+            
             # seen it before tho -- fog of war.
             if tileIsExplored:
                 blankTile.set_alpha(200)
             surface.blit(blankTile, tilePosition)
 
-def getNeighborDependentTile(viewer, x, y, limits):
+''' On a visible tile, draw the overhanging FOW effect, if applicable.
+We could replace this (in fewer LOC) with just doing each side as needed
+and rotating and reblitting. a single image.  Maybe we should, dunno, but I like 
+the flexibility, because later we won't get away with that trick for walls.
+Meh.  Need to find something a bit more elegant, eventually.'''
+def drawFowEdges(viewer, x, y, limits):
 
-    aboveIsVis = False if (y==0) else viewer.getTileIsVisible(x, y-1)
-    leftIsVis = False if (x==0) else viewer.getTileIsVisible(x-1, y)
-    belowIsVis = False if (y==limits[1]-1) else viewer.getTileIsVisible(x, y+1)
-    rightIsVis = False if (x==limits[0]-1) else viewer.getTileIsVisible(x+1, y)
+    aboveIsNotVis = True if (y==0) else not viewer.getTileIsVisible(x, y-1)
+    leftIsNotVis = True if (x==0) else not viewer.getTileIsVisible(x-1, y)
+    belowIsNotVis = True if (y==limits[1]-1) else not viewer.getTileIsVisible(x, y+1)
+    rightIsNotVis = True if (x==limits[0]-1) else not viewer.getTileIsVisible(x+1, y)
 
-    numVisNeighbors = aboveIsVis+leftIsVis+belowIsVis+rightIsVis
+    numNotVisNeighbors = aboveIsNotVis+leftIsNotVis+belowIsNotVis+rightIsNotVis
 
-    blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
-    blankTile.fill(constants.COLOR_BLACK)
-    return blankTile
+    if numNotVisNeighbors == 0:
+        retSprite = None
 
-    numVisNeighbors = aboveIsVis+leftIsVis+belowIsVis+rightIsVis
+    elif numNotVisNeighbors == 1:
+        retSprite = ASSETS.s_fow_oneSide[0].copy()
 
-    
-    # blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
-    # blankTile.fill(constants.COLOR_BLACK)
-    # return blankTile
+        if belowIsNotVis:
+            rotAngle = 0
+        if leftIsNotVis:
+            rotAngle = -90
+        if rightIsNotVis:
+            rotAngle = 90
+        if aboveIsNotVis:
+            rotAngle = 180
+        retSprite = pygame.transform.rotate(retSprite, rotAngle)
 
-    if numVisNeighbors == 0:
-        return ASSETS.s_fow_full[0]#.copy()
+    elif numNotVisNeighbors == 2:
+        
+        if leftIsNotVis and rightIsNotVis:
+            retSprite = ASSETS.s_fow_twoSideB[0].copy()
+            retSprite = pygame.transform.rotate(retSprite, 90)
+            #retSprite=None #DEBUG
+            #pass
 
-    if numVisNeighbors == 1:
-        if aboveIsVis:
-            pass
-            #return ASSETS.s_fow_threeNeighbor[0].copy()
+        elif belowIsNotVis and aboveIsNotVis:
+            retSprite = ASSETS.s_fow_twoSideB[0].copy()
+            #retSprite=None #DEBUG
+            #pass
+            
+        else:
+            retSprite = ASSETS.s_fow_twoSide[0].copy()
+            if rightIsNotVis and belowIsNotVis:
+                rotAngle = 0
+            elif rightIsNotVis and aboveIsNotVis:
+                rotAngle=90
+            elif aboveIsNotVis and leftIsNotVis:
+                rotAngle = 180
+            else:
+                rotAngle = -90
+            retSprite = pygame.transform.rotate(retSprite, rotAngle)
+            #retSprite=None #DEBUG
 
-    return ASSETS.s_fow_full[0]#.copy()
+    elif numNotVisNeighbors == 3:
+        retSprite = ASSETS.s_fow_threeSide[0].copy()
+
+        if not belowIsNotVis:
+            rotAngle = 90
+        if not leftIsNotVis:
+            rotAngle = 0
+        if not rightIsNotVis:
+            rotAngle = 180
+        if not aboveIsNotVis:
+            rotAngle = -90
+        retSprite = pygame.transform.rotate(retSprite, rotAngle)
+
+    elif numNotVisNeighbors == 4:
+        retSprite = ASSETS.s_fow_fourSide[0].copy() 
+
+    return retSprite
 
 
 def helperTextDims(text='a',font=constants.FONT_DEBUG):
@@ -282,8 +342,10 @@ def drawGame():
 
     SURFACE_MAIN.fill(constants.COLOR_BLACK)
 
-    drawLevel()
+    drawBackground()
     drawObjects()
+    drawFogOfWar()
+    
     drawGameMessages()
     drawDebug()
 
@@ -348,13 +410,44 @@ class structAssets():
         #                                                 imageUnitX=32, imageUnitY=32)
         self.s_ladder = self.dungeon_ss.getAnimation(colIdx=9, rowIdx=3, numSprites=1)
 
-        self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWar.png')
-        self.s_fow_full = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
-        self.s_fow_threeNeighbor = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=0, numSprites=1)#, convAlpha=True)
-        self.s_fow_twoNeighbor = self.fowSpriteSheet.getAnimation(colIdx=2, rowIdx=0, numSprites=1)
-        self.s_fow_twoNeighborAcross = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
-        self.s_fow_oneNeighbor = self.fowSpriteSheet.getAnimation(colIdx=4, rowIdx=0, numSprites=1)
-        self.s_fow_noNeighbors = self.fowSpriteSheet.getAnimation(colIdx=5, rowIdx=0, numSprites=1)
+       # self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWar.png')
+        self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWarPositiveB.png')
+        #self.s_fow_full = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
+        self.s_fow_oneSide = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)#, convAlpha=True)
+        self.s_fow_twoSide = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=0, numSprites=1)
+        self.s_fow_threeSide = self.fowSpriteSheet.getAnimation(colIdx=2, rowIdx=0, numSprites=1)
+        self.s_fow_fourSide = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
 
+        self.s_fow_twoSideB = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=1, numSprites=1)
+
+
+        #self.s_fow_fousdf = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
+
+def spriteDebugger():
+    # show all the sprites in ASSETS, with their names
+    SURFACE_MAIN.fill(constants.COLOR_WHITE)
+
+    attrs = ASSETS.__dict__.keys()
+
+    LINE_HEIGHT = 20
+    vertIdx = 0.25
+    for attr in attrs:
+        if not (attr.startswith("s_") or attr.startswith("a_")):
+            continue
+        vertPos = vertIdx*LINE_HEIGHT
+        drawText(SURFACE_MAIN, attr, (20, vertPos), constants.COLOR_BLACK, bgColor=constants.COLOR_WHITE)
+
+        attrVal = getattr(ASSETS, attr)
+        if type(attrVal) is not list:
+            attrVal = [attrVal,]
+
+        horIdx = 0
+        for sprite in attrVal:
+            pos = (100+horIdx*20, vertPos)
+            SURFACE_MAIN.blit(sprite, pos)
+            horIdx += 1
+
+        vertIdx += 1
+    pygame.display.flip()
 
 ASSETS = structAssets()
