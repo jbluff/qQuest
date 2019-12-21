@@ -9,6 +9,8 @@ from qQuest.graphics import Actor
 from qQuest.items import Item
 
 
+# TODO:  QueueEntry should be a class.
+
 ''' Creatures are Actor children which can move, fight, die
 '''
 class Creature(Actor):
@@ -18,7 +20,6 @@ class Creature(Actor):
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
-        #self.creature = True
  
         self.ai = ai
         if self.ai:
@@ -42,7 +43,7 @@ class Creature(Actor):
         if eventType == 'move':
             self.executeMove(*argsTuple)
 
-            if remainingDuration == 0:
+            if remainingDuration <= 0:
                 self.terminateMovement()
 
         if remainingDuration > 0:
@@ -53,6 +54,8 @@ class Creature(Actor):
     def scheduleMove(self, dx, dy):
         if self.moving:
             return 
+        if dx==0 and dy==0:
+            return
 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
         if target:
@@ -64,8 +67,10 @@ class Creature(Actor):
         tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
         if not tileIsBlocking:
             # (action type, duration in ticks, argsTuple)
-            moveTuple = (dx/self.ticksPerMove, dy/self.ticksPerMove)
-            queueEntry = ('move', self.ticksPerMove, moveTuple)
+            dt = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
+            moveTuple = (dx/dt, dy/dt)
+            
+            queueEntry = ('move', dt, moveTuple)
             self.creatureQueue.append(queueEntry)
 
     def executeMove(self, dx, dy):

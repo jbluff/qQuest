@@ -60,17 +60,42 @@ def handleInputEvents():
         if event.type != pygame.KEYDOWN:
             continue
 
-        if event.key == pygame.K_UP:
-            GAME.player.scheduleMove(0, -1)
+        # if event.key == pygame.K_UP:
+        #     GAME.player.scheduleMove(0, -1)
 
-        if event.key == pygame.K_DOWN:
-            GAME.player.scheduleMove(0, 1)
+        # if event.key == pygame.K_DOWN:
+        #     GAME.player.scheduleMove(0, 1)
 
-        if event.key == pygame.K_LEFT:
-            GAME.player.scheduleMove(-1, 0)
+        # if event.key == pygame.K_LEFT:
+        #     GAME.player.scheduleMove(-1, 0)
 
-        if event.key == pygame.K_RIGHT:
-            GAME.player.scheduleMove(1, 0)
+        # if event.key == pygame.K_RIGHT:
+        #     GAME.player.scheduleMove(1, 0)
+
+        # we should invert the signs on moving, here.
+        #sif event.type == pygame.KEYDOWN:
+        pressedKeys = pygame.key.get_pressed()
+        move = [0,0]
+        if pressedKeys[pygame.K_UP]:
+            #print('moving up!')
+            move[1] -= 1
+
+        if pressedKeys[pygame.K_DOWN]:
+            # GAME.player.scheduleMove(0, 1)
+            move[1] += 1
+
+        if pressedKeys[pygame.K_LEFT]:
+            move[0] -= 1
+            #GAME.player.scheduleMove(-1, 0)
+
+        if pressedKeys[pygame.K_RIGHT]:
+            move[0] += 1
+            # GAME.player.scheduleMove(1, 0)
+
+        if move != [0,0]:
+            #print(move)
+            GAME.player.scheduleMove(*move)
+
 
         if event.key == pygame.K_g:
             GAME.player.pickupObjects()
