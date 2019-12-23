@@ -4,7 +4,7 @@ import collections
 import numpy as np
 
 from qQuest import constants
-from qQuest.game import GAME, SURFACE_MAIN, CLOCK
+from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
 

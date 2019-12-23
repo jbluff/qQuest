@@ -2,10 +2,18 @@ import itertools
 import copy
 
 import pygame
+from pygame.locals import DOUBLEBUF, FULLSCREEN
 import numpy as np
 
 from qQuest import constants
-from qQuest.game import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import CLOCK, GAME
+
+SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P, constants.TOTAL_HEIGHT_P ),
+                                        FULLSCREEN | DOUBLEBUF)
+
+SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
+SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
+
 
 
 class Camera:
@@ -159,7 +167,7 @@ class Actor():
         drawX, drawY = GAME.camera.drawPosition(self.graphicX, self.graphicY)
         position = (round(drawX * constants.CELL_WIDTH), 
                     round(drawY * constants.CELL_HEIGHT)) 
-        SURFACE_MAIN.blit(currentSprite, position)
+        SURFACE_MAP.blit(currentSprite, position)
 
 ''' Blits together all of the images that make up the background of a given map.
 This only needs to be called roughly once, when a level is first instantiated.
@@ -188,7 +196,7 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
 # draws the pre-compiled background tiles (walls, floor, etc)
 def drawBackground():    
     level = GAME.currentLevel
-    surface = SURFACE_MAIN
+    surface = SURFACE_MAP
 
     map_rect = GAME.camera.getViewingRect()
     map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
@@ -202,7 +210,7 @@ def drawFogOfWar(viewer=None):
     if viewer is None:
         viewer = GAME.viewer
     level = GAME.currentLevel
-    surface = SURFACE_MAIN
+    surface = SURFACE_MAP
 
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
@@ -328,29 +336,42 @@ def drawGameMessages():
     messages = GAME.messageHistory[-numMessages:]
 
     _, height = helperTextDims()
-    startY = SURFACE_MAIN.get_height() - numMessages*height
+    startY = SURFACE_MAP.get_height() - numMessages*height
 
-    drawTextList(SURFACE_MAIN, messages, startX=0, startY=startY)
+    drawTextList(SURFACE_MAP, messages, startX=0, startY=startY)
 
 def drawDebug():
     drawFPS()
 
 def drawFPS():
-    drawText(SURFACE_MAIN, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
+    drawText(SURFACE_MAP, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
 def drawGame():
 
     SURFACE_MAIN.fill(constants.COLOR_BLACK)
-
+    
+    ''' draw the map and such '''
     drawBackground()
     drawObjects()
     drawFogOfWar()
     
     drawGameMessages()
     drawDebug()
+    SURFACE_MAIN.blit(SURFACE_MAP, (0,0))
+
+    ''' off-map portions of the interface '''
+    drawChyron()
+    SURFACE_MAIN.blit(SURFACE_CHYRON, (0,SURFACE_MAP.get_height()))
 
     pygame.display.flip()
+
+
+def drawChyron() -> None:
+    ''' the bit of the UI drawn below the map'''
+
+    SURFACE_CHYRON.fill(constants.COLOR_GREY)
+    pass
 
 def drawObjects():
     for gameObj in GAME.currentLevel.objects:

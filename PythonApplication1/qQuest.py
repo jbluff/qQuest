@@ -1,8 +1,8 @@
 import pygame
 
-from qQuest import constants, graphics,  menus 
+from qQuest import constants, graphics, menus 
 from qQuest.levels import Level
-from qQuest.game import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import CLOCK, GAME
 
 
 '''
@@ -31,11 +31,20 @@ Basic object structure:
 
 '''
 TODO:  
-- floating movement -- this requires a real change in how actors and time work
-- "smart" wall and fov sprite selections-- choice of sprite depends on neighbors
-- Clean up assets section.  Lots of unnecssary complexity there.  Be smarter about storate and separation of assets.
-- Refactoring menu list items
-    - adding text-entry menu list items
+- smarted fow logic -- should do first unseen areas with edges, then prev. 
+    seen areas with edges.
+- partial movement -- not just tile-by-tile.
+- smart walls--gfx depend on neightbors, like fow.
+
+- Clean up assets section.  Lots of unnecessary complexity there.  Be smarter about storage and separation of assets.
+
+- creatures need stats and such
+- add other types to menus
+- npcs text popups and interaction, scripting schema
+- add inventory and health graphics (expand gfx past map window.)
+
+- procedural level generation integrated to be in the fly
+- moar graphic assets
 
 - Image processing on procGen rooms for rounding etc.
 
@@ -48,6 +57,8 @@ TODO:
 - Refine map loading (set pieces, named npcs, items.)
 - New monster AIs
 - Area effect spells
+
+- multi character mechanics!
 '''
 
 def handleMovementInputs():
@@ -82,13 +93,13 @@ def handleOtherGameInputs(event):
 
 def handleMenuInputs(event):
     if event.key == pygame.K_p:
-        menus.PauseMenu(SURFACE_MAIN)
+        menus.PauseMenu()
 
     if event.key == pygame.K_i:
-        menus.InventoryMenu(SURFACE_MAIN, GAME.player)
+        menus.InventoryMenu(GAME.player)
     
     if event.key == pygame.K_s:
-        menus.SaveLoadMenu(SURFACE_MAIN)
+        menus.SaveLoadMenu()
 
 
 def handleInputEvents():

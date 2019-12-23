@@ -1,6 +1,5 @@
 
-from qQuest import graphics
-from qQuest.game import GAME, SURFACE_MAIN
+from qQuest.game import GAME
 
 
 '''

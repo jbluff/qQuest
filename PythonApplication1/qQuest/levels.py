@@ -11,7 +11,7 @@ from qQuest import ai, constants
 
 from qQuest.actors import Creature, Portal, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
-from qQuest.game import SURFACE_MAIN, CLOCK, GAME
+from qQuest.game import GAME
 from qQuest.graphics import ASSETS, compileBackgroundTiles
 
 from qQuest.lib.itemLib import ITEMS

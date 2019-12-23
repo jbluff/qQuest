@@ -7,6 +7,7 @@ import pygame
 
 from qQuest import constants
 from qQuest import graphics
+from qQuest.graphics import SURFACE_MAIN
 from qQuest.game import CLOCK, GAME 
 
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
@@ -100,8 +101,8 @@ class Menu:
 
 # This is a rather pointless thing, at present.
 class PauseMenu(Menu):
-    def __init__(self, parentSurface):
-        super().__init__(parentSurface, menuSize=(200,50))
+    def __init__(self):
+        super().__init__(SURFACE_MAIN, menuSize=(200,50))
 
     def restartLoop(self):
         pass
@@ -119,11 +120,12 @@ class PauseMenu(Menu):
     def redrawMenuBody(self):
         graphics.drawTextList(self.menuSurface, [["P is for Paused",constants.COLOR_WHITE,constants.COLOR_BLACK]])
 
+
 class TextListMenu(Menu):
-    def __init__(self, parentSurface):
+    def __init__(self):
         self.selected=None
         self.initTextList()
-        super().__init__(parentSurface)
+        super().__init__(SURFACE_MAIN)
 
     def initTextList(self):
         raise NotImplemented("sinitTextList must be overwritten by children")
@@ -220,28 +222,17 @@ class SaveLoadMenu(TextListMenu):
             return None
 
         if event.key == pygame.K_RETURN:
-            if self.selected == 0:
-                self.gameSave()
-
             if self.selected == 1:
-                LoadMenu(self.parentSurface)
+                gameSave()
+
+            elif self.selected == 2:
+                LoadMenu()
                 self.breakLoop = True
-
-    def gameSave(self, saveName: str='default') -> None:
-        ''' dump the GAME object to a dill file. '''
-        dt = datetime.datetime.now()
-        dtString = dt.strftime(DATETIME_FORMAT)
-
-        fileName = dtString + '_' + saveName + '.sav'
-        filePath = os.path.join(SAVEPATH,fileName)
-        print(filePath)
-        with open(filePath, 'wb') as f:
-            dill.dump(GAME, f)
-        pass
 
 
 class LoadMenu(TextListMenu):
     def initTextList(self) -> None:
+        self.menuList = []
         allFiles = listSavedGames()
         [self.addMenuItem(f, selectable=True) for f in allFiles]
 
@@ -251,17 +242,15 @@ class LoadMenu(TextListMenu):
             return None
 
         if event.key == pygame.K_RETURN:
-            fname = self.menuList[self.selected][0]
-            # print(f'loading {fname}')
+            fname = self.menuList[self.selected].text
             loadGame(fname)
             self.breakLoop = True
 
 
 class InventoryMenu(TextListMenu):
-    def __init__(self, parentSurface, actor):
+    def __init__(self, actor):
         self.actor = actor
-        self.selected = 0
-        super().__init__(parentSurface)
+        super().__init__()
 
     def initTextList(self) -> None:
         self.menuList = []
@@ -304,6 +293,20 @@ class InventoryMenu(TextListMenu):
         self.redrawGame = True
 
 
+def gameSave(saveName: str='default') -> None:
+    ''' dump the GAME object to a dill file. '''
+    dt = datetime.datetime.now()
+    dtString = dt.strftime(DATETIME_FORMAT)
+
+    fileName = dtString + '_' + saveName + '.sav'
+    filePath = os.path.join(SAVEPATH,fileName)
+    GAME.addMessage(f'Game saved to {fileName}')
+    print(filePath)
+    with open(filePath, 'wb') as f:
+        dill.dump(GAME, f)
+    pass
+
+
 def loadGame(fname):
     global GAME
 
@@ -318,6 +321,7 @@ def loadGame(fname):
     GAME.player = newGame.player
     GAME.messageHistory = newGame.messageHistory
     GAME.viewer = newGame.viewer
+    GAME.camera = newGame.camera
 
 def listSavedGames():
     #datetime.strptime(date_string, format).

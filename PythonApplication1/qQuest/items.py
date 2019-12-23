@@ -1,5 +1,5 @@
 from qQuest import constants
-from qQuest.game import GAME, SURFACE_MAIN, CLOCK
+from qQuest.game import GAME
 from qQuest.graphics import Actor
 
 """Items are an Actor child which 

@@ -1,9 +1,8 @@
 """
-Covers the Game class, as well as the global singletons GAME, CLOCK, and SURFACE_MAIN.
+Covers the Game class, as well as the non-graphics global singletons.
 """
 
 import pygame
-from pygame.locals import DOUBLEBUF, FULLSCREEN
 import numpy as np
 
 from qQuest import constants
@@ -13,10 +12,7 @@ from qQuest import constants
 #flags = FULLSCREEN | DOUBLEBUF
 
 CLOCK = pygame.time.Clock()
-cameraWidthInPix = constants.CAMERA_WIDTH*constants.CELL_WIDTH
-cameraHeightInPix = constants.CAMERA_HEIGHT*constants.CELL_HEIGHT
-SURFACE_MAIN = pygame.display.set_mode((cameraWidthInPix, cameraHeightInPix),
-                                        FULLSCREEN | DOUBLEBUF)
+
 
 class Game:
     def __init__(self):
