@@ -16,5 +16,5 @@ jobs:
         echo Add other actions to build,
         echo test, and deploy your project.
         
-name: Hercules Insights
-uses: src-d/hercules@v10.6.3
+    - name: Hercules Insights
+      uses: src-d/hercules@v10.6.3
