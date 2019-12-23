@@ -50,6 +50,47 @@ TODO:
 - Area effect spells
 '''
 
+def handleMovementInputs():
+    pressedKeys = pygame.key.get_pressed()
+    move = [0,0]
+    if pressedKeys[pygame.K_UP]:
+        move[1] -= 1
+
+    if pressedKeys[pygame.K_DOWN]:
+        move[1] += 1
+
+    if pressedKeys[pygame.K_LEFT]:
+        move[0] -= 1
+
+    if pressedKeys[pygame.K_RIGHT]:
+        move[0] += 1
+
+    if move != [0,0]:
+        GAME.player.scheduleMove(*move)
+
+
+def handleOtherGameInputs(event):
+    if event.key == pygame.K_g:
+        GAME.player.pickupObjects()
+
+    if event.key == pygame.K_y:
+        entryPortal = GAME.player.isOnPortal()
+        if entryPortal is None:
+            return
+        GAME.transitPortal(entryPortal)
+
+
+def handleMenuInputs(event):
+    if event.key == pygame.K_p:
+        menus.PauseMenu(SURFACE_MAIN)
+
+    if event.key == pygame.K_i:
+        menus.InventoryMenu(SURFACE_MAIN, GAME.player)
+    
+    if event.key == pygame.K_s:
+        menus.SaveLoadMenu(SURFACE_MAIN)
+
+
 def handleInputEvents():
     eventsList = pygame.event.get()
 
@@ -60,69 +101,19 @@ def handleInputEvents():
         if event.type != pygame.KEYDOWN:
             continue
 
-        # if event.key == pygame.K_UP:
-        #     GAME.player.scheduleMove(0, -1)
-
-        # if event.key == pygame.K_DOWN:
-        #     GAME.player.scheduleMove(0, 1)
-
-        # if event.key == pygame.K_LEFT:
-        #     GAME.player.scheduleMove(-1, 0)
-
-        # if event.key == pygame.K_RIGHT:
-        #     GAME.player.scheduleMove(1, 0)
-
-        # we should invert the signs on moving, here.
-        #sif event.type == pygame.KEYDOWN:
-        pressedKeys = pygame.key.get_pressed()
-        move = [0,0]
-        if pressedKeys[pygame.K_UP]:
-            #print('moving up!')
-            move[1] -= 1
-
-        if pressedKeys[pygame.K_DOWN]:
-            # GAME.player.scheduleMove(0, 1)
-            move[1] += 1
-
-        if pressedKeys[pygame.K_LEFT]:
-            move[0] -= 1
-            #GAME.player.scheduleMove(-1, 0)
-
-        if pressedKeys[pygame.K_RIGHT]:
-            move[0] += 1
-            # GAME.player.scheduleMove(1, 0)
-
-        if move != [0,0]:
-            #print(move)
-            GAME.player.scheduleMove(*move)
-
-
-        if event.key == pygame.K_g:
-            GAME.player.pickupObjects()
-
-        if event.key == pygame.K_p:
-            menus.PauseMenu(SURFACE_MAIN)
-
-        if event.key == pygame.K_i:
-            menus.InventoryMenu(SURFACE_MAIN, GAME.player)
-        
-        if event.key == pygame.K_s:
-            menus.SaveLoadMenu(SURFACE_MAIN)
-
         if event.key == pygame.K_q:
             return "QUIT"
 
-        if event.key == pygame.K_y:
-            entryPortal = GAME.player.isOnPortal()
-            if entryPortal is None:
-                return
-            GAME.transitPortal(entryPortal)
-
+        handleMovementInputs()
+        handleOtherGameInputs(event)
+        handleMenuInputs(event)
     return "no-action"
+
 
 def exitGame():
     pygame.quit()
     quit()
+
 
 def mainGameLoop(debugMode=None):
     playerAction = ""

@@ -20,13 +20,15 @@ class MenuListItem():
                        bgColorUnsel=constants.COLOR_BLACK, 
                        selectable=True, 
                        textColorSel=constants.COLOR_RED, 
-                       bgColorSel=constants.COLOR_DGREY):
+                       bgColorSel=constants.COLOR_DGREY,
+                       selected=False):
         self.text = text
         self.textColorUnsel = textColorUnsel
         self.bgColorUnsel = bgColorUnsel
         self.selectable = selectable
         self.textColorSel = textColorSel
         self.bgColorSel = bgColorSel
+        self.selected = selected
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -72,28 +74,21 @@ class Menu:
         CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
 
-    '''
-    How to respond to key strokes
-    '''
+    
     def parseEvent(self, event):
+        ''' How to respond to key strokes '''
         raise NotImplementedError("parseEvent must be implemented by child class")
 
-    '''
-    What do before the input parsing
-    '''
     def restartLoop(self):
+        ''' What do before the input parsing '''
         raise NotImplementedError("restartLoop must be implemented by child class")
 
-    '''
-    What to do after input parsing
-    '''
-    def finishLoop(self):
+    def finishLoop(self):  
+        ''' What to do after input parsing '''
         raise NotImplementedError("finishLoop must be implemented by child class")
 
-    '''
-    What gets drawn on the menu surface
-    '''
     def redrawMenuBody(self):
+        ''' What gets drawn on the menu surface '''
         raise NotImplementedError("redrawMenuBody must be implemented by child class")
 
 # This is a rather pointless thing, at present.
@@ -119,36 +114,67 @@ class PauseMenu(Menu):
 
 class TextListMenu(Menu):
     def __init__(self, parentSurface):
-        self.selected = 0
+        self.selected=None
+        self.initTextList()
         super().__init__(parentSurface)
 
     def initTextList(self):
-        raise NotImplemented("initTextList must be overwritten by children")
+        raise NotImplemented("sinitTextList must be overwritten by children")
 
     def restartLoop(self):
-        self.initTextList()
-        self.updateSelected() #this really only needs to be called in the init
-        self.menuSurface.fill(constants.COLOR_BLACK) # this shouldn't really be here.
+        pass
+    
+    @property
+    def numSelectable(self):
+        ''' how many selectable objects are in the menu? '''
+        return sum([entry.selectable for entry in self.textList])
 
-    def updateSelected(self):
-        for idx, el in enumerate(self.textList):
-            if idx == self.selected:
-                self.textList[idx][1] = constants.COLOR_RED
-            else:
-                self.textList[idx][1] = constants.COLOR_GREY
+    def addItem(self, text, **kwargs):
+        ''' Add an entry to the text list menu'''
+        newEntry = MenuListItem(text, **kwargs)
+        
+        if self.selected is None and kwargs.get('selectable', False):
+            self.selected = len(self.textList)
+            newEntry.selected = True
+
+        self.textList.append(newEntry)
 
     def decrementSelected(self):
-        if self.selected > 0:
-            self.selected -= 1
-        self.updateSelected()
+        if self.numSelectable == 0:
+            return
+            
+        for idx in range(self.selected-1, -1, -1):
+            if not self.textList[idx].selectable:
+                continue
+            else:
+                self.textList[self.selected].selected = False
+                self.textList[idx].selected = True
+                self.selected = idx
+                break
 
     def incrementSelected(self):
-        if self.selected < len(self.textList) - 1:
-            self.selected += 1
-        self.updateSelected()
+        if self.numSelectable == 0:
+            return
+
+        for idx in range(self.selected+1, len(self.textList)):
+            if not self.textList[idx].selectable:
+                continue
+            else:
+                self.textList[self.selected].selected = False
+                self.textList[idx].selected = True
+                self.selected = idx
+                break
 
     def redrawMenuBody(self):
-        graphics.drawTextList(self.menuSurface, self.textList)
+        gfxTextList = []
+        
+        for entry in self.textList:
+            if entry.selected:
+                gfxEntry = [entry.text, entry.textColorSel, entry.bgColorSel]
+            else:
+                gfxEntry = [entry.text, entry.textColorUnsel, entry.bgColorUnsel]
+            gfxTextList.append(gfxEntry)
+        graphics.drawTextList(self.menuSurface, gfxTextList)
 
     def finishLoop(self):
         pass
@@ -163,16 +189,18 @@ class TextListMenu(Menu):
 
         if event.key == pygame.K_DOWN:
             self.incrementSelected()
-            return 'continue'
-
         elif event.key == pygame.K_UP:
             self.decrementSelected()      
-            return 'continue'
+        return 'continue'
 
 class SaveLoadMenu(TextListMenu):
     def initTextList(self):
-        self.textList = [["Save", constants.COLOR_WHITE,constants.COLOR_BLACK],
-                         ["Load", constants.COLOR_WHITE,constants.COLOR_BLACK]]
+        self.textList = []
+        self.addItem('Save/Load', selectable=False, 
+                                  textColorUnsel=constants.COLOR_BLACK,
+                                  bgColorUnsel=constants.COLOR_GREY)
+        self.addItem('Save', selectable=True)
+        self.addItem('Load', selectable=True)
  
     def parseEvent(self, event):
         ret = super().parseEvent(event)
@@ -206,8 +234,15 @@ class InventoryMenu(TextListMenu):
         super().__init__(parentSurface)
 
     def initTextList(self):
-        self.textList = [["Inventory:", constants.COLOR_WHITE,constants.COLOR_BLACK]]
-        self.textList.extend([[obj.name,constants.COLOR_GREY,constants.COLOR_BLACK] for obj in self.actor.container.inventory if not obj.deleted])
+        self.textList = []
+        self.addItem('Inventory', selectable=False, 
+                                  textColorUnsel=constants.COLOR_BLACK,
+                                  bgColorUnsel=constants.COLOR_GREY)
+        
+        for obj in self.actor.container.inventory:
+            if obj.deleted:
+                 continue
+            self.addItem(obj.name, selectable=True)
 
     def parseEvent(self, event):
         ret = super().parseEvent(event)
@@ -218,7 +253,7 @@ class InventoryMenu(TextListMenu):
             return 
 
         elif event.key == pygame.K_d:
-            print('dropping')
+            #print('dropping')
             self.actor.container.inventory[self.selected-1].drop() #fix this nonsense.
             del self.textList[self.selected]
             self.decrementSelected()

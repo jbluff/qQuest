@@ -78,16 +78,18 @@ class Creature(Actor):
         self.graphicX += dx
         self.graphicY += dy    
 
-    def terminateMovement(self):
+    def terminateMovement(self) -> None:
+        ''' Call this when movement ends.  Cleans up loose ends.'''
         self.x = round(self.graphicX)
         self.y = round(self.graphicY)
         self.moving = False
 
-    def pickupObjects(self):
+    def pickupObjects(self) -> None:
+        ''' Creature picks up all objects at current coords '''
         objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
         [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
 
-    def takeDamage(self, damage):
+    def takeDamage(self, damage: float) -> None:
         self.hp -= damage
         GAME.addMessage(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
 
@@ -95,12 +97,14 @@ class Creature(Actor):
             if self.deathFunction:
                 self.deathFunction(self)
 
-    def heal(self, deltaHp):
+    def heal(self, deltaHp: float) -> None:
         #TODO!
         assert deltaHp >= 0
         pass
 
-    def isOnPortal(self):
+    def isOnPortal(self) -> Portal:
+        ''' if Creatre standing on a portal, returns that Portal.  
+        Otherwise returns None. '''
         for portal in self.level.portals:
             if self.x == portal.x and self.y == portal.y:
                 return portal
@@ -118,22 +122,29 @@ class Viewer(Actor):
         super().__init__(*args, **kwargs)
         self.explorationHistory = {}
                 
-    def recalculateFov(self):
+    def recalculateFov(self) -> None:
+        ''' Using the level's transparency map, recalculate what can be seen 
+        from the Viewer's coordinates'''
         self.fov = self.level.computeFov(self.x, self.y).tolist()   
 
-    def getTileIsVisible(self, x, y):
+    def getTileIsVisible(self, x: int, y: int) -> bool:
+        ''' Can the Viewer see the square x, y '''
         return self.fov[y][x]
 
-    def initLevelExplorationHistory(self):
+    def initLevelExplorationHistory(self) -> None:
+        ''' Initialize a map which depicts, for this level, the history of
+        what the Viewer has seen.  Needed for fog of war '''
         levelID = self.level.uniqueID
         if levelID not in self.explorationHistory.keys(): #first time visiting a level
             self.explorationHistory[levelID] = np.zeros_like(self.level.map, dtype=np.bool).tolist()
 
-    def setTileIsExplored(self, x, y):
+    def setTileIsExplored(self, x: int, y: int):
+        ''' Mark that the tile at (x,y) for this level has been seen by Viewer'''
         levelID = self.level.uniqueID
         self.explorationHistory[levelID][y][x] = True
     
-    def getTileIsExplored(self, x, y):
+    def getTileIsExplored(self, x: int, y: int) -> bool:
+        ''' Has viewer perviousy seen the tile at (x,y) for this level?'''
         levelID = self.level.uniqueID
         return self.explorationHistory[levelID][y][x]
 
@@ -145,7 +156,7 @@ class PlayerClass(Creature, Viewer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def terminateMovement(self):
+    def terminateMovement(self) -> None:
         super().terminateMovement()
         self.recalculateFov()
 
@@ -162,5 +173,5 @@ class Portal(Actor):
         super().__init__(*args, **kwargs)
         self.destinationPortal = destinationPortal
          
-    def pickup(self, actor):
+    def pickup(self, actor: Actor) -> None:
         return
