@@ -127,8 +127,7 @@ class Level:
         return self.visibilityMap.fov
                 
     def checkForCreature(self, x: int, y: int, excludeObject: Actor=None)->Actor:
-        '''
-        Returns target creature instance if target location contains creature.
+        ''' Returns target creature instance if target location contains creature.
         x,y in cells.  excludeObject can be any type which is in level.objects.
         For the time being, that means Actors and (mostly) subclasses.
         The return type has the same constraints.

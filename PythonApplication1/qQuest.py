@@ -31,8 +31,7 @@ Basic object structure:
 
 '''
 TODO:  
-- smarted fow logic -- should do first unseen areas with edges, then prev. 
-    seen areas with edges.
+
 - partial movement -- not just tile-by-tile.
 - smart walls--gfx depend on neightbors, like fow.
 

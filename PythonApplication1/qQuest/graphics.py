@@ -1,6 +1,6 @@
 import itertools
 import copy
-from typing import Tuple, List
+from typing import Tuple, List, Callable
 
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
@@ -223,32 +223,46 @@ def drawFogOfWar(viewer=None) -> None:
 
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
-
-            fowSprite = drawFowEdges(viewer, x, y, (mapWidth, mapHeight))
-            if fowSprite is None:
-                continue
-            fowSprite.set_alpha(200)
-            surface.blit(fowSprite, tilePosition)
+            tileIsExplored = True
         else: 
+            # can't see the tile-- it should be blacked entirely or darkened
             blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
             blankTile.fill(constants.COLOR_BLACK)
  
-            # seen it before tho -- fog of war.
             if tileIsExplored:
-                blankTile.set_alpha(200)
+                blankTile.set_alpha(200) # only darken
             surface.blit(blankTile, tilePosition)
 
+        # Now we add the ragged edges, if applicable. 
+        if not tileIsExplored:
+            continue
 
-def drawFowEdges(viewer, x: int, y: int, limits: Tuple[int]) -> None:
+        # First the blacked ragged edges surrounding explored space.
+        fowSprite = drawFowEdges(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsExplored)
+        if fowSprite is not None:
+            surface.blit(fowSprite, tilePosition)
+
+        # Then the darkened edges around currently visible space
+        if not tileIsVisibleToViewer:
+            continue
+        fowSprite = drawFowEdges(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsVisible)
+        if fowSprite is not None:
+            fowSprite.set_alpha(200)
+            surface.blit(fowSprite, tilePosition)
+
+
+
+def drawFowEdges(x: int, y: int, limits: Tuple[int],
+                 testFunction: Callable[[int,int], bool]) -> None:
     ''' On a visible tile, draw the overhanging FOW effect, if applicable.
     We could replace this (in fewer LOC) with just doing each side as needed
     and rotating and reblitting. a single image.  Maybe we should, dunno, but I like 
     the flexibility, because later we won't get away with that trick for walls.
     Meh.  Need to find something a bit more elegant, eventually.'''
-    aboveIsNotVis = True if (y==0) else not viewer.getTileIsVisible(x, y-1)
-    leftIsNotVis = True if (x==0) else not viewer.getTileIsVisible(x-1, y)
-    belowIsNotVis = True if (y==limits[1]-1) else not viewer.getTileIsVisible(x, y+1)
-    rightIsNotVis = True if (x==limits[0]-1) else not viewer.getTileIsVisible(x+1, y)
+    aboveIsNotVis = True if (y==0) else not testFunction(x, y-1)
+    leftIsNotVis = True if (x==0) else not testFunction(x-1, y)
+    belowIsNotVis = True if (y==limits[1]-1) else not testFunction(x, y+1)
+    rightIsNotVis = True if (x==limits[0]-1) else not testFunction(x+1, y)
 
     numNotVisNeighbors = aboveIsNotVis+leftIsNotVis+belowIsNotVis+rightIsNotVis
 
@@ -292,11 +306,11 @@ def drawFowEdges(viewer, x: int, y: int, limits: Tuple[int]) -> None:
 
         if not belowIsNotVis:
             rotAngle = 90
-        if not leftIsNotVis:
+        elif not leftIsNotVis:
             rotAngle = 0
-        if not rightIsNotVis:
+        elif not rightIsNotVis:
             rotAngle = 180
-        if not aboveIsNotVis:
+        elif not aboveIsNotVis:
             rotAngle = -90
         retSprite = pygame.transform.rotate(retSprite, rotAngle)
 

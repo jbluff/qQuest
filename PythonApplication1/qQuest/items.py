@@ -148,6 +148,7 @@ def creatureToItems(creature, **kwargs):
     corpse = Item((creature.x, creature.y),
                   creature.name+"'s corpse",
                   creature.animationName+"_dead",
+                  creature.level,
                   #[creature.animation[0],],  #this is kinda broke.  
                   **kwargs)
     
