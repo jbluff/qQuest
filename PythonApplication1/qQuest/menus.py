@@ -285,33 +285,23 @@ class InventoryMenu(TextListMenu):
 
         elif event.key == pygame.K_d:
             item = self.menuList[self.selected].annotation
-            print(f'dropping item {item.uniqueID}')
             item.drop()
-            #print(self.menuList)
-            selectedCopy = copy.deepcopy(self.selected)
-            self.decrementSelected()
-            del self.menuList[selectedCopy]
-            #print(self.menuList)
-            #self.actor.container.inventory[self.selected-1].drop() #fix this nonsense.
-            #del self.menuList[self.selected]
-            
-            self.redrawGame = True
+            self.removeSelectedItemFromList()
 
         elif event.key == pygame.K_u:
-            invObj = self.actor.container.inventory[self.selected-1] # selected item's Actor.
-            
-            success = invObj.use(self.actor)
+            item = self.menuList[self.selected].annotation
+
+            success = item.use(self.actor) #this won't always be at self.actor.
             if success:
-                GAME.addMessage(self.actor.name + " uses " + invObj.name )
-                if invObj.deleted:
-                    del self.menuList[self.selected] #delete from menu list -- doesn't really work.
-                    self.decrementSelected()
-            self.redrawGame = True
+                GAME.addMessage(self.actor.name + " uses " + item.name)
+                if item.deleted:
+                    self.removeSelectedItemFromList()
 
-    # def getSelectedItem(self) -> Item:
-    #     itemInMenu = 
-    #     pass
-
+    def removeSelectedItemFromList(self):
+        selectedCopy = copy.deepcopy(self.selected)
+        self.decrementSelected()
+        del self.menuList[selectedCopy]
+        self.redrawGame = True
 
 
 def loadGame(fname):

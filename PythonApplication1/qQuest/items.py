@@ -58,23 +58,23 @@ class Item(Actor):
         GAME.addMessage("item " + self.name + " dropped!")
 
     def use(self, target):
-        print("use was called")
-        print(self.useFunction)
         if self.useFunction is None:
-            return
-        print("found useFunction")
-        success = self.useFunction(target)
-        if not success:
-            return 
+            return False
+        else:
+            success = self.useFunction(target)
+            if not success:
+                return False
 
         self.numCharges -= 1
         if self.numCharges <= 0:
             if self.depleteFunction is None:
                 self.currentContainer.inventory.remove(self)
                 self.deleted = True
-            #self.depleteFunction(self)
 
-# let's be serious, this should use inheritance.
+            #self.depleteFunction(self)
+            return True
+
+
 class Equipment(Item):
 
     def __init__(self, *args, slot=None, attackBonus=0, 
