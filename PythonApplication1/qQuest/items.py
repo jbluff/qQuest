@@ -12,7 +12,11 @@ numCharges : number of items item is used before..
 depleteFunction : called (passed self) when charges run out.
     defaults to delete self.  Allows for e.g. turning into an empty bottle
 """
+
+
 class Item(Actor):
+    numItems = 0
+
     def __init__(self, *args, weight=0.0, volume=0.0, 
                  useFunction=None, numCharges=1, depleteFunction=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,6 +31,9 @@ class Item(Actor):
         self.depleteFunction = depleteFunction
         #self.item = True
         #self.currentContainer = None
+
+        self.uniqueID = f'item{Item.numItems}'
+        Item.numItems += 1
 
         self.deleted = False
         

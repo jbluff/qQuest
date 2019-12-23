@@ -11,9 +11,8 @@ from qQuest.items import Item
 
 # TODO:  QueueEntry should be a class.
 
-''' Creatures are Actor children which can move, fight, die
-'''
 class Creature(Actor):
+    ''' Creatures are Actor children which can move, fight, die '''
     def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
                               container=None, speed=0.1, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,7 +32,8 @@ class Creature(Actor):
         self.ticksPerMove = 1/speed
         self.moving = False
 
-    def resolveQueueTick(self):
+    def resolveQueueTick(self) -> None:
+        ''' Resolve the next entry in the Creature's action queue. '''
         if len(self.creatureQueue) == 0:
             return 
 
@@ -51,7 +51,9 @@ class Creature(Actor):
             self.creatureQueue.append(queueEntry)
 
     # dx, dy in units of cells.
-    def scheduleMove(self, dx, dy):
+    def scheduleMove(self, dx: int, dy: int) -> None:
+        ''' Attempt to queue up a tile -> tile movement.
+        dx, dy in units of tiles.'''
         if self.moving:
             return 
         if dx==0 and dy==0:
@@ -73,7 +75,9 @@ class Creature(Actor):
             queueEntry = ('move', dt, moveTuple)
             self.creatureQueue.append(queueEntry)
 
-    def executeMove(self, dx, dy):
+    def executeMove(self, dx: float, dy: float) -> None:
+        ''' Moves graphic, not root tile position. 
+        dx & dy are in units of tile, but can be fractional.'''
         self.moving = True
         self.graphicX += dx
         self.graphicY += dy    
@@ -102,7 +106,7 @@ class Creature(Actor):
         assert deltaHp >= 0
         pass
 
-    def isOnPortal(self) -> Portal:
+    def isOnPortal(self): # -> Portal:
         ''' if Creatre standing on a portal, returns that Portal.  
         Otherwise returns None. '''
         for portal in self.level.portals:
@@ -110,6 +114,7 @@ class Creature(Actor):
                 return portal
         return None
   
+
 class Viewer(Actor):
     """As an Actor instance, it has reference to a level and a position.
     Viewers introduce the functionality of having a field of view, and we can calculate what they can see.
@@ -149,10 +154,11 @@ class Viewer(Actor):
         return self.explorationHistory[levelID][y][x]
 
 
-''' This class is a Creature, with a field of view -- this name needs to change once we use NPC
-AIs that care about FOV.   It'll be used for more than just the player(s).  
-'''
 class PlayerClass(Creature, Viewer):
+    ''' This class is a Creature, with a field of view -- this name needs to 
+    change once we use NPC AIs that care about FOV.   It'll be used for more 
+    than just the player(s).  
+    '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -160,12 +166,15 @@ class PlayerClass(Creature, Viewer):
         super().terminateMovement()
         self.recalculateFov()
 
-#  pos, name, animationName, 
-#  These will move to their own place..
+
 class Portal(Actor):
+    ''' This class represents a location at which a creature can move rapidly
+    from one location and another.  These instances point at another instance
+    of the same type, generally (but not necessarily) in a different level.
+    '''
     numPortals = 0
 
-    def __init__(self, *args, destinationPortal=None, **kwargs):
+    def __init__(self, *args, destinationPortal=None, **kwargs): #: Portal=
         
         self.uniqueID = Portal.numPortals
         Portal.numPortals += 1

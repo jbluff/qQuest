@@ -1,5 +1,6 @@
 import os
 import datetime
+import copy
 
 import dill
 import pygame
@@ -11,17 +12,18 @@ from qQuest.game import CLOCK, GAME
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
 SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")
 
-#Todo:  make MenuListItem class
-# selected or not
-# selectable or not
 class MenuListItem():
+    ''' Items which are elements in a Menu, both selectable and not.
+    Right now that mostly means carrying colors and text around, but we will
+    generalize eventually, for sliders and buttons and such.'''
     def __init__(self, text,
                        textColorUnsel=constants.COLOR_WHITE, 
                        bgColorUnsel=constants.COLOR_BLACK, 
                        selectable=True, 
                        textColorSel=constants.COLOR_RED, 
                        bgColorSel=constants.COLOR_DGREY,
-                       selected=False):
+                       selected=False,
+                       annotation=None):
         self.text = text
         self.textColorUnsel = textColorUnsel
         self.bgColorUnsel = bgColorUnsel
@@ -29,6 +31,7 @@ class MenuListItem():
         self.textColorSel = textColorSel
         self.bgColorSel = bgColorSel
         self.selected = selected
+        self.annotation = annotation
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -45,13 +48,16 @@ class Menu:
 
         self.mainLoop()
 
-    def calculateDrawPosition(self):
+    def calculateDrawPosition(self) -> None:
+        ''' Calculate where the upper left corner of the menu should be 
+        drawn on the screen.'''
         windowWidth = constants.CELL_WIDTH*constants.CAMERA_WIDTH
         windowHeight = constants.CELL_HEIGHT*constants.CAMERA_HEIGHT
         self.coordY = (windowHeight-self.menuHeight)/2
         self.coordX = (windowWidth-self.menuWidth)/2
 
-    def mainLoop(self):
+    def mainLoop(self) -> None:
+        ''' Infinite loop for menu operation'''
         
         while not self.breakLoop:
             self.restartLoop()
@@ -68,13 +74,14 @@ class Menu:
 
             self.redrawMenu()
 
-    def redrawMenu(self):
+    def redrawMenu(self) -> None:
+        ''' Redraw the menu, respecting FPS limits.'''
+        self.menuSurface.fill(constants.COLOR_BLACK)
         self.redrawMenuBody()
         self.parentSurface.blit(self.menuSurface, (self.coordX, self.coordY))
         CLOCK.tick(constants.GAME_FPS)
         pygame.display.flip()
 
-    
     def parseEvent(self, event):
         ''' How to respond to key strokes '''
         raise NotImplementedError("parseEvent must be implemented by child class")
@@ -125,50 +132,50 @@ class TextListMenu(Menu):
         pass
     
     @property
-    def numSelectable(self):
+    def numSelectable(self) -> int:
         ''' how many selectable objects are in the menu? '''
-        return sum([entry.selectable for entry in self.textList])
+        return sum([entry.selectable for entry in self.menuList])
 
-    def addItem(self, text, **kwargs):
+    def addMenuItem(self, text: str, **kwargs) -> None:
         ''' Add an entry to the text list menu'''
         newEntry = MenuListItem(text, **kwargs)
         
         if self.selected is None and kwargs.get('selectable', False):
-            self.selected = len(self.textList)
+            self.selected = len(self.menuList)
             newEntry.selected = True
 
-        self.textList.append(newEntry)
+        self.menuList.append(newEntry)
 
-    def decrementSelected(self):
+    def decrementSelected(self) -> None:
         if self.numSelectable == 0:
             return
             
         for idx in range(self.selected-1, -1, -1):
-            if not self.textList[idx].selectable:
+            if not self.menuList[idx].selectable:
                 continue
             else:
-                self.textList[self.selected].selected = False
-                self.textList[idx].selected = True
+                self.menuList[self.selected].selected = False
+                self.menuList[idx].selected = True
                 self.selected = idx
                 break
 
-    def incrementSelected(self):
+    def incrementSelected(self) -> None:
         if self.numSelectable == 0:
             return
 
-        for idx in range(self.selected+1, len(self.textList)):
-            if not self.textList[idx].selectable:
+        for idx in range(self.selected+1, len(self.menuList)):
+            if not self.menuList[idx].selectable:
                 continue
             else:
-                self.textList[self.selected].selected = False
-                self.textList[idx].selected = True
+                self.menuList[self.selected].selected = False
+                self.menuList[idx].selected = True
                 self.selected = idx
                 break
 
-    def redrawMenuBody(self):
+    def redrawMenuBody(self) -> None:
         gfxTextList = []
         
-        for entry in self.textList:
+        for entry in self.menuList:
             if entry.selected:
                 gfxEntry = [entry.text, entry.textColorSel, entry.bgColorSel]
             else:
@@ -179,7 +186,7 @@ class TextListMenu(Menu):
     def finishLoop(self):
         pass
 
-    def parseEvent(self, event):
+    def parseEvent(self, event) -> str:
         if event.type != pygame.KEYDOWN:
             return 'continue'
                     
@@ -187,22 +194,27 @@ class TextListMenu(Menu):
             self.breakLoop = True
             return ''
 
-        if event.key == pygame.K_DOWN:
+        elif event.key == pygame.K_DOWN:
             self.incrementSelected()
+            return 'continue'
+
         elif event.key == pygame.K_UP:
             self.decrementSelected()      
-        return 'continue'
+            return 'continue'
+
+        return ''
+
 
 class SaveLoadMenu(TextListMenu):
     def initTextList(self):
-        self.textList = []
-        self.addItem('Save/Load', selectable=False, 
+        self.menuList = []
+        self.addMenuItem('Save/Load', selectable=False, 
                                   textColorUnsel=constants.COLOR_BLACK,
                                   bgColorUnsel=constants.COLOR_GREY)
-        self.addItem('Save', selectable=True)
-        self.addItem('Load', selectable=True)
+        self.addMenuItem('Save', selectable=True)
+        self.addMenuItem('Load', selectable=True)
  
-    def parseEvent(self, event):
+    def parseEvent(self, event) -> None:
         ret = super().parseEvent(event)
         if ret == 'continue':
             return None
@@ -215,8 +227,8 @@ class SaveLoadMenu(TextListMenu):
                 LoadMenu(self.parentSurface)
                 self.breakLoop = True
 
-
-    def gameSave(self, saveName='default'):
+    def gameSave(self, saveName: str='default') -> None:
+        ''' dump the GAME object to a dill file. '''
         dt = datetime.datetime.now()
         dtString = dt.strftime(DATETIME_FORMAT)
 
@@ -227,36 +239,62 @@ class SaveLoadMenu(TextListMenu):
             dill.dump(GAME, f)
         pass
 
+
+class LoadMenu(TextListMenu):
+    def initTextList(self) -> None:
+        allFiles = listSavedGames()
+        [self.addMenuItem(f, selectable=True) for f in allFiles]
+
+    def parseEvent(self, event)-> None:
+        ret = super().parseEvent(event)
+        if ret == 'continue':
+            return None
+
+        if event.key == pygame.K_RETURN:
+            fname = self.menuList[self.selected][0]
+            # print(f'loading {fname}')
+            loadGame(fname)
+            self.breakLoop = True
+
+
 class InventoryMenu(TextListMenu):
     def __init__(self, parentSurface, actor):
         self.actor = actor
         self.selected = 0
         super().__init__(parentSurface)
 
-    def initTextList(self):
-        self.textList = []
-        self.addItem('Inventory', selectable=False, 
+    def initTextList(self) -> None:
+        self.menuList = []
+        self.addMenuItem('Inventory', selectable=False, 
                                   textColorUnsel=constants.COLOR_BLACK,
                                   bgColorUnsel=constants.COLOR_GREY)
         
         for obj in self.actor.container.inventory:
             if obj.deleted:
                  continue
-            self.addItem(obj.name, selectable=True)
+            self.addMenuItem(obj.name, selectable=True, annotation=obj)
 
     def parseEvent(self, event):
+        ''' event is PyGame event, unsure of typing '''
         ret = super().parseEvent(event)
         if ret == 'continue':
             return None
 
-        if len(self.textList) == 1: #empty inventory
+        if len(self.menuList) == 1: #empty inventory
             return 
 
         elif event.key == pygame.K_d:
-            #print('dropping')
-            self.actor.container.inventory[self.selected-1].drop() #fix this nonsense.
-            del self.textList[self.selected]
+            item = self.menuList[self.selected].annotation
+            print(f'dropping item {item.uniqueID}')
+            item.drop()
+            #print(self.menuList)
+            selectedCopy = copy.deepcopy(self.selected)
             self.decrementSelected()
+            del self.menuList[selectedCopy]
+            #print(self.menuList)
+            #self.actor.container.inventory[self.selected-1].drop() #fix this nonsense.
+            #del self.menuList[self.selected]
+            
             self.redrawGame = True
 
         elif event.key == pygame.K_u:
@@ -266,26 +304,15 @@ class InventoryMenu(TextListMenu):
             if success:
                 GAME.addMessage(self.actor.name + " uses " + invObj.name )
                 if invObj.deleted:
-                    del self.textList[self.selected] #delete from menu list -- doesn't really work.
+                    del self.menuList[self.selected] #delete from menu list -- doesn't really work.
                     self.decrementSelected()
             self.redrawGame = True
 
-class LoadMenu(TextListMenu):
-    def initTextList(self):
-        allFiles = listSavedGames()
+    # def getSelectedItem(self) -> Item:
+    #     itemInMenu = 
+    #     pass
 
-        self.textList = [[f, constants.COLOR_WHITE,constants.COLOR_BLACK] for f in allFiles]
- 
-    def parseEvent(self, event):
-        ret = super().parseEvent(event)
-        if ret == 'continue':
-            return None
 
-        if event.key == pygame.K_RETURN:
-            fname = self.textList[self.selected][0]
-            print(f'loading {fname}')
-            loadGame(fname)
-            self.breakLoop = True
 
 def loadGame(fname):
     global GAME
