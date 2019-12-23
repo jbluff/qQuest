@@ -1,5 +1,6 @@
 import itertools
 import copy
+from typing import Tuple, List
 
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
@@ -22,36 +23,30 @@ class Camera:
         self.updatePositionFromViewer() # in cells
 
     
-    def updatePositionFromViewer(self):
+    def updatePositionFromViewer(self) -> None:
         if self.viewer is not None:
             self.x = self.viewer.graphicX # x
             self.y = self.viewer.graphicY # y
 
-    def canSee(self, x, y):
+    def canSee(self, x: int, y: int) -> bool:
+        ''' is the specified cell within the range of the camera?'''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
 
-        #isVisisble = (x < self.x+w/2) and (x > self.x-w/2) and (y < self.y+h/2) and (y > self.y-h/2)
-        #xVisible = (x < self.x+w/2) and (x > self.x-w/2) 
         xVisible = (x < self.x+w) and (x > self.x-w) 
         yVisible = (y < self.y+h) and (y > self.y-h)
-
         return xVisible and yVisible
 
-    def getUpperLeftCorner(self) -> tuple:
+    def getUpperLeftCorner(self) -> Tuple[float]:
         ''' Returned in pixels '''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT 
 
-        # the -w/2 and -h/2 are to center the camera,
-        # the +w and +h are to deal with the map buffer
-        # return (self.x-w/2+w)*constants.CELL_WIDTH, (self.y-h/2+h)*constants.CELL_HEIGHT
         xDrawingPos = (self.x-w/2+w)*constants.CELL_WIDTH
         yDrawingPos = (self.y-h/2+h)*constants.CELL_HEIGHT
         return (xDrawingPos, yDrawingPos)
 
-
-    def getViewingRect(self):
+    def getViewingRect(self) -> pygame.Rect:
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
         map_rect = pygame.Rect(*self.getUpperLeftCorner(),
@@ -59,32 +54,35 @@ class Camera:
                                h*constants.CELL_HEIGHT)
         return map_rect
 
-    '''Converts a game map position to a draw position, both still in units of cells'''
-    def drawPosition(self, x, y):
+    def drawPosition(self, x: int, y: int) -> Tuple[int]:
+        '''Converts a game map position to a draw position, both still in units 
+        of cells.'''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
-
         return (x - self.x + w/2 - 0.5, y - self.y + h/2 - 0.5)
         
 
 class objSpriteSheet:
-    ''' loads a sprite sheet, allows pulling out animations '''
-    def __init__(self, fileName, imageUnitX=constants.CELL_WIDTH, imageUnitY=constants.CELL_HEIGHT):
+    ''' loads a sprite sheet, allows pulling out animations. '''
+    def __init__(self, fileName: str, 
+                       imageUnitX: int=constants.CELL_WIDTH, 
+                       imageUnitY: int=constants.CELL_HEIGHT) -> None:
         ''' 
         imageUnitX/Y define the atomic size of an image on the sprite sheet, in pixels.
             images from the sprite sheet can be selected to take up e.g. several atomic units.
             images can also be scaled from their sprite sheet sizes
-        
         '''
         self.spriteSheet = pygame.image.load(fileName).convert()
         self.imageUnitX = imageUnitX
         self.imageUnitY = imageUnitY
         
-    def getAnimation(self, colIdx=0, rowIdx=0, numSprites=1, spanX=1, spanY=1, scale=None):
+    def getAnimation(self, colIdx: int=0, rowIdx: int=0, numSprites: int=1, 
+                           spanX: int=1, spanY: int=1, scale: float=None
+                           ) -> List[pygame.Surface]:
         ''' 
         spanX and spanY define size of image on the spriteSheet, in units of imageUnitX/Y
-        
-        scale is a tuple of scale factors, applied later
+        colIdx and rowIdx should where to find the first sprite on the spritesheet
+        numSprites is how many (in a row) to take to define an animation.
         '''
         startX, startY = colIdx * self.imageUnitX, rowIdx * self.imageUnitY
         width, height = spanX * self.imageUnitX, spanY * self.imageUnitY
@@ -92,16 +90,7 @@ class objSpriteSheet:
         imageList = []
 
         for idx in range(numSprites):
-            if (colIdx==4):
-                print("colIdx=4")
-                print(f'startX={startX+idx*width}')
-                print(f'width={width}')
-                print(f'startY={startY}')
-                print(f'height={height}')
-
-
             image = pygame.Surface([width, height])#.convert()
-            #print(f'modstartX={startX+idx*width}')
             image.blit(self.spriteSheet, (0,0), (startX+idx*width, startY, width, height))
             image.set_colorkey(constants.COLOR_BLACK)
 
@@ -114,9 +103,12 @@ class objSpriteSheet:
         return imageList
  
 
-'''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
 class Actor():
-    def __init__(self, pos, name, animationName, level=None, **kwargs):
+    '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
+
+    def __init__(self, pos: Tuple[int], name: str, animationName: str, 
+        level, **kwargs):
+        ''' level type is Level.  dur.'''
 
         self.x, self.y = pos
         self.resyncGraphicPosition()
@@ -131,16 +123,16 @@ class Actor():
 
         self.level = level
 
-    def resyncGraphicPosition(self):
-        # X and Y are ints annd represent grid locations for most logic purposes
+    def resyncGraphicPosition(self) -> None:
+        # X and Y are ints and represent grid locations for most logic purposes
         # graphicX and graphicY are where the sprite is drawn, and can be floats.
         self.graphicX, self.graphicY = copy.copy(self.x), copy.copy(self.y)
 
     @property
-    def animation(self):
+    def animation(self) -> List[pygame.Surface]:
         return getattr(ASSETS,self.animationName)
 
-    def getCurrentSprite(self):
+    def getCurrentSprite(self) -> pygame.Surface:
         if len(self.animation) == 1:
             return self.animation[0]
         
@@ -155,7 +147,7 @@ class Actor():
                 self.spriteImageNum = 0
         return self.animation[self.spriteImageNum]
 
-    def draw(self):
+    def draw(self) -> None:
         isInViewerFov = GAME.viewer.getTileIsVisible(self.x, self.y)
         if not isInViewerFov:
             return 
@@ -169,10 +161,13 @@ class Actor():
                     round(drawY * constants.CELL_HEIGHT)) 
         SURFACE_MAP.blit(currentSprite, position)
 
-''' Blits together all of the images that make up the background of a given map.
-This only needs to be called roughly once, when a level is first instantiated.
-'''
+
 def compileBackgroundTiles(level=None) -> pygame.Surface:
+    ''' Blits together all of the images that make up the background of a given map.
+    This only needs to be called roughly once, when a level is first instantiated.
+    level is Level instance.
+    '''
+
     if level is None:
         level = GAME.currentLevel
 
@@ -193,8 +188,8 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
 
     return level_surface
 
-# draws the pre-compiled background tiles (walls, floor, etc)
 def drawBackground():    
+    ''' blits the pre-compiled background tiles (walls, floor, etc)'''
     level = GAME.currentLevel
     surface = SURFACE_MAP
 
@@ -205,8 +200,8 @@ def drawBackground():
     pos = (round(-0.5*constants.CELL_WIDTH),round(-0.5*constants.CELL_HEIGHT))
     surface.blit(map_subsurface, pos)
 
-
-def drawFogOfWar(viewer=None):
+def drawFogOfWar(viewer=None) -> None:
+    ''' viewer is Viewer instance. '''
     if viewer is None:
         viewer = GAME.viewer
     level = GAME.currentLevel
@@ -237,20 +232,19 @@ def drawFogOfWar(viewer=None):
         else: 
             blankTile = pygame.Surface((constants.CELL_WIDTH, constants.CELL_HEIGHT))
             blankTile.fill(constants.COLOR_BLACK)
-
-            
+ 
             # seen it before tho -- fog of war.
             if tileIsExplored:
                 blankTile.set_alpha(200)
             surface.blit(blankTile, tilePosition)
 
-''' On a visible tile, draw the overhanging FOW effect, if applicable.
-We could replace this (in fewer LOC) with just doing each side as needed
-and rotating and reblitting. a single image.  Maybe we should, dunno, but I like 
-the flexibility, because later we won't get away with that trick for walls.
-Meh.  Need to find something a bit more elegant, eventually.'''
-def drawFowEdges(viewer, x, y, limits):
 
+def drawFowEdges(viewer, x: int, y: int, limits: Tuple[int]) -> None:
+    ''' On a visible tile, draw the overhanging FOW effect, if applicable.
+    We could replace this (in fewer LOC) with just doing each side as needed
+    and rotating and reblitting. a single image.  Maybe we should, dunno, but I like 
+    the flexibility, because later we won't get away with that trick for walls.
+    Meh.  Need to find something a bit more elegant, eventually.'''
     aboveIsNotVis = True if (y==0) else not viewer.getTileIsVisible(x, y-1)
     leftIsNotVis = True if (x==0) else not viewer.getTileIsVisible(x-1, y)
     belowIsNotVis = True if (y==limits[1]-1) else not viewer.getTileIsVisible(x, y+1)
@@ -279,14 +273,8 @@ def drawFowEdges(viewer, x, y, limits):
         if leftIsNotVis and rightIsNotVis:
             retSprite = ASSETS.s_fow_twoSideB[0].copy()
             retSprite = pygame.transform.rotate(retSprite, 90)
-            #retSprite=None #DEBUG
-            #pass
-
         elif belowIsNotVis and aboveIsNotVis:
-            retSprite = ASSETS.s_fow_twoSideB[0].copy()
-            #retSprite=None #DEBUG
-            #pass
-            
+            retSprite = ASSETS.s_fow_twoSideB[0].copy()     
         else:
             retSprite = ASSETS.s_fow_twoSide[0].copy()
             if rightIsNotVis and belowIsNotVis:
@@ -298,7 +286,6 @@ def drawFowEdges(viewer, x, y, limits):
             else:
                 rotAngle = -90
             retSprite = pygame.transform.rotate(retSprite, rotAngle)
-            #retSprite=None #DEBUG
 
     elif numNotVisNeighbors == 3:
         retSprite = ASSETS.s_fow_threeSide[0].copy()
@@ -319,7 +306,7 @@ def drawFowEdges(viewer, x, y, limits):
     return retSprite
 
 
-def helperTextDims(text='a',font=constants.FONT_DEBUG):
+def helperTextDims(text='a',font=constants.FONT_DEBUG) -> Tuple[int]:
     fontObject = font.render(text, False, (0,0,0))
     fontRect = fontObject.get_rect()
     return fontRect.width, fontRect.height
@@ -329,7 +316,7 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawGameMessages():
+def drawGameMessages() -> None:
     numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
     if(numMessages==0):
         return 0
@@ -340,14 +327,14 @@ def drawGameMessages():
 
     drawTextList(SURFACE_MAP, messages, startX=0, startY=startY)
 
-def drawDebug():
+def drawDebug() -> None:
     drawFPS()
 
-def drawFPS():
+def drawFPS() -> None:
     drawText(SURFACE_MAP, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame():
+def drawGame() -> None:
 
     SURFACE_MAIN.fill(constants.COLOR_BLACK)
     
@@ -373,18 +360,20 @@ def drawChyron() -> None:
     SURFACE_CHYRON.fill(constants.COLOR_GREY)
     pass
 
-def drawObjects():
+def drawObjects() -> None:
     for gameObj in GAME.currentLevel.objects:
         if getattr(gameObj, "deleted", False):
             return
         gameObj.draw()
 
-def drawText(displaySurface, text, coords, textColor, bgColor=None):
+def drawText(displaySurface: pygame.Surface, text: str, coords: Tuple[int], 
+             textColor: Tuple[int], bgColor: Tuple[int]=None) -> None:
     textSurf, textRect = helperTextObjects(text, textColor, bgColor=bgColor)
     textRect.topleft = coords
     displaySurface.blit(textSurf, textRect)
  
-def drawTextList(surface, messages, startX=0, startY=0):
+def drawTextList(surface: pygame.Surface, messages: tuple, 
+                 startX: int=0, startY: int=0) -> None:
     ''' StartX and startY show upper left coordinate of textList on surface.
     '''
     _, height = helperTextDims()
@@ -445,7 +434,7 @@ class structAssets():
 
         #self.s_fow_fousdf = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
 
-def spriteDebugger():
+def spriteDebugger() -> None:
     # show all the sprites in ASSETS, with their names
     SURFACE_MAIN.fill(constants.COLOR_WHITE)
 

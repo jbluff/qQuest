@@ -59,7 +59,7 @@ class Creature(Actor):
         if dx==0 and dy==0:
             return
 
-        target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, exclude_object=self)
+        target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, excludeObject=self)
         if target:
             #this will also become a queud thing later.
             GAME.addMessage(self.name + " attacks " + target.name)

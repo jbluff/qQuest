@@ -1,6 +1,7 @@
 import os
 import datetime
 import copy
+from typing import List
 
 import dill
 import pygame
@@ -33,6 +34,7 @@ class MenuListItem():
         self.bgColorSel = bgColorSel
         self.selected = selected
         self.annotation = annotation
+
 
 class Menu:
     def __init__(self, parentSurface, menuSize=(300,200)):
@@ -99,8 +101,10 @@ class Menu:
         ''' What gets drawn on the menu surface '''
         raise NotImplementedError("redrawMenuBody must be implemented by child class")
 
-# This is a rather pointless thing, at present.
+
 class PauseMenu(Menu):
+    ''' This is a pointless thing at present, except as an example of a 
+    theortically non-textList menu. '''
     def __init__(self):
         super().__init__(SURFACE_MAIN, menuSize=(200,50))
 
@@ -263,7 +267,7 @@ class InventoryMenu(TextListMenu):
                  continue
             self.addMenuItem(obj.name, selectable=True, annotation=obj)
 
-    def parseEvent(self, event):
+    def parseEvent(self, event) -> None:
         ''' event is PyGame event, unsure of typing '''
         ret = super().parseEvent(event)
         if ret == 'continue':
@@ -286,7 +290,7 @@ class InventoryMenu(TextListMenu):
                 if item.deleted:
                     self.removeSelectedItemFromList()
 
-    def removeSelectedItemFromList(self):
+    def removeSelectedItemFromList(self) -> None:
         selectedCopy = copy.deepcopy(self.selected)
         self.decrementSelected()
         del self.menuList[selectedCopy]
@@ -301,30 +305,25 @@ def gameSave(saveName: str='default') -> None:
     fileName = dtString + '_' + saveName + '.sav'
     filePath = os.path.join(SAVEPATH,fileName)
     GAME.addMessage(f'Game saved to {fileName}')
-    print(filePath)
     with open(filePath, 'wb') as f:
         dill.dump(GAME, f)
     pass
 
-
-def loadGame(fname):
+def loadGame(fname: str) -> None:
     global GAME
 
     filePath = os.path.join(SAVEPATH,fname)
-    print(filePath)
     with open(filePath, 'rb') as f:
         newGame = dill.load(f)
     
     GAME.levels = newGame.levels
-    #GAME.currentLevelIdx = newGame.currentLevelIdx
     GAME.currentLevel = newGame.currentLevel
     GAME.player = newGame.player
     GAME.messageHistory = newGame.messageHistory
     GAME.viewer = newGame.viewer
     GAME.camera = newGame.camera
 
-def listSavedGames():
-    #datetime.strptime(date_string, format).
+def listSavedGames() -> List[str]:
     saveFiles = []
     for f in os.listdir(SAVEPATH):
         name = os.path.join(SAVEPATH, f)
