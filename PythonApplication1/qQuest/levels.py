@@ -193,7 +193,8 @@ class Level:
         if GAME.player is None:
             playerInventory = Container()
             GAME.player = PlayerClass((x,y), "hero", "a_player",
-                                      container=playerInventory, level=self)
+                                      container=playerInventory, level=self,
+                                      speed=0.12)
         else:
             GAME.player.x = x
             GAME.player.y = y
@@ -232,8 +233,3 @@ class Level:
         for gameObj in self.objects:
             if isinstance(gameObj, Creature):
                 gameObj.resolveQueueTick()
-
-            ''' it's not at all clear that 'thinking' shouldn't also be 
-            handled through the Creature's queue'''
-            if getattr(gameObj, "ai", None):
-                gameObj.ai.takeTurn()

@@ -27,19 +27,18 @@ class QueueEntry():
 
 class QueuedMove(QueueEntry):
     def __init__(self, remainingDuration: float, Dx: int, Dy: int):
-        
         self.Dx, self.Dy = Dx, Dy
-        
         super().__init__(remainingDuration)
-
-        ''' dx and dy are per time tick '''
+        # dx and dy are per time tick
         self.dx, self.dy = Dx/self.totalDuration, Dy/self.totalDuration
 
+class QueuedAI(QueueEntry):
+    pass
 
 class Creature(Actor):
     ''' Creatures are Actor children which can move, fight, die '''
     def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
-                              container=None, speed=0.1, **kwargs):
+                              container=None, speed=0.07, **kwargs):
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
@@ -55,42 +54,35 @@ class Creature(Actor):
 
         self.creatureQueue = collections.deque()
         self.ticksPerMove = 1/speed
-        self.moving = False
 
     def resolveQueueTick(self) -> None:
         ''' Resolve the next entry in the Creature's action queue. '''
         if len(self.creatureQueue) == 0:
+            if self.ai is not None:
+                self.scheduleAI()
             return 
 
-        queueEntry = self.creatureQueue.popleft()
-    
+        queueEntry = self.creatureQueue.pop()
         if isinstance(queueEntry, QueuedMove):
             success = self.executeMove(queueEntry)
-
-            
             if queueEntry.completed:
                 self.terminateMovement()
+ 
+        if isinstance(queueEntry, QueuedAI):
+            success = self.executeAI(queueEntry)
 
-        
         if not queueEntry.completed and success:
             self.creatureQueue.append(queueEntry)
 
     def scheduleMove(self, dx: int, dy: int) -> None:
         ''' Attempt to queue up a tile -> tile movement.
         dx, dy are differential position.  In units of tiles.'''
-        if self.movesInQueue > 0:
+        MAX_QUEUED_MOVES = 2
+        if self.movesInQueue >= MAX_QUEUED_MOVES:
             return 
         if dx==0 and dy==0:
             return
 
-        # target = self.level.checkForCreature(self.x+dx, self.y+dy, excludeObject=self)
-        # if target: #this will also become a queued thing later.
-        #     GAME.addMessage(self.name + " attacks " + target.name)
-        #     target.takeDamage(3)
-        #     return 
-
-        # tileIsBlocking = self.level.map[self.y+dy][self.x+dx].blocking 
-        # if not tileIsBlocking:
         duration = int(math.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
         queueEntry = QueuedMove(duration, dx, dy)
         self.creatureQueue.append(queueEntry)
@@ -106,12 +98,8 @@ class Creature(Actor):
 
         # if the move hasn't initiated yet, do some checks.
         if not queueEntry.started:
-            # can we move into the next tile?  
-            nextX = self.x + queueEntry.Dx#dx*queueEntry.remainingDuration)
-            nextY = self.y + queueEntry.Dy#dy*queueEntry.remainingDuration)
-            if isinstance(self, PlayerClass):
-                #print(f'{nextX},{self.graphicX+queueEntry.dx*queueEntry.remainingDuration}')
-                print(f'{nextX},{nextY}')
+            nextX = self.x + queueEntry.Dx
+            nextY = self.y + queueEntry.Dy
             tileIsBlocking = self.level.map[nextY][nextX].blocking 
             if tileIsBlocking:
                 return False
@@ -122,24 +110,32 @@ class Creature(Actor):
                 target.takeDamage(3)
                 return False
 
-        self.executeMoveTick(queueEntry)#.dx, queueEntry.dy) 
+        self.executeMoveTick(queueEntry)
         return True 
 
-    def executeMoveTick(self, queueEntry: QueuedMove) -> None:#dx: float, dy: float) -> None:
-        ''' Moves graphic, not root tile position. 
-        dx & dy are in units of tile, but can be fractional.
-        Only one frame of motion, no checks.'''
-        self.moving = True
+    def executeMoveTick(self, queueEntry: QueuedMove) -> None:
+        ''' Moves graphic one frame, not root tile position. 
+        dx & dy are in units of tile, but can be fractional. '''
         self.graphicX += queueEntry.dx
         self.graphicY += queueEntry.dy   
         queueEntry.tick()
-        
 
     def terminateMovement(self) -> None:
-        ''' Called when movement ends.  Cleans up loose ends.'''
+        ''' Called when movement ends.  Cleans up loose ends. Or it used to, anyways.'''
         self.x = round(self.graphicX)
         self.y = round(self.graphicY)
-        self.moving = False
+
+    def scheduleAI(self) -> None:
+        queueEntry = QueuedAI(self.ai.thinkingDuration)
+        self.creatureQueue.append(queueEntry)
+
+    def executeAI(self, queueEntry: QueuedAI) -> bool:
+        queueEntry.tick()
+        if queueEntry.completed:
+            self.ai.think()
+            return False
+        return True 
+
 
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''
