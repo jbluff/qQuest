@@ -35,6 +35,11 @@ class QueuedMove(QueueEntry):
 class QueuedAI(QueueEntry):
     pass
 
+class QueuedAttack(QueueEntry):
+    def __init__(self, remainingDuration: float, target: Actor):
+        self.target = target
+        super().__init__(remainingDuration)
+
 class Creature(Actor):
     ''' Creatures are Actor children which can move, fight, die '''
     def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
@@ -71,6 +76,9 @@ class Creature(Actor):
         if isinstance(queueEntry, QueuedAI):
             success = self.executeAI(queueEntry)
 
+        if isinstance(queueEntry, QueuedAttack):
+            success = self.executeAttack(queueEntry)
+
         if not queueEntry.completed and success:
             self.creatureQueue.append(queueEntry)
 
@@ -105,9 +113,8 @@ class Creature(Actor):
                 return False
 
             target = self.level.checkForCreature(nextX, nextY, excludeObject=self)
-            if target: #this will also become a queued thing later.
-                GAME.addMessage(self.name + " attacks " + target.name)
-                target.takeDamage(3)
+            if target:
+                self.scheduleAttack(target)
                 return False
 
         self.executeMoveTick(queueEntry)
@@ -130,12 +137,28 @@ class Creature(Actor):
         self.creatureQueue.append(queueEntry)
 
     def executeAI(self, queueEntry: QueuedAI) -> bool:
+        # think at the end of the duration.
         queueEntry.tick()
         if queueEntry.completed:
             self.ai.think()
             return False
         return True 
 
+    def scheduleAttack(self, target: Actor) -> None:
+        attackDuration = 30 # inverse "attack speed"
+        queueEntry = QueuedAttack(attackDuration, target)
+        self.creatureQueue.append(queueEntry)
+
+    def executeAttack(self, queueEntry: QueuedAttack) -> bool:
+        # attack at the start of the duration.
+        # do fun graphicsy things... or sound effects.  woah.
+        if not queueEntry.started:
+            GAME.addMessage(self.name + " attacks " + queueEntry.target.name)
+            queueEntry.target.takeDamage(3)           
+        queueEntry.tick()
+        if queueEntry.completed:
+            return False
+        return True 
 
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''

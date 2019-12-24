@@ -22,7 +22,7 @@ class aiTest(aiTemplate):
 
 class aiDumbAggro(aiTemplate):
     def __init__(self):
-        self.thinkingDuration = 2
+        self.thinkingDuration = 2 
 
     def think(self):
         dx = GAME.player.graphicX - self.owner.graphicX
