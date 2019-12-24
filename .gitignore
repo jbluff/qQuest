@@ -345,3 +345,5 @@ healthchecksdb
 *.sav
 *.DS_Store
 *.xcf
+out/linecounter.json
+out/linecounter.txt

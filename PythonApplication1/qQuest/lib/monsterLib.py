@@ -3,13 +3,13 @@ from qQuest import magic, items, ai
 MONSTERS = {}
 MONSTERS['jelly'] = {'name' : 'jelly',
                     'animation' : "a_jelly",
-                    'ai' : "aiTest",
+                    'ai' : "aiRandom",
                     'deathFunction' : items.deathMonster,
                     'kwargs' : {}}
 
 MONSTERS['demon'] = {'name' : 'demon',
                     'animation' : "a_demon",
-                    'ai' : 'aiDumbAggro', #"aiTest",
+                    'ai' : 'aiDumbCoward',#'aiDumbAggro', #"aiTest",
                     'deathFunction' : items.deathMonster,
                     'kwargs' : {}}
 
