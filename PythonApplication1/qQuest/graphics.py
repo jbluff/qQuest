@@ -232,9 +232,9 @@ def drawFogOfWar(viewer=None) -> None:
             if tileIsExplored:
                 blankTile.set_alpha(200) # only darken
             surface.blit(blankTile, tilePosition)
-
+            
         # Now we add the ragged edges, if applicable. 
-        if not tileIsExplored:
+        if tileIsExplored:
             continue
 
         # First the blacked ragged edges surrounding explored space.
@@ -411,12 +411,9 @@ class structAssets():
 
         self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
         self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
-
        
-        self.s_wall = pygame.image.load(root+'16x16figs/wall.png').convert()
-        # self.s_wall_dark = pygame.image.load(root+'16x16figs/wall_dark.png').convert()
-        self.s_floor = pygame.image.load(root+'16x16figs/floor.png').convert()
-        # self.s_floor_dark = pygame.image.load(root+'16x16figs/floor_dark.png').convert()
+        self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
+        self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
 
         self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
         self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
@@ -431,22 +428,16 @@ class structAssets():
 
         #self.dungeon_ss = pygame.image.load(root+'')
         self.dungeon_ss = objSpriteSheet(root+'16x16figs/dungeon_tileset.png')
-        # self.stairsDownSpriteSheet = objSpriteSheet(root+'32x32figs/stone_stairs_down.png',
-        #                                                 imageUnitX=32, imageUnitY=32)
         self.s_ladder = self.dungeon_ss.getAnimation(colIdx=9, rowIdx=3, numSprites=1)
 
-       # self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWar.png')
         self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWarPositiveB.png')
-        #self.s_fow_full = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
-        self.s_fow_oneSide = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)#, convAlpha=True)
+        self.s_fow_oneSide = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
         self.s_fow_twoSide = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=0, numSprites=1)
-        self.s_fow_threeSide = self.fowSpriteSheet.getAnimation(colIdx=2, rowIdx=0, numSprites=1)
+        self.s_fow_threeSide = self.fowSpriteSheet.getAnimation(colIdx=2, rowIdx=0,numSprites=1)
         self.s_fow_fourSide = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
-
         self.s_fow_twoSideB = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=1, numSprites=1)
 
 
-        #self.s_fow_fousdf = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
 
 def spriteDebugger() -> None:
     # show all the sprites in ASSETS, with their names

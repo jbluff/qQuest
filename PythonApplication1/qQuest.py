@@ -42,7 +42,7 @@ TODO:
 - npcs text popups and interaction, scripting schema
 - add inventory and health graphics (expand gfx past map window.)
 
-- procedural level generation integrated to be in the fly
+- procedural level generation integrated to be on the fly
 - moar graphic assets
 
 - Image processing on procGen rooms for rounding etc.

@@ -7,6 +7,7 @@ from typing import List
 import numpy as np
 import tcod as libtcod
 
+
 from qQuest import ai, constants
 
 from qQuest.actors import Creature, Portal, PlayerClass, Viewer
@@ -16,12 +17,13 @@ from qQuest.graphics import ASSETS, Actor, compileBackgroundTiles
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.monsterLib import MONSTERS, NAMES
-from qQuest.lib.tileLib import TILES
+from qQuest.lib.portalLib import PORTALS 
+from qQuest.lib.tileLib import TILES 
 
 # the tile Sprites will change with level, eventually.
 # like caves vs dungeon vs whatever
 class Tile:
-    def __init__(self, inFovSpriteName, blocking=False, seeThru=True):
+    def __init__(self, inFovSpriteName, blocking=False, seeThru=True, **kwargs):
         self.inFovSpriteName = inFovSpriteName
         self.blocking = blocking
         self.seeThru = seeThru
@@ -60,40 +62,61 @@ class Level:
         instances tiles.  Floors, walls, items, monsters, portals.  All as
         specified in the loaded dictionary.'''
 
+        '''
+        Refactor & entensions plan:
+        1)  entries in the levelArray should allow more than one type per entry
+            - that allows, for instance, multiple objects at the same place.
+            - looking ahead, that means we can specify both the floor tile and
+                the object on top of it.
+
+        2) tileLib gets renamed portalLib
+
+        3) we create floorLib, which points at various different types of 
+            floor tile sprites, so we can mix that up.
+
+        4) similarly we create wallLib.
+            - note that this DOESN'T allow for dynamic, neighbor-aware sprite
+                selection.  We'll have to work that out later.  
+
+        5) I'd also like to make some decoratives that get rendered on top of 
+            the floors and walls, but don't actually create any sort of blocking
+            or opaque tile entry.  
+        '''
+
         self.levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
 
         self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
 
-        floorTile = Tile("s_floor", blocking=False, seeThru=True)
+        floorTile = ""#Tile("s_floor", blocking=False, seeThru=True)
         self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
-            tileType = decoder[self.levelArray[i][j]]
-            if tileType == "floor":
-                continue
+            stringList = self.levelArray[i][j]
+            for char in stringList:
+                tileType = decoder[char]
+                if tileType in TILES.keys():
+                    tileDict = TILES[tileType]
+                    self.map[i][j] = Tile(tileDict['animation'], **tileDict)
+                    continue
 
-            if tileType == "wall":
-                self.map[i][j] = Tile("s_wall", blocking=True, seeThru=False)
-                continue
-            
-            if tileType == "player":
-                # don't use this.  always add player at portal.
-                continue
+                elif tileType == "player":
+                    # don't use this.  always add player at portal.
+                    continue
 
-            if tileType in ITEMS.keys():
-                self.addItem(j, i, tileType)
-                continue
+                elif tileType in ITEMS.keys():
+                    self.addItem(j, i, tileType)
+                    continue
 
-            if tileType in MONSTERS.keys():
-                self.addEnemy(j, i, tileType)
-                continue
+                elif tileType in MONSTERS.keys():
+                    self.addEnemy(j, i, tileType)
+                    continue
 
-            if tileType in TILES.keys():
-                self.addPortal(j, i, tileType) #this construction is erroneous.
-                continue
+                elif tileType in PORTALS.keys():
+                    self.addPortal(j, i, tileType) 
+                    continue
 
-            raise Exception("Failed at adding item during level parsing.")
+                raise Exception(f"Failed at adding item during level parsing. {tileType}")
 
         self.initializeVisibilityMap()
 
@@ -197,7 +220,7 @@ class Level:
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
-        itemDict = TILES[name]
+        itemDict = PORTALS[name]
         item = Portal( (coordX, coordY), name, itemDict['animation'], level=self, destinationPortal=None)
         self.objects.append(item)
         self.portals.append(item)
