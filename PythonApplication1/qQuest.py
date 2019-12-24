@@ -148,25 +148,12 @@ def initializeGame():
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    #level1 = Level("newMap1")
-    #level1 = Level("mapWithPlayer")
-    #level1 = Level("mapwPG")
-    #level1 = Level("testMap")
-    #level1 = Level("mapwPIE")
-
-    # level1 = Level("mapwPIES", initPlayer=True)
-    # GAME.levels.append(level1)
-    # GAME.currentLevel = 0
-
-    # level2 = Level("mapwPIES3", initPlayer=False)
-    # GAME.levels.append(level2)
-
-    level1 = Level("mapwPIES3")#, initPlayer=False)
+    level1 = Level("mapwPIES3")
     GAME.levels.append(level1)
     GAME.currentLevel = level1
     level1.placePlayerAtPortal(level1.portals[0])
 
-    level2 = Level("mapwPIES2")#, initPlayer=False)
+    level2 = Level("mapwPIES2")
     GAME.levels.append(level1)
 
     level1.portals[0].destinationPortal = level2.portals[0]

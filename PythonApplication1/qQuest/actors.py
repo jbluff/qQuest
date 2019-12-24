@@ -9,7 +9,14 @@ from qQuest.graphics import Actor
 from qQuest.items import Item
 
 
-# TODO:  QueueEntry should be a class.
+class QueueEntry():
+    def __init__(self, remainingDuration: float):
+        self.remainingDuration = remainingDuration
+
+class QueuedMove(QueueEntry):
+    def __init__(self, remainingDuration: float, dx: float, dy: float):
+        self.dx, self.dy = dx, dy
+        super().__init__(remainingDuration)
 
 class Creature(Actor):
     ''' Creatures are Actor children which can move, fight, die '''
@@ -37,17 +44,19 @@ class Creature(Actor):
         if len(self.creatureQueue) == 0:
             return 
 
-        eventType, remainingDuration, argsTuple = self.creatureQueue.popleft()
-        remainingDuration -= 1
+        queueEntry = self.creatureQueue.popleft()
+        # remainingDuration, dx, dy):
+        #eventType, remainingDuration, argsTuple = self.creatureQueue.popleft()
+        queueEntry.remainingDuration -= 1
 
-        if eventType == 'move':
-            self.executeMove(*argsTuple)
+        if isinstance(queueEntry, QueuedMove):# eventType == 'move':
+            self.executeMove(queueEntry.dx, queueEntry.dy)#*argsTuple)
 
-            if remainingDuration <= 0:
+            if queueEntry.remainingDuration <= 0:
                 self.terminateMovement()
 
-        if remainingDuration > 0:
-            queueEntry = (eventType, remainingDuration, argsTuple)
+        if queueEntry.remainingDuration > 0:
+            #queueEntry = (eventType, remainingDuration, argsTuple)
             self.creatureQueue.append(queueEntry)
 
     # dx, dy in units of cells.
@@ -70,9 +79,9 @@ class Creature(Actor):
         if not tileIsBlocking:
             # (action type, duration in ticks, argsTuple)
             dt = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
-            moveTuple = (dx/dt, dy/dt)
-            
-            queueEntry = ('move', dt, moveTuple)
+            #moveTuple = (dx/dt, dy/dt)
+            queueEntry = QueuedMove(dt, dx/dt, dy/dt)
+            #queueEntry = ('move', dt, moveTuple)
             self.creatureQueue.append(queueEntry)
 
     def executeMove(self, dx: float, dy: float) -> None:

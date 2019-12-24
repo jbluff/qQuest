@@ -9,7 +9,7 @@ import numpy as np
 from qQuest import constants
 from qQuest.game import CLOCK, GAME
 
-SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P, constants.TOTAL_HEIGHT_P ),
+SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
                                         FULLSCREEN | DOUBLEBUF)
 
 SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
@@ -234,7 +234,7 @@ def drawFogOfWar(viewer=None) -> None:
             surface.blit(blankTile, tilePosition)
             
         # Now we add the ragged edges, if applicable. 
-        if tileIsExplored:
+        if not tileIsExplored:
             continue
 
         # First the blacked ragged edges surrounding explored space.
@@ -362,7 +362,7 @@ def drawGame() -> None:
     SURFACE_MAIN.blit(SURFACE_MAP, (0,0))
 
     ''' off-map portions of the interface '''
-    drawChyron()
+    #drawChyron()
     SURFACE_MAIN.blit(SURFACE_CHYRON, (0,SURFACE_MAP.get_height()))
 
     pygame.display.flip()

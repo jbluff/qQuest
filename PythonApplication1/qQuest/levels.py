@@ -7,7 +7,6 @@ from typing import List
 import numpy as np
 import tcod as libtcod
 
-
 from qQuest import ai, constants
 
 from qQuest.actors import Creature, Portal, PlayerClass, Viewer
@@ -64,19 +63,20 @@ class Level:
 
         '''
         Refactor & entensions plan:
-        1)  entries in the levelArray should allow more than one type per entry
+        x 1)  entries in the levelArray should allow more than one type per entry
             - that allows, for instance, multiple objects at the same place.
             - looking ahead, that means we can specify both the floor tile and
                 the object on top of it.
 
-        2) tileLib gets renamed portalLib
+        x 2) tileLib gets renamed portalLib
 
-        3) we create floorLib, which points at various different types of 
+        x 3) we create floorLib, which points at various different types of 
             floor tile sprites, so we can mix that up.
 
-        4) similarly we create wallLib.
+        x 4) similarly we create wallLib.
             - note that this DOESN'T allow for dynamic, neighbor-aware sprite
-                selection.  We'll have to work that out later.  
+                selection.  We'll have to work that out later.  Maybe handle in
+                generation?
 
         5) I'd also like to make some decoratives that get rendered on top of 
             the floors and walls, but don't actually create any sort of blocking
@@ -92,31 +92,31 @@ class Level:
         self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
-            stringList = self.levelArray[i][j]
-            for char in stringList:
-                tileType = decoder[char]
-                if tileType in TILES.keys():
-                    tileDict = TILES[tileType]
+            allTiles = self.levelArray[i][j]
+            for tileChar in allTiles:
+                tileTypeKey = decoder[tileChar]
+                if tileTypeKey in TILES.keys():
+                    tileDict = TILES[tileTypeKey]
                     self.map[i][j] = Tile(tileDict['animation'], **tileDict)
                     continue
 
-                elif tileType == "player":
+                elif tileTypeKey == "player":
                     # don't use this.  always add player at portal.
                     continue
 
-                elif tileType in ITEMS.keys():
-                    self.addItem(j, i, tileType)
+                elif tileTypeKey in ITEMS.keys():
+                    self.addItem(j, i, tileTypeKey)
                     continue
 
-                elif tileType in MONSTERS.keys():
-                    self.addEnemy(j, i, tileType)
+                elif tileTypeKey in MONSTERS.keys():
+                    self.addEnemy(j, i, tileTypeKey)
                     continue
 
-                elif tileType in PORTALS.keys():
-                    self.addPortal(j, i, tileType) 
+                elif tileTypeKey in PORTALS.keys():
+                    self.addPortal(j, i, tileTypeKey) 
                     continue
 
-                raise Exception(f"Failed at adding item during level parsing. {tileType}")
+                raise Exception(f"Failed at adding item during level parsing. {tileTypeKey}")
 
         self.initializeVisibilityMap()
 
