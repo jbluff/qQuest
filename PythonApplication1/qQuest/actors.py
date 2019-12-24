@@ -28,6 +28,7 @@ class QueuedMove(QueueEntry):
         self.dx, self.dy = dx, dy
         super().__init__(remainingDuration)
 
+
 class Creature(Actor):
     ''' Creatures are Actor children which can move, fight, die '''
     def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
@@ -63,29 +64,33 @@ class Creature(Actor):
             if queueEntry.completed:
                 self.terminateMovement()
 
-        if queueEntry.remainingDuration > 0:
+        if not queueEntry.completed:
             self.creatureQueue.append(queueEntry)
 
     def scheduleMove(self, dx: int, dy: int) -> None:
         ''' Attempt to queue up a tile -> tile movement.
-        dx, dy in units of tiles.'''
-        if self.moving:
+        dx, dy are differential position.  In units of tiles.'''
+        if self.movesInQueue > 0:
             return 
         if dx==0 and dy==0:
             return
 
-        target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, excludeObject=self)
-        if target:
-            #this will also become a queued thing later.
+        target = self.level.checkForCreature(self.x+dx, self.y+dy, excludeObject=self)
+        if target: #this will also become a queued thing later.
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
             return 
 
-        tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
+        tileIsBlocking = self.level.map[self.y+dy][self.x+dx].blocking 
         if not tileIsBlocking:
             duration = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
             queueEntry = QueuedMove(duration, dx/duration, dy/duration)
             self.creatureQueue.append(queueEntry)
+
+    @property
+    def movesInQueue(self) -> int:
+        ''' How many moves have been scheduled?  Helpful for smooth movement. '''
+        return sum([isinstance(entry, QueuedMove) for entry in self.creatureQueue])
 
     def executeMove(self, dx: float, dy: float) -> None:
         ''' Moves graphic, not root tile position. 
@@ -95,14 +100,14 @@ class Creature(Actor):
         self.graphicY += dy    
 
     def terminateMovement(self) -> None:
-        ''' Call this when movement ends.  Cleans up loose ends.'''
+        ''' Called when movement ends.  Cleans up loose ends.'''
         self.x = round(self.graphicX)
         self.y = round(self.graphicY)
         self.moving = False
 
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''
-        objs = GAME.currentLevel.objectsAtCoords(self.x, self.y)
+        objs = self.level.objectsAtCoords(self.x, self.y)
         [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
 
     def takeDamage(self, damage: float) -> None:

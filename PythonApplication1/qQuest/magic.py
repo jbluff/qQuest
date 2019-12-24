@@ -1,11 +1,8 @@
 
 from qQuest.game import GAME
 
-
-'''
-Target is a Creature
-'''
-def castHeal(target, value):
+def castHeal(target, value) -> float:
+    ''' Target is a Creature type. '''
     print("heal was cast")
     #TODO:  implement creature.heal function
     endHp = min(target.maxHp, target.hp+value)
@@ -14,11 +11,9 @@ def castHeal(target, value):
 
     if deltaHp > 0:
         GAME.addMessage(target.name + " heals for " + str(deltaHp))
-        graphics.drawGameMessages()
         return True
     else:
         GAME.addMessage(target.name + " is already at full HP")
-        graphics.drawGameMessages()
         return False
 
 
