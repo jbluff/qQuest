@@ -1,18 +1,14 @@
-"""
+'''
 Covers the Game class, as well as the non-graphics global singletons.
-"""
+'''
 
 import pygame
 import numpy as np
 
 from qQuest import constants
-#from qQuest import map_util
 
-
-#flags = FULLSCREEN | DOUBLEBUF
 
 CLOCK = pygame.time.Clock()
-
 
 class Game:
     def __init__(self):
