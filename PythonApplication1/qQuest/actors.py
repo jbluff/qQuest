@@ -1,5 +1,6 @@
 import itertools
 import collections
+import math
 
 import numpy as np
 
@@ -13,9 +14,11 @@ class QueueEntry():
     def __init__(self, duration: float):
         self.totalDuration = duration
         self.remainingDuration = duration
+        self.started = False
 
     def tick(self, dt: float=1) -> None:
         self.remainingDuration -= dt
+        self.started = True
 
     @property
     def completed(self) -> bool:
@@ -23,10 +26,14 @@ class QueueEntry():
 
 
 class QueuedMove(QueueEntry):
-    def __init__(self, remainingDuration: float, dx: float, dy: float):
-        ''' dx and dy are per time tick '''
-        self.dx, self.dy = dx, dy
+    def __init__(self, remainingDuration: float, Dx: int, Dy: int):
+        
+        self.Dx, self.Dy = Dx, Dy
+        
         super().__init__(remainingDuration)
+
+        ''' dx and dy are per time tick '''
+        self.dx, self.dy = Dx/self.totalDuration, Dy/self.totalDuration
 
 
 class Creature(Actor):
@@ -56,15 +63,16 @@ class Creature(Actor):
             return 
 
         queueEntry = self.creatureQueue.popleft()
-        queueEntry.tick()
-
+    
         if isinstance(queueEntry, QueuedMove):
-            self.executeMove(queueEntry.dx, queueEntry.dy)
+            success = self.executeMove(queueEntry)
 
+            
             if queueEntry.completed:
                 self.terminateMovement()
 
-        if not queueEntry.completed:
+        
+        if not queueEntry.completed and success:
             self.creatureQueue.append(queueEntry)
 
     def scheduleMove(self, dx: int, dy: int) -> None:
@@ -75,29 +83,57 @@ class Creature(Actor):
         if dx==0 and dy==0:
             return
 
-        target = self.level.checkForCreature(self.x+dx, self.y+dy, excludeObject=self)
-        if target: #this will also become a queued thing later.
-            GAME.addMessage(self.name + " attacks " + target.name)
-            target.takeDamage(3)
-            return 
+        # target = self.level.checkForCreature(self.x+dx, self.y+dy, excludeObject=self)
+        # if target: #this will also become a queued thing later.
+        #     GAME.addMessage(self.name + " attacks " + target.name)
+        #     target.takeDamage(3)
+        #     return 
 
-        tileIsBlocking = self.level.map[self.y+dy][self.x+dx].blocking 
-        if not tileIsBlocking:
-            duration = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
-            queueEntry = QueuedMove(duration, dx/duration, dy/duration)
-            self.creatureQueue.append(queueEntry)
+        # tileIsBlocking = self.level.map[self.y+dy][self.x+dx].blocking 
+        # if not tileIsBlocking:
+        duration = int(math.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
+        queueEntry = QueuedMove(duration, dx, dy)
+        self.creatureQueue.append(queueEntry)
 
     @property
     def movesInQueue(self) -> int:
         ''' How many moves have been scheduled?  Helpful for smooth movement. '''
         return sum([isinstance(entry, QueuedMove) for entry in self.creatureQueue])
 
-    def executeMove(self, dx: float, dy: float) -> None:
+    def executeMove(self, queueEntry: QueuedMove) -> bool:
         ''' Moves graphic, not root tile position. 
         dx & dy are in units of tile, but can be fractional.'''
+
+        # if the move hasn't initiated yet, do some checks.
+        if not queueEntry.started:
+            # can we move into the next tile?  
+            nextX = self.x + queueEntry.Dx#dx*queueEntry.remainingDuration)
+            nextY = self.y + queueEntry.Dy#dy*queueEntry.remainingDuration)
+            if isinstance(self, PlayerClass):
+                #print(f'{nextX},{self.graphicX+queueEntry.dx*queueEntry.remainingDuration}')
+                print(f'{nextX},{nextY}')
+            tileIsBlocking = self.level.map[nextY][nextX].blocking 
+            if tileIsBlocking:
+                return False
+
+            target = self.level.checkForCreature(nextX, nextY, excludeObject=self)
+            if target: #this will also become a queued thing later.
+                GAME.addMessage(self.name + " attacks " + target.name)
+                target.takeDamage(3)
+                return False
+
+        self.executeMoveTick(queueEntry)#.dx, queueEntry.dy) 
+        return True 
+
+    def executeMoveTick(self, queueEntry: QueuedMove) -> None:#dx: float, dy: float) -> None:
+        ''' Moves graphic, not root tile position. 
+        dx & dy are in units of tile, but can be fractional.
+        Only one frame of motion, no checks.'''
         self.moving = True
-        self.graphicX += dx
-        self.graphicY += dy    
+        self.graphicX += queueEntry.dx
+        self.graphicY += queueEntry.dy   
+        queueEntry.tick()
+        
 
     def terminateMovement(self) -> None:
         ''' Called when movement ends.  Cleans up loose ends.'''
@@ -193,7 +229,7 @@ class Portal(Actor):
 
     def __init__(self, *args, destinationPortal=None, **kwargs): #: Portal=
         
-        self.uniqueID = Portal.numPortals
+        self.uniqueID = f'portal{Portal.numPortals}'
         Portal.numPortals += 1
 
         super().__init__(*args, **kwargs)

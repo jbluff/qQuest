@@ -6,7 +6,7 @@ from qQuest.game import CLOCK, GAME
 
 
 '''
-Basic object structure:
+Basic Class & interaction structure:
     - Game type contains
         - Levels
         - Player 
