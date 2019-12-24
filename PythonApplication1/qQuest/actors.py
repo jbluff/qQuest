@@ -10,11 +10,21 @@ from qQuest.items import Item
 
 
 class QueueEntry():
-    def __init__(self, remainingDuration: float):
-        self.remainingDuration = remainingDuration
+    def __init__(self, duration: float):
+        self.totalDuration = duration
+        self.remainingDuration = duration
+
+    def tick(self, dt: float=1) -> None:
+        self.remainingDuration -= dt
+
+    @property
+    def completed(self) -> bool:
+        return self.remainingDuration <= 0
+
 
 class QueuedMove(QueueEntry):
     def __init__(self, remainingDuration: float, dx: float, dy: float):
+        ''' dx and dy are per time tick '''
         self.dx, self.dy = dx, dy
         super().__init__(remainingDuration)
 
@@ -45,21 +55,17 @@ class Creature(Actor):
             return 
 
         queueEntry = self.creatureQueue.popleft()
-        # remainingDuration, dx, dy):
-        #eventType, remainingDuration, argsTuple = self.creatureQueue.popleft()
-        queueEntry.remainingDuration -= 1
+        queueEntry.tick()
 
-        if isinstance(queueEntry, QueuedMove):# eventType == 'move':
-            self.executeMove(queueEntry.dx, queueEntry.dy)#*argsTuple)
+        if isinstance(queueEntry, QueuedMove):
+            self.executeMove(queueEntry.dx, queueEntry.dy)
 
-            if queueEntry.remainingDuration <= 0:
+            if queueEntry.completed:
                 self.terminateMovement()
 
         if queueEntry.remainingDuration > 0:
-            #queueEntry = (eventType, remainingDuration, argsTuple)
             self.creatureQueue.append(queueEntry)
 
-    # dx, dy in units of cells.
     def scheduleMove(self, dx: int, dy: int) -> None:
         ''' Attempt to queue up a tile -> tile movement.
         dx, dy in units of tiles.'''
@@ -70,18 +76,15 @@ class Creature(Actor):
 
         target = GAME.currentLevel.checkForCreature(self.x + dx, self.y + dy, excludeObject=self)
         if target:
-            #this will also become a queud thing later.
+            #this will also become a queued thing later.
             GAME.addMessage(self.name + " attacks " + target.name)
             target.takeDamage(3)
             return 
 
         tileIsBlocking = GAME.currentLevel.map[self.y + dy][self.x + dx].blocking 
         if not tileIsBlocking:
-            # (action type, duration in ticks, argsTuple)
-            dt = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
-            #moveTuple = (dx/dt, dy/dt)
-            queueEntry = QueuedMove(dt, dx/dt, dy/dt)
-            #queueEntry = ('move', dt, moveTuple)
+            duration = int(np.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
+            queueEntry = QueuedMove(duration, dx/duration, dy/duration)
             self.creatureQueue.append(queueEntry)
 
     def executeMove(self, dx: float, dy: float) -> None:

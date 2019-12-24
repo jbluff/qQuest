@@ -250,8 +250,6 @@ def drawFogOfWar(viewer=None) -> None:
             fowSprite.set_alpha(200)
             surface.blit(fowSprite, tilePosition)
 
-
-
 def drawFowEdges(x: int, y: int, limits: Tuple[int],
                  testFunction: Callable[[int,int], bool]) -> None:
     ''' On a visible tile, draw the overhanging FOW effect, if applicable.
@@ -318,7 +316,6 @@ def drawFowEdges(x: int, y: int, limits: Tuple[int],
         retSprite = ASSETS.s_fow_fourSide[0].copy() 
 
     return retSprite
-
 
 def helperTextDims(text='a',font=constants.FONT_DEBUG) -> Tuple[int]:
     fontObject = font.render(text, False, (0,0,0))
