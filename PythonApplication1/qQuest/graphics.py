@@ -1,6 +1,8 @@
 import itertools
 import copy
 from typing import Tuple, List, Callable
+from functools import lru_cache
+from collections import namedtuple
 
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
@@ -77,8 +79,8 @@ class objSpriteSheet:
         self.imageUnitY = imageUnitY
         
     def getAnimation(self, colIdx: int=0, rowIdx: int=0, numSprites: int=1, 
-                           spanX: int=1, spanY: int=1, scale: float=None
-                           ) -> List[pygame.Surface]:
+                           spanX: int=1, spanY: int=1, scale: float=None,
+                           **kwargs) -> List[pygame.Surface]:
         ''' 
         spanX and spanY define size of image on the spriteSheet, in units of imageUnitX/Y
         colIdx and rowIdx should where to find the first sprite on the spritesheet
@@ -181,9 +183,13 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
         tile = level.map[y][x]
 
-        tileSprite = getattr(ASSETS, tile.inFovSpriteName) 
         tilePosition = ((x+camWidth)*constants.CELL_WIDTH, 
                         (y+camHeight)*constants.CELL_HEIGHT)
+
+        if hasattr(tile, 'spriteDict'):
+            tileSprite = ASSETS[tile.spriteDict][0] # no animations here
+        else:
+            tileSprite = getattr(ASSETS, tile.inFovSpriteName) 
         level_surface.blit(tileSprite, tilePosition)
 
     return level_surface
@@ -400,6 +406,7 @@ class structAssets():
         self.compiledLevelMaps = {}
 
         root = "pythonApplication1/" #fix this!
+        self.root = root
         #root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
         self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
@@ -414,6 +421,10 @@ class structAssets():
 
         self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
         self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
+
+        self.floorSheet = objSpriteSheet(root+'dawnlike/Objects/floor.png')
+        self.grass_1 = self.floorSheet.getAnimation(colIdx=8, rowIdx=7, numSprites=1)
+
 
         self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
         self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
@@ -441,6 +452,36 @@ class structAssets():
         self.s_fow_fourSide = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
         self.s_fow_twoSideB = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=1, numSprites=1)
 
+
+    @lru_cache(maxsize=256)
+    def __getitem__(self, dictTuple: Tuple[namedtuple]) -> List[pygame.Surface]:
+        '''
+        Key should be a tuple of namedtuples with {'path', 'colIdx', 'rowIdx', 'numSprites=1'}.
+        Output is an Animation (list of Surfaces).
+
+        the 'dictTuple' entries are actually named tuples, which are hashable.
+
+        Memoized
+        '''
+        if type(dictTuple) == namedtuple:
+            dictTuple = (dictTuple,)
+        
+        animationOut = []
+        for spriteDict in dictTuple:
+            #spriteDict = spriteDict._asdict() #From namedtuple to dict.
+            sheet = loadSpriteSheet(self.root+spriteDict.path)
+            spriteSurface = sheet.getAnimation(colIdx=spriteDict.colIdx,
+                                               rowIdx=spriteDict.rowIdx,
+                                               numSprites=spriteDict.numSprites)
+            animationOut.extend(spriteSurface)
+        return animationOut
+
+
+@lru_cache(maxsize=256)
+def loadSpriteSheet(path: str) -> objSpriteSheet:
+    ''' load a sprite sheet, but memoized. 
+    Probably unnecessary for the amount of data we're dealing with.'''
+    return objSpriteSheet(path)
 
 
 def spriteDebugger() -> None:

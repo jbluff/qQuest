@@ -27,6 +27,9 @@ class Tile:
         self.blocking = blocking
         self.seeThru = seeThru
 
+        if 'spriteDict' in kwargs:
+            self.spriteDict = kwargs['spriteDict']
+
 class Level:
     numLevels = 0
 
