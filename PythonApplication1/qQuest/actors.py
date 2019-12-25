@@ -215,12 +215,11 @@ class Creature(Actor):
 
         itemList = []
         corpse = Item((self.x, self.y),
-                    self.uniqueName +"'s corpse",
-                    self.animationName+"_dead",
-                    self.level,
+                    name=self.uniqueName +"'s corpse",
+                    level=self.level,
                     spriteDict=MONSTERS[self.name]["spriteDictDead"],
                     # ^^ that's gross and opaque.
-                    monsterType = self.name,
+                    monsterType=self.name,
                     **kwargs)
         
         itemList.append(corpse)

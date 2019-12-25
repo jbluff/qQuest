@@ -173,19 +173,14 @@ class Level:
         cell (x,y).  Unique name is instance name of that particular monster.
         '''
         monsterDict = MONSTERS[name]
-        #  print(monsterDict)
-        name = monsterDict['name']
+
         if uniqueName is None:
             uniqueName = random.choice(NAMES) + " the " + name
-        #name = uniqueName + " the " + name
-
         inventory = Container(**monsterDict['kwargs'])
+        aiInst = getattr(ai,monsterDict['aiName'])() 
 
-        # this is terribly gross.  we ought to be able to use a **kwargs.
-        enemy = Creature( (coordX, coordY), name, spriteDict=monsterDict['spriteDict'],
-                        ai=getattr(ai,monsterDict['ai'])(), 
-                        container=inventory, deathFunction=monsterDict['deathFunction'],
-                        level=self, uniqueName=uniqueName)  
+        enemy = Creature((coordX, coordY), level=self, container=inventory, 
+                         ai=aiInst, uniqueName=uniqueName, **monsterDict)  
  
         self.objects.append(enemy)
 
@@ -196,11 +191,10 @@ class Level:
         if GAME.player is None:
             playerInventory = Container()
             playerSpriteDict = SpriteDict('dawnlike/Characters/humanoid0.png',
-                                           colIdx=0,
-                                           rowIdx=3,
-                                           numSprites=3)
-            GAME.player = PlayerClass((x,y), "hero", spriteDict=(playerSpriteDict,),
-                                      container=playerInventory, level=self,
+                                           colIdx=0, rowIdx=3, numSprites=3)
+            GAME.player = PlayerClass((x,y), name="hero", level=self,
+                                      spriteDict=(playerSpriteDict,),
+                                      container=playerInventory, 
                                       speed=0.12)
         else:
             GAME.player.x = x
@@ -219,18 +213,18 @@ class Level:
         cell (x,y).  
         '''
         itemDict = ITEMS[name]
-        if 'equipment' in itemDict.keys():
-            item = Equipment( (coordX, coordY), itemDict['name'], spriteDict=itemDict['spriteDict'],
-                        **itemDict['kwargs'], level=self, )
+
+        if 'equipment' in itemDict:
+            #passing the dict and special kwargs has to be wrong.
+            item = Equipment( (coordX, coordY), level=self, **itemDict,
+                        **itemDict['kwargs'])
         else:
-            item = Item( (coordX, coordY), itemDict['name'], spriteDict=itemDict['spriteDict'] ,
-                        useFunction=itemDict['useFunction'], **itemDict['kwargs'], level=self,
-                        )
+            item = Item( (coordX, coordY), **itemDict, **itemDict['kwargs'], level=self)
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
         itemDict = PORTALS[name]
-        item = Portal( (coordX, coordY), name, spriteDict=itemDict['spriteDict'], level=self, 
+        item = Portal( (coordX, coordY), level=self, **itemDict,
                         destinationPortal=None)
         self.objects.append(item)
         self.portals.append(item)
