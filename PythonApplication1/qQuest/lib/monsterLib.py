@@ -9,7 +9,13 @@ MONSTERS['jelly'] = {'name' : 'jelly',
 
 MONSTERS['demon'] = {'name' : 'demon',
                     'animation' : "a_demon",
-                    'ai' : 'aiDumbCoward',#'aiDumbAggro', #"aiTest",
+                    'ai' : 'aiDumbAggro', 
+                    'deathFunction' : items.deathMonster,
+                    'kwargs' : {}}
+
+MONSTERS['slime'] = {'name' : 'slime',
+                    'animation' : "a_slime",
+                    'ai' : "aiDumbCoward",
                     'deathFunction' : items.deathMonster,
                     'kwargs' : {}}
 

@@ -408,7 +408,10 @@ class structAssets():
 
         self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
         self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
-       
+
+        self.slimeSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Slime0.png')
+        self.slimeSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Slime1.png')
+
         self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
         self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
 
@@ -422,6 +425,10 @@ class structAssets():
         self.a_demon = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
         self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
         self.a_demon_dead = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
+
+        self.a_slime = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
+        self.a_slime.extend(self.slimeSpriteSheet1.getAnimation(colIdx=0, rowIdx=4, numSprites=1))
+        self.a_slime_dead = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
 
         #self.dungeon_ss = pygame.image.load(root+'')
         self.dungeon_ss = objSpriteSheet(root+'16x16figs/dungeon_tileset.png')

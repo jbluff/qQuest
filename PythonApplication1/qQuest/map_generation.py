@@ -117,8 +117,8 @@ class Map:
 
         self.metaDict = {"level" : self.mapArray,
                          "decoderRing" : {
-                            "_" : "floor",
-                            "#" : "wall"}}
+                            "_" : "floor_dungeon_1",
+                            "#" : "wall_dungeon_1"}}
 
     def checkOverlaps(self, newObj):
         overlapInfo = []
@@ -152,9 +152,22 @@ class Map:
             # There must be a good numpy way to do this.
             for y, row in enumerate(list(room.roomArray)):
                 for x, el in enumerate(row):
-                    self.mapArray[room.y+y][room.x+x] = el
+                    #self.mapArray[room.y+y][room.x+x] = el
+                    #if self.mapArray[room.y+y][room.x+x] == '#':
+                    #    continue
+                    # self.mapArray[room.y+y][room.x+x] = el
+                    
+                    if el in self.mapArray[room.y+y][room.x+x]:
+                        continue
+
+                    if self.mapArray[room.y+y][room.x+x] == '#':
+                        self.mapArray[room.y+y][room.x+x] = el
+                    else:
+                        self.mapArray[room.y+y][room.x+x] += el
+
 
     def plot(self):
+        # this no longer really works now that we allow multiple entries per cell
         print('\n')
         for row in self.mapArray:
             print(''.join(row))
@@ -274,7 +287,7 @@ class Map:
 
 def makeMapObject(width, height, symbol="_", **kwargs):
     mapArray = [[symbol,] * width,]*height
-    return MapObject(np.array(mapArray, dtype=np.str), 0, 0, **kwargs)
+    return MapObject(np.array(mapArray, dtype='U256'), 0, 0, **kwargs)
 
 
 
@@ -327,12 +340,12 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 0:
+    if 1:
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
         newMap.renderArray()
         newMap.plot()
-        newMap.addEntity('p', 'player', rmIdx=0)
+        #newMap.addEntity('p', 'player', rmIdx=0)
         #newMap.addEntity('h', 'healingPotion', rmIdx=0)
         for _ in range(3):
             newMap.addEntity('h', 'healingPotion')
@@ -343,7 +356,10 @@ if __name__ == "__main__":
 
             newMap.addEntity('d', 'demon')
 
+            newMap.addEntity('k', 'slime')
+
         newMap.addEntity('s', 'stairs', rmIdx=0)
+        newMap.addEntity('s', 'stairs', rmIdx=4)
         #for _ in range(10):
         #    newMap.addEntity('e', 'enemy')
         newMap.renderArray()
@@ -351,7 +367,7 @@ if __name__ == "__main__":
 
         #newMap.mapArray = list(newMap.mapArray)
 
-        newMap.saveMap("mapwPIES3")
+        newMap.saveMap("mapwPIES4")
     
 
 
@@ -366,7 +382,7 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 1:
+    if 0:
         newMap.closeMapEdges()
         newMap.renderArray()
         newMap.plot()
@@ -374,4 +390,4 @@ if __name__ == "__main__":
         newMap.addEntity('s', 'stairs', rmIdx=0)
         newMap.renderArray()
         newMap.plot()
-        newMap.saveMap("portalTest2")
+        newMap.saveMap("zportalTest2")
