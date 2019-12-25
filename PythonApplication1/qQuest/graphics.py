@@ -419,11 +419,11 @@ class structAssets():
         self.slimeSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Slime0.png')
         self.slimeSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Slime1.png')
 
-        self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
-        self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
+        #self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
+        #self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
 
-        self.floorSheet = objSpriteSheet(root+'dawnlike/Objects/floor.png')
-        self.grass_1 = self.floorSheet.getAnimation(colIdx=8, rowIdx=7, numSprites=1)
+        #self.floorSheet = objSpriteSheet(root+'dawnlike/Objects/floor.png')
+        #self.grass_1 = self.floorSheet.getAnimation(colIdx=8, rowIdx=7, numSprites=1)
 
 
         self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
@@ -459,7 +459,7 @@ class structAssets():
         Key should be a tuple of namedtuples with {'path', 'colIdx', 'rowIdx', 'numSprites=1'}.
         Output is an Animation (list of Surfaces).
 
-        the 'dictTuple' entries are actually named tuples, which are hashable.
+        the 'dictTuple' entries/spriteDicts are actually namedtuples, which are hashable.
 
         Memoized
         '''

@@ -32,16 +32,24 @@ class QueuedMove(QueueEntry):
         # dx and dy are per time tick
         self.dx, self.dy = Dx/self.totalDuration, Dy/self.totalDuration
 
+
 class QueuedAI(QueueEntry):
     pass
+
 
 class QueuedAttack(QueueEntry):
     def __init__(self, remainingDuration: float, target: Actor):
         self.target = target
         super().__init__(remainingDuration)
 
+
 class Creature(Actor):
-    ''' Creatures are Actor children which can move, fight, die '''
+    ''' Creatures are Actor children which can move, fight, die, etc. 
+    Their actions are handled in a queue (implemented as deque), which can 
+    take varying amounts of time, but are ticked through once per game update.
+    For Creatures with an ai property, the ai is consulted when the queue is 
+    empty.
+    '''
     def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
                               container=None, speed=0.07, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,7 +69,10 @@ class Creature(Actor):
         self.ticksPerMove = 1/speed
 
     def resolveQueueTick(self) -> None:
-        ''' Resolve the next entry in the Creature's action queue. '''
+        ''' Resolve the next entry in the Creature's action queue. Note it reads
+        from the right (.pop()), so new queue entries should be added with
+        .appendleft()
+        '''
         if len(self.creatureQueue) == 0:
             if self.ai is not None:
                 self.scheduleAI()
@@ -83,7 +94,6 @@ class Creature(Actor):
         if not success:
             return #if it didn't work, don't continue
         if not queueEntry.completed:
-            print(f'   requeuing {id(queueEntry)}')
             self.creatureQueue.append(queueEntry)
 
     def scheduleMove(self, dx: int, dy: int) -> None:
@@ -105,10 +115,11 @@ class Creature(Actor):
         return sum([isinstance(entry, QueuedMove) for entry in self.creatureQueue])
 
     def executeMove(self, queueEntry: QueuedMove) -> bool:
-        ''' Moves graphic, not root tile position. 
-        dx & dy are in units of tile, but can be fractional.'''
+        ''' Called each tick and returns success.
+        Non-success means stop this current queued movement, completed or not.
+        Checks are evaluated if this is the first tick of a QueuedMove.
+        '''
 
-        # if the move hasn't initiated yet, do some checks.
         if not queueEntry.started:
             nextX = self.x + queueEntry.Dx
             nextY = self.y + queueEntry.Dy   
@@ -126,14 +137,16 @@ class Creature(Actor):
         return True 
 
     def executeMoveTick(self, queueEntry: QueuedMove) -> None:
-        ''' Moves graphic one frame, not root tile position. 
-        dx & dy are in units of tile, but can be fractional. '''
+        ''' Moves graphic one frame--not root tile position. 
+        dx & dy are in units of tile, but can be fractional. 
+        '''
         self.graphicX += queueEntry.dx
         self.graphicY += queueEntry.dy   
         queueEntry.tick()
 
     def terminateMovement(self) -> None:
-        ''' Called when movement ends.  Cleans up loose ends. Or it used to, anyways.'''
+        ''' Called when movement ends.  Cleans up loose ends. 
+        Or it used to, anyways.'''
         self.x = round(self.graphicX)
         self.y = round(self.graphicY)
 

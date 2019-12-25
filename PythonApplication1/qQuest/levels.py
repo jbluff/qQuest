@@ -19,16 +19,12 @@ from qQuest.lib.monsterLib import MONSTERS, NAMES
 from qQuest.lib.portalLib import PORTALS 
 from qQuest.lib.tileLib import TILES 
 
-# the tile Sprites will change with level, eventually.
-# like caves vs dungeon vs whatever
+
 class Tile:
-    def __init__(self, inFovSpriteName, blocking=False, seeThru=True, **kwargs):
-        self.inFovSpriteName = inFovSpriteName
+    def __init__(self, blocking=False, seeThru=True, spriteDict={}, **kwargs):
         self.blocking = blocking
         self.seeThru = seeThru
-
-        if 'spriteDict' in kwargs:
-            self.spriteDict = kwargs['spriteDict']
+        self.spriteDict = spriteDict
 
 class Level:
     numLevels = 0
@@ -100,7 +96,7 @@ class Level:
                 tileTypeKey = decoder[tileChar]
                 if tileTypeKey in TILES.keys():
                     tileDict = TILES[tileTypeKey]
-                    self.map[i][j] = Tile(tileDict['animation'], **tileDict)
+                    self.map[i][j] = Tile(**tileDict)
                     continue
 
                 elif tileTypeKey == "player":

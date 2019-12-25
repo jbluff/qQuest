@@ -148,28 +148,29 @@ def initializeGame():
     pygame.init()
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
-    level0 = Level("portalTest1")
-    GAME.levels.append(level0)
-    GAME.currentLevel = level0
-    level0.placePlayerAtPortal(level0.portals[0])
+    if 0:
+        level0 = Level("portalTest1")
+        GAME.levels.append(level0)
+        GAME.currentLevel = level0
+        level0.placePlayerAtPortal(level0.portals[0])
 
-    # level0 = Level("mapwPIES4")
-    # GAME.levels.append(level0)
-    # GAME.currentLevel = level0
-    # level0.placePlayerAtPortal(level0.portals[0])
+    if 1:
+        level0 = Level("mapwPIES4")
+        GAME.levels.append(level0)
+        GAME.currentLevel = level0
+        level0.placePlayerAtPortal(level0.portals[0])
 
-    # level1 = Level("mapwPIES3")
-    # GAME.levels.append(level1)
+        level1 = Level("mapwPIES3")
+        GAME.levels.append(level1)
 
+        level2 = Level("mapwPIES2")
+        GAME.levels.append(level1)
 
-    # level2 = Level("mapwPIES2")
-    # GAME.levels.append(level1)
+        level0.portals[0].destinationPortal = level1.portals[0]
+        level1.portals[0].destinationPortal = level0.portals[0]
 
-    # level0.portals[0].destinationPortal = level1.portals[0]
-    # level1.portals[0].destinationPortal = level0.portals[0]
-
-    # level0.portals[1].destinationPortal = level2.portals[0]
-    # level2.portals[0].destinationPortal = level0.portals[1]
+        level0.portals[1].destinationPortal = level2.portals[0]
+        level2.portals[0].destinationPortal = level0.portals[1]
 
     GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
     #GAME.viewer.recalculateFov(force=True)
