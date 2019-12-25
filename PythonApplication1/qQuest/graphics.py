@@ -108,7 +108,7 @@ class objSpriteSheet:
 class Actor():
     '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
 
-    def __init__(self, pos: Tuple[int], name: str, animationName: str, 
+    def __init__(self, pos: Tuple[int], name: str, 
         level, uniqueName='', **kwargs):
         ''' level type is Level.  dur.'''
 
@@ -116,13 +116,11 @@ class Actor():
         self.resyncGraphicPosition()
 
         self.name = name
-        self.animationName = animationName
         self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
 
         self.uniqueName = uniqueName if uniqueName is not '' else name
 
-        if 'spriteDict' in kwargs:
-            self.spriteDict = kwargs['spriteDict']
+        self.spriteDict = kwargs['spriteDict']
 
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
@@ -416,8 +414,8 @@ class structAssets():
         self.root = root
         #root = ""
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
-        self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
-        self.potionSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Potion.png')    
+        #self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
+        #self.potionSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Potion.png')    
         #self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')
 
         #self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
@@ -437,8 +435,8 @@ class structAssets():
         #self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
         #self.a_jelly_dead = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
 
-        self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)             
-        self.a_red_potion = self.potionSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)        
+        #self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)             
+        #self.a_red_potion = self.potionSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)        
 
         #self.a_demon = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
         # self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
@@ -449,8 +447,8 @@ class structAssets():
         # self.a_slime_dead = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
 
         #self.dungeon_ss = pygame.image.load(root+'')
-        self.dungeon_ss = objSpriteSheet(root+'16x16figs/dungeon_tileset.png')
-        self.s_ladder = self.dungeon_ss.getAnimation(colIdx=9, rowIdx=3, numSprites=1)
+        #self.dungeon_ss = objSpriteSheet(root+'16x16figs/dungeon_tileset.png')
+        #self.s_ladder = self.dungeon_ss.getAnimation(colIdx=9, rowIdx=3, numSprites=1)
 
         self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWarPositiveB.png')
         self.s_fow_oneSide = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)

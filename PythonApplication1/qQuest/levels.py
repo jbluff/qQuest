@@ -9,6 +9,7 @@ import tcod as libtcod
 
 from qQuest import ai, constants
 
+from qQuest.constants import SpriteDict 
 from qQuest.actors import Creature, Portal, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
 from qQuest.game import GAME
@@ -179,17 +180,13 @@ class Level:
         #name = uniqueName + " the " + name
 
         inventory = Container(**monsterDict['kwargs'])
-        if 'spriteDict' in monsterDict:
-            # print('found a sprite dict')
-            enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
-                            ai=getattr(ai,monsterDict['ai'])(), 
-                            container=inventory, deathFunction=monsterDict['deathFunction'],
-                            level=self, spriteDict=monsterDict['spriteDict'], uniqueName=uniqueName)  
-        else:
-            enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
-                            ai=getattr(ai,monsterDict['ai'])(), 
-                            container=inventory, deathFunction=monsterDict['deathFunction'],
-                            level=self)     
+
+        # this is terribly gross.  we ought to be able to use a **kwargs.
+        enemy = Creature( (coordX, coordY), name, spriteDict=monsterDict['spriteDict'],
+                        ai=getattr(ai,monsterDict['ai'])(), 
+                        container=inventory, deathFunction=monsterDict['deathFunction'],
+                        level=self, uniqueName=uniqueName)  
+ 
         self.objects.append(enemy)
 
     def addPlayer(self, x: int, y: int) -> None:
@@ -198,7 +195,11 @@ class Level:
         '''
         if GAME.player is None:
             playerInventory = Container()
-            GAME.player = PlayerClass((x,y), "hero", "a_player",
+            playerSpriteDict = SpriteDict('dawnlike/Characters/humanoid0.png',
+                                           colIdx=0,
+                                           rowIdx=3,
+                                           numSprites=3)
+            GAME.player = PlayerClass((x,y), "hero", spriteDict=(playerSpriteDict,),
                                       container=playerInventory, level=self,
                                       speed=0.12)
         else:
@@ -219,16 +220,18 @@ class Level:
         '''
         itemDict = ITEMS[name]
         if 'equipment' in itemDict.keys():
-            item = Equipment( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                        **itemDict['kwargs'], level=self)
+            item = Equipment( (coordX, coordY), itemDict['name'], spriteDict=itemDict['spriteDict'],
+                        **itemDict['kwargs'], level=self, )
         else:
-            item = Item( (coordX, coordY), itemDict['name'], itemDict['animation'] ,
-                        useFunction=itemDict['useFunction'], **itemDict['kwargs'], level=self)
+            item = Item( (coordX, coordY), itemDict['name'], spriteDict=itemDict['spriteDict'] ,
+                        useFunction=itemDict['useFunction'], **itemDict['kwargs'], level=self,
+                        )
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
         itemDict = PORTALS[name]
-        item = Portal( (coordX, coordY), name, itemDict['animation'], level=self, destinationPortal=None)
+        item = Portal( (coordX, coordY), name, spriteDict=itemDict['spriteDict'], level=self, 
+                        destinationPortal=None)
         self.objects.append(item)
         self.portals.append(item)
 

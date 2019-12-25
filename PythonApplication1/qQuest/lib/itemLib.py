@@ -1,12 +1,20 @@
 from qQuest import magic
+from qQuest.constants import SpriteDict 
 
 ITEMS = {}
 ITEMS['goggles'] = {'name' : 'Goggles!',
-                    'animation' : "a_goggles",#ASSETS.a_goggles,
                     'useFunction' : None,
                     'equipment' : True,
+                    'spriteDict' : (SpriteDict('dawnlike/Items/Tool.png',
+                            colIdx=3,
+                            rowIdx=0,
+                            numSprites=1),),
                     'kwargs' : {}}
+
 ITEMS['healingPotion'] = {'name' : 'healing potion',
-                       'animation' : "a_red_potion",#ASSETS.red_potion,
                        'useFunction' : lambda target: magic.castHeal(target, 5),
+                       'spriteDict' : (SpriteDict('dawnlike/Items/Potion.png',
+                            colIdx=0,
+                            rowIdx=0,
+                            numSprites=1),),
                        'kwargs' : {}}

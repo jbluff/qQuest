@@ -4,7 +4,6 @@ from qQuest.constants import SpriteDict
 
 MONSTERS = {}
 MONSTERS['jelly'] = {'name' : 'jelly',
-                    'animation' : "a_jelly",
                     'ai' : "aiRandom",
                     'deathFunction' : items.deathMonster,
                     'spriteDict' : (SpriteDict('16x16figs/jellySheet.png',
@@ -18,7 +17,6 @@ MONSTERS['jelly'] = {'name' : 'jelly',
                     'kwargs' : {}}
 
 MONSTERS['demon'] = {'name' : 'demon',
-                    'animation' : "a_demon",
                     'ai' : 'aiDumbAggro', 
                     'deathFunction' : items.deathMonster,
                     'spriteDict' : (SpriteDict('dawnlike/Characters/Demon0.png',
@@ -36,7 +34,6 @@ MONSTERS['demon'] = {'name' : 'demon',
                     'kwargs' : {}}
 
 MONSTERS['slime'] = {'name' : 'slime',
-                    'animation' : "a_slime",
                     'ai' : "aiDumbCoward",
                     'deathFunction' : items.deathMonster,
                     'spriteDict' : (SpriteDict('dawnlike/Characters/Slime0.png',
