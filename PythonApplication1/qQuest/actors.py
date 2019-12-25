@@ -231,13 +231,14 @@ class Creature(Actor):
 
 
 class Viewer(Actor):
-    """As an Actor instance, it has reference to a level and a position.
+    '''As an Actor instance, it has reference to a level and a position.
     Viewers introduce the functionality of having a field of view, and we can calculate what they can see.
     They also keep a history of what they have seen (think fog of war.) for each level they've interacted with
 
     Note:  Viewers are not (generally) Cameras.  We might care about what an NPC can see, but we often
         won't use it to reflect what's drawn in the game. 
-    """
+    '''
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.explorationHistory = {}

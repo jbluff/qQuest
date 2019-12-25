@@ -176,7 +176,7 @@ class Level:
 
         if uniqueName is None:
             uniqueName = random.choice(NAMES) + " the " + name
-        inventory = Container(**monsterDict['kwargs'])
+        inventory = Container(**monsterDict)
         aiInst = getattr(ai,monsterDict['aiName'])() 
 
         enemy = Creature((coordX, coordY), level=self, container=inventory, 
@@ -215,17 +215,15 @@ class Level:
         itemDict = ITEMS[name]
 
         if 'equipment' in itemDict:
-            #passing the dict and special kwargs has to be wrong.
-            item = Equipment( (coordX, coordY), level=self, **itemDict,
-                        **itemDict['kwargs'])
+            item = Equipment( (coordX, coordY), level=self, **itemDict)
         else:
-            item = Item( (coordX, coordY), **itemDict, **itemDict['kwargs'], level=self)
+            item = Item( (coordX, coordY), level=self, **itemDict)
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
         itemDict = PORTALS[name]
-        item = Portal( (coordX, coordY), level=self, **itemDict,
-                        destinationPortal=None)
+        item = Portal( (coordX, coordY), level=self, 
+                        destinationPortal=None, **itemDict)
         self.objects.append(item)
         self.portals.append(item)
 

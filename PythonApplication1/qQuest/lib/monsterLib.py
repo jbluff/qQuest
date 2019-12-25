@@ -13,8 +13,7 @@ MONSTERS['jelly'] = {'name' : 'jelly',
                     'spriteDictDead' : (SpriteDict('16x16figs/jellySheet.png',
                                            colIdx=0,
                                            rowIdx=0,
-                                           numSprites=1),),
-                    'kwargs' : {}}
+                                           numSprites=1),)}
 
 MONSTERS['demon'] = {'name' : 'demon',
                     'aiName' : 'aiDumbAggro', 
@@ -30,8 +29,7 @@ MONSTERS['demon'] = {'name' : 'demon',
                     'spriteDictDead' : (SpriteDict('dawnlike/Characters/Demon0.png',
                                            colIdx=5,
                                            rowIdx=1,
-                                           numSprites=1),),
-                    'kwargs' : {}}
+                                           numSprites=1),)}
 
 MONSTERS['slime'] = {'name' : 'slime',
                     'aiName' : "aiDumbCoward",
@@ -47,8 +45,7 @@ MONSTERS['slime'] = {'name' : 'slime',
                     'spriteDictDead' : (SpriteDict('dawnlike/Characters/Slime0.png',
                                            colIdx=0,
                                            rowIdx=4,
-                                           numSprites=1),),
-                    'kwargs' : {}}
+                                           numSprites=1),)}
 
 NAMES = ['jonny', 'james', 'Mephisto, lord of terror',
          'janet', 'juliette', 'Andariel, queen of the succubi']

@@ -8,13 +8,11 @@ ITEMS['goggles'] = {'name' : 'Goggles!',
                     'spriteDict' : (SpriteDict('dawnlike/Items/Tool.png',
                             colIdx=3,
                             rowIdx=0,
-                            numSprites=1),),
-                    'kwargs' : {}}
+                            numSprites=1),),}
 
 ITEMS['healingPotion'] = {'name' : 'healing potion',
                        'useFunction' : lambda target: magic.castHeal(target, 5),
                        'spriteDict' : (SpriteDict('dawnlike/Items/Potion.png',
                             colIdx=0,
                             rowIdx=0,
-                            numSprites=1),),
-                       'kwargs' : {}}
+                            numSprites=1),),}

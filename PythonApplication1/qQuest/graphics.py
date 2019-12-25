@@ -10,6 +10,7 @@ import numpy as np
 
 from qQuest import constants
 from qQuest.game import CLOCK, GAME
+from qQuest.lib.visEffectsLib import EFFECTS
 
 SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
                                         FULLSCREEN | DOUBLEBUF)
@@ -270,56 +271,42 @@ def drawFowEdges(x: int, y: int, limits: Tuple[int],
     numNotVisNeighbors = aboveIsNotVis+leftIsNotVis+belowIsNotVis+rightIsNotVis
 
     if numNotVisNeighbors == 0:
-        retSprite = None
+        return None
 
     elif numNotVisNeighbors == 1:
-        retSprite = ASSETS.s_fow_oneSide[0].copy()
-
-        if belowIsNotVis:
-            rotAngle = 0
-        if leftIsNotVis:
-            rotAngle = -90
-        if rightIsNotVis:
-            rotAngle = 90
-        if aboveIsNotVis:
-            rotAngle = 180
-        retSprite = pygame.transform.rotate(retSprite, rotAngle)
-
+        spriteDict = EFFECTS['fow_oneSide']['spriteDict']
+        if belowIsNotVis: rotAngle = 0
+        elif leftIsNotVis: rotAngle = -90
+        elif rightIsNotVis: rotAngle = 90
+        elif aboveIsNotVis: rotAngle = 180
+ 
     elif numNotVisNeighbors == 2:
-        
         if leftIsNotVis and rightIsNotVis:
-            retSprite = ASSETS.s_fow_twoSideB[0].copy()
-            retSprite = pygame.transform.rotate(retSprite, 90)
+            spriteDict = EFFECTS['fow_twoSideB']['spriteDict']
+            rotAngle = 90
         elif belowIsNotVis and aboveIsNotVis:
-            retSprite = ASSETS.s_fow_twoSideB[0].copy()     
-        else:
-            retSprite = ASSETS.s_fow_twoSide[0].copy()
-            if rightIsNotVis and belowIsNotVis:
-                rotAngle = 0
-            elif rightIsNotVis and aboveIsNotVis:
-                rotAngle=90
-            elif aboveIsNotVis and leftIsNotVis:
-                rotAngle = 180
-            else:
-                rotAngle = -90
-            retSprite = pygame.transform.rotate(retSprite, rotAngle)
+            spriteDict = EFFECTS['fow_twoSideB']['spriteDict']
+            rotAngle = 0
+        else:  
+            spriteDict = EFFECTS['fow_twoSide']['spriteDict']
+            if rightIsNotVis and belowIsNotVis: rotAngle = 0
+            elif rightIsNotVis and aboveIsNotVis: rotAngle=90
+            elif aboveIsNotVis and leftIsNotVis: rotAngle = 180
+            else: rotAngle = -90
 
     elif numNotVisNeighbors == 3:
-        retSprite = ASSETS.s_fow_threeSide[0].copy()
-
-        if not belowIsNotVis:
-            rotAngle = 90
-        elif not leftIsNotVis:
-            rotAngle = 0
-        elif not rightIsNotVis:
-            rotAngle = 180
-        elif not aboveIsNotVis:
-            rotAngle = -90
-        retSprite = pygame.transform.rotate(retSprite, rotAngle)
+        spriteDict = EFFECTS['fow_threeSide']['spriteDict']
+        if not belowIsNotVis: rotAngle = 90
+        elif not leftIsNotVis: rotAngle = 0
+        elif not rightIsNotVis: rotAngle = 180
+        elif not aboveIsNotVis: rotAngle = -90
 
     elif numNotVisNeighbors == 4:
-        retSprite = ASSETS.s_fow_fourSide[0].copy() 
+        rotAngle = 0
+        spriteDict = EFFECTS['fow_fourSide']['spriteDict']
 
+    retSprite = ASSETS[spriteDict][0].copy()  
+    retSprite = pygame.transform.rotate(retSprite, rotAngle)
     return retSprite
 
 def helperTextDims(text='a',font=constants.FONT_DEBUG) -> Tuple[int]:
@@ -400,19 +387,8 @@ class structAssets():
     It starts empty and gets filled via requests & memoization.
     '''
     def __init__(self):
-
         self.compiledLevelMaps = {}
-
-        root = "pythonApplication1/" #fix this!
-        self.root = root
-
-        self.fowSpriteSheet = objSpriteSheet(root+'16x16figs/fogOfWarPositiveB.png')
-        self.s_fow_oneSide = self.fowSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
-        self.s_fow_twoSide = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=0, numSprites=1)
-        self.s_fow_threeSide = self.fowSpriteSheet.getAnimation(colIdx=2, rowIdx=0,numSprites=1)
-        self.s_fow_fourSide = self.fowSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)
-        self.s_fow_twoSideB = self.fowSpriteSheet.getAnimation(colIdx=1, rowIdx=1, numSprites=1)
-
+        self.root = "pythonApplication1/" #fix this!
 
     @lru_cache(maxsize=256)
     def __getitem__(self, dictTuple: Tuple[namedtuple]) -> List[pygame.Surface]:

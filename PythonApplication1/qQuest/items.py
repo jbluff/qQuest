@@ -102,11 +102,11 @@ class Equipment(Item):
         GAME.addMessage("item equipped")
         
 
-'''
-Containers represent actor attributes which can contain in game items
-e.g. player inventory is a container.  Chest items have containers.  etc.
-'''
+
 class Container:
+    ''' Containers represent actor attributes which can contain in game items
+    e.g. player inventory is a container.  Chest items have containers.  etc.
+    '''
     def __init__(self, volume=10.0, inventory=[], **kwargs):
         self.max_volume = volume
         self.inventory = inventory
