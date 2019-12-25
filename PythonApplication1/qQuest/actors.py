@@ -68,18 +68,22 @@ class Creature(Actor):
             return 
 
         queueEntry = self.creatureQueue.pop()
+        
         if isinstance(queueEntry, QueuedMove):
             success = self.executeMove(queueEntry)
             if queueEntry.completed:
                 self.terminateMovement()
  
-        if isinstance(queueEntry, QueuedAI):
+        elif isinstance(queueEntry, QueuedAI):
             success = self.executeAI(queueEntry)
 
-        if isinstance(queueEntry, QueuedAttack):
+        elif isinstance(queueEntry, QueuedAttack):
             success = self.executeAttack(queueEntry)
 
-        if not queueEntry.completed and success:
+        if not success:
+            return #if it didn't work, don't continue
+        if not queueEntry.completed:
+            print(f'   requeuing {id(queueEntry)}')
             self.creatureQueue.append(queueEntry)
 
     def scheduleMove(self, dx: int, dy: int) -> None:
@@ -93,7 +97,7 @@ class Creature(Actor):
 
         duration = int(math.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
         queueEntry = QueuedMove(duration, dx, dy)
-        self.creatureQueue.append(queueEntry)
+        self.creatureQueue.appendleft(queueEntry)
 
     @property
     def movesInQueue(self) -> int:
@@ -107,7 +111,8 @@ class Creature(Actor):
         # if the move hasn't initiated yet, do some checks.
         if not queueEntry.started:
             nextX = self.x + queueEntry.Dx
-            nextY = self.y + queueEntry.Dy
+            nextY = self.y + queueEntry.Dy   
+
             tileIsBlocking = self.level.map[nextY][nextX].blocking 
             if tileIsBlocking:
                 return False
@@ -134,20 +139,19 @@ class Creature(Actor):
 
     def scheduleAI(self) -> None:
         queueEntry = QueuedAI(self.ai.thinkingDuration)
-        self.creatureQueue.append(queueEntry)
+        self.creatureQueue.appendleft(queueEntry)
 
     def executeAI(self, queueEntry: QueuedAI) -> bool:
         # think at the end of the duration.
         queueEntry.tick()
         if queueEntry.completed:
             self.ai.think()
-            return False
         return True 
 
     def scheduleAttack(self, target: Actor) -> None:
         attackDuration = 30 # inverse "attack speed"
         queueEntry = QueuedAttack(attackDuration, target)
-        self.creatureQueue.append(queueEntry)
+        self.creatureQueue.appendleft(queueEntry)
 
     def executeAttack(self, queueEntry: QueuedAttack) -> bool:
         # attack at the start of the duration.
@@ -156,8 +160,6 @@ class Creature(Actor):
             GAME.addMessage(self.name + " attacks " + queueEntry.target.name)
             queueEntry.target.takeDamage(3)           
         queueEntry.tick()
-        if queueEntry.completed:
-            return False
         return True 
 
     def pickupObjects(self) -> None:
