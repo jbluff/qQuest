@@ -8,7 +8,7 @@ from qQuest import constants
 from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
-
+from qQuest.lib.monsterLib import MONSTERS
 
 class QueueEntry():
     def __init__(self, duration: float):
@@ -56,6 +56,7 @@ class Creature(Actor):
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
+        self.dead = False
  
         self.ai = ai
         if self.ai:
@@ -119,7 +120,6 @@ class Creature(Actor):
         Non-success means stop this current queued movement, completed or not.
         Checks are evaluated if this is the first tick of a QueuedMove.
         '''
-
         if not queueEntry.started:
             nextX = self.x + queueEntry.Dx
             nextY = self.y + queueEntry.Dy   
@@ -129,7 +129,7 @@ class Creature(Actor):
                 return False
 
             target = self.level.checkForCreature(nextX, nextY, excludeObject=self)
-            if target:
+            if target: #don't need first cond?
                 self.scheduleAttack(target)
                 return False
 
@@ -170,7 +170,10 @@ class Creature(Actor):
         # attack at the start of the duration.
         # do fun graphicsy things... or sound effects.  woah.
         if not queueEntry.started:
-            GAME.addMessage(self.name + " attacks " + queueEntry.target.name)
+            if queueEntry.target.dead:
+                return False
+
+            GAME.addMessage(self.uniqueName + " attacks " + queueEntry.target.name)
             queueEntry.target.takeDamage(3)           
         queueEntry.tick()
         return True 
@@ -200,7 +203,33 @@ class Creature(Actor):
             if self.x == portal.x and self.y == portal.y:
                 return portal
         return None
-  
+
+    
+    def creatureToItems(self, **kwargs):
+        ''' Destroys a creature, turns it into a corpse and drops its inventory items.
+        > inventory item feature unadded
+        > also want the ability to change the graphic
+        > also kwargs can have e.g. weight, useFunction
+        not particularly completed.
+        '''
+
+        itemList = []
+        corpse = Item((self.x, self.y),
+                    self.uniqueName +"'s corpse",
+                    self.animationName+"_dead",
+                    self.level,
+                    spriteDict=MONSTERS[self.name]["spriteDictDead"],
+                    # ^^ that's gross and opaque.
+                    monsterType = self.name,
+                    **kwargs)
+        
+        itemList.append(corpse)
+        for el in itemList:
+            GAME.currentLevel.objects.append(el)
+
+        self.dead = True
+        GAME.currentLevel.objects.remove(self)
+
 
 class Viewer(Actor):
     """As an Actor instance, it has reference to a level and a position.

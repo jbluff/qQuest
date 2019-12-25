@@ -109,7 +109,7 @@ class Actor():
     '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
 
     def __init__(self, pos: Tuple[int], name: str, animationName: str, 
-        level, **kwargs):
+        level, uniqueName='', **kwargs):
         ''' level type is Level.  dur.'''
 
         self.x, self.y = pos
@@ -119,11 +119,18 @@ class Actor():
         self.animationName = animationName
         self.animationSpeed = 0.5 # in seconds  -- TODO:  make kwarg
 
+        self.uniqueName = uniqueName if uniqueName is not '' else name
+
+        if 'spriteDict' in kwargs:
+            self.spriteDict = kwargs['spriteDict']
+
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
 
         self.level = level
+
+        #todo:  spriteDict will become required here
 
     def resyncGraphicPosition(self) -> None:
         # X and Y are ints and represent grid locations for most logic purposes
@@ -132,7 +139,10 @@ class Actor():
 
     @property
     def animation(self) -> List[pygame.Surface]:
-        return getattr(ASSETS,self.animationName)
+        if hasattr(self, 'spriteDict'):   
+            return ASSETS[self.spriteDict]
+        else:
+            return getattr(ASSETS,self.animationName)  #this will get removed
 
     def getCurrentSprite(self) -> pygame.Surface:
         if len(self.animation) == 1:
@@ -163,6 +173,8 @@ class Actor():
                     round(drawY * constants.CELL_HEIGHT)) 
         SURFACE_MAP.blit(currentSprite, position)
 
+    
+
 
 def compileBackgroundTiles(level=None) -> pygame.Surface:
     ''' Blits together all of the images that make up the background of a given map.
@@ -185,11 +197,7 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
 
         tilePosition = ((x+camWidth)*constants.CELL_WIDTH, 
                         (y+camHeight)*constants.CELL_HEIGHT)
-
-        if hasattr(tile, 'spriteDict'):
-            tileSprite = ASSETS[tile.spriteDict][0] # no animations here
-        else:
-            tileSprite = getattr(ASSETS, tile.inFovSpriteName) 
+        tileSprite = ASSETS[tile.spriteDict][0] # no animations here
         level_surface.blit(tileSprite, tilePosition)
 
     return level_surface
@@ -370,7 +378,6 @@ def drawGame() -> None:
 
     pygame.display.flip()
 
-
 def drawChyron() -> None:
     ''' the bit of the UI drawn below the map'''
 
@@ -411,13 +418,13 @@ class structAssets():
         self.characterSpriteSheet = objSpriteSheet(root+'dawnlike/Characters/humanoid0.png')        
         self.toolsSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Tool.png')
         self.potionSpriteSheet = objSpriteSheet(root+'dawnlike/Items/Potion.png')    
-        self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')
+        #self.jellySpriteSheet = objSpriteSheet(root+'16x16figs/jellySheet.png')
 
-        self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
-        self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
+        #self.demonSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Demon0.png')
+        #self.demonSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Demon1.png')
 
-        self.slimeSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Slime0.png')
-        self.slimeSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Slime1.png')
+        ##self.slimeSpriteSheet0 = objSpriteSheet(root+'dawnlike/Characters/Slime0.png')
+        #self.slimeSpriteSheet1 = objSpriteSheet(root+'dawnlike/Characters/Slime1.png')
 
         #self.wall_dungeon_1 = pygame.image.load(root+'16x16figs/wall.png').convert()
         #self.floor_dungeon_1 = pygame.image.load(root+'16x16figs/floor.png').convert()
@@ -427,19 +434,19 @@ class structAssets():
 
 
         self.a_player = self.characterSpriteSheet.getAnimation(colIdx=0, rowIdx=3, numSprites=3)        
-        self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
-        self.a_jelly_dead = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
+        #self.a_jelly = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=2)
+        #self.a_jelly_dead = self.jellySpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)
 
         self.a_goggles = self.toolsSpriteSheet.getAnimation(colIdx=3, rowIdx=0, numSprites=1)             
         self.a_red_potion = self.potionSpriteSheet.getAnimation(colIdx=0, rowIdx=0, numSprites=1)        
 
-        self.a_demon = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
-        self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
-        self.a_demon_dead = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
+        #self.a_demon = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
+        # self.a_demon.extend(self.demonSpriteSheet1.getAnimation(colIdx=5, rowIdx=1, numSprites=1))
+        # self.a_demon_dead = self.demonSpriteSheet0.getAnimation(colIdx=5, rowIdx=1, numSprites=1)  
 
-        self.a_slime = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
-        self.a_slime.extend(self.slimeSpriteSheet1.getAnimation(colIdx=0, rowIdx=4, numSprites=1))
-        self.a_slime_dead = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
+        # self.a_slime = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
+        # self.a_slime.extend(self.slimeSpriteSheet1.getAnimation(colIdx=0, rowIdx=4, numSprites=1))
+        # self.a_slime_dead = self.slimeSpriteSheet0.getAnimation(colIdx=0, rowIdx=4, numSprites=1)  
 
         #self.dungeon_ss = pygame.image.load(root+'')
         self.dungeon_ss = objSpriteSheet(root+'16x16figs/dungeon_tileset.png')

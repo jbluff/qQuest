@@ -135,8 +135,7 @@ class Level:
         for obj in self.objects:
             if isinstance(obj, Viewer):  
                 obj.recalculateFov()
-
-    
+  
     def computeFov(self, x: int, y: int) -> np.ndarray:
         ''' Using the boolean visibility map of the level, return the boolean 
         field of view may from a specific (x,y) position. x,y specificed in 
@@ -173,16 +172,24 @@ class Level:
         cell (x,y).  Unique name is instance name of that particular monster.
         '''
         monsterDict = MONSTERS[name]
+        #  print(monsterDict)
         name = monsterDict['name']
         if uniqueName is None:
-            uniqueName = random.choice(NAMES)
-        name = uniqueName + " the " + name
+            uniqueName = random.choice(NAMES) + " the " + name
+        #name = uniqueName + " the " + name
 
         inventory = Container(**monsterDict['kwargs'])
-        enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
-                        ai=getattr(ai,monsterDict['ai'])(), 
-                        container=inventory, deathFunction=monsterDict['deathFunction'],
-                        level=self)    
+        if 'spriteDict' in monsterDict:
+            # print('found a sprite dict')
+            enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
+                            ai=getattr(ai,monsterDict['ai'])(), 
+                            container=inventory, deathFunction=monsterDict['deathFunction'],
+                            level=self, spriteDict=monsterDict['spriteDict'], uniqueName=uniqueName)  
+        else:
+            enemy = Creature( (coordX, coordY), name, monsterDict['animation'],
+                            ai=getattr(ai,monsterDict['ai'])(), 
+                            container=inventory, deathFunction=monsterDict['deathFunction'],
+                            level=self)     
         self.objects.append(enemy)
 
     def addPlayer(self, x: int, y: int) -> None:

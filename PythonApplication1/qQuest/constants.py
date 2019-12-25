@@ -48,3 +48,11 @@ FOV_RADIUS = 10             # Sight radius for FOV
 NUM_GAME_MESSAGES = 4
 
 GAME_FPS = 60
+
+
+
+from collections import namedtuple
+# this shouldn't really be here.  to be fixed.
+# yes, I know it's not a dict.  Deal with it.
+# this construction is used for hashability & memoization.
+SpriteDict = namedtuple('SpriteDict',['path', 'colIdx', 'rowIdx', 'numSprites'])

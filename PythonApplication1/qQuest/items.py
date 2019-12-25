@@ -1,6 +1,7 @@
 from qQuest import constants
 from qQuest.game import GAME
 from qQuest.graphics import Actor
+#from qQuest.lib.monsterLib import MONSTERS 
 
 """Items are an Actor child which 
 - don't move
@@ -127,34 +128,6 @@ def deathMonster(monster):
     '''
     GAME.addMessage(monster.name + " has been slain!")
     
-    creatureToItems(monster)
+    monster.creatureToItems()
 
 
-'''
-Destroys a creature, turns it into a corpse and drops its inventory items.
-> inventory item feature unadded
-> also want the ability to change the graphic
-> also kwargs can have e.g. weight, useFunction
-'''
-"""TODO:  make this a method in the Creature class.  self=Item(...)"""
-def creatureToItems(creature, **kwargs):
-
-    itemList = []
-
-    #inventory = creature.container.inventory
-    #if inventory:
-    #    itemList.extend(inventory)
-
-    corpse = Item((creature.x, creature.y),
-                  creature.name+"'s corpse",
-                  creature.animationName+"_dead",
-                  creature.level,
-                  #[creature.animation[0],],  #this is kinda broke.  
-                  **kwargs)
-    
-    itemList.append(corpse)
-
-    for el in itemList:
-        GAME.currentLevel.objects.append(el)
-
-    GAME.currentLevel.objects.remove(creature)

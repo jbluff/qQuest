@@ -1,8 +1,4 @@
-from collections import namedtuple
-
-# yes, I know it's not a dict.  Deal with it.
-# this construction is used for hashability & memoization.
-SpriteDict = namedtuple('SpriteDict',['path', 'colIdx', 'rowIdx', 'numSprites'])
+from qQuest.constants import SpriteDict 
 
 TILES = {}
 TILES['wall_dungeon_1'] = {'blocking' : True,
