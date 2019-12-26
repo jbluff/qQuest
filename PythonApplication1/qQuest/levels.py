@@ -190,10 +190,8 @@ class Level:
         '''
         if GAME.player is None:
             playerInventory = Container()
-            # playerSpriteDict = SpriteDict('dawnlike/Characters/humanoid0.png',
-            playerSpriteDict = SpriteDict('dawnlike/Commissions/Engineer.png',
-
-                                           colIdx=0, rowIdx=0, numSprites=4)
+            playerSpriteDict = SpriteDict('dawnlike/Characters/humanoid0.png',
+                                           colIdx=0, rowIdx=3, numSprites=3)
             GAME.player = PlayerClass((x,y), name="hero", level=self,
                                       spriteDict=(playerSpriteDict,),
                                       container=playerInventory, 

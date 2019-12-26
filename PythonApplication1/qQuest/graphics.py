@@ -18,7 +18,6 @@ SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                
 SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
 SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
 
-SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
 
 
 class Camera:
@@ -254,7 +253,8 @@ def drawFogOfWar(viewer=None) -> None:
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
-        
+        if x==20 and y==17:
+            print(f'x={x}, y={y}, visible={tileIsVisibleToViewer}, explored={tileIsExplored}')
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
             tileIsExplored = True
@@ -379,7 +379,7 @@ def drawGame() -> None:
     SURFACE_MAIN.blit(SURFACE_MAP, (0,0))
 
     ''' off-map portions of the interface '''
-    drawChyron()
+    #drawChyron()
     SURFACE_MAIN.blit(SURFACE_CHYRON, (0,SURFACE_MAP.get_height()))
 
     pygame.display.flip()
@@ -405,7 +405,7 @@ def drawChyron() -> None:
     
     SURFACE_CHYRON.blit(SURFACE_HEALTH, ( 8,8))
 
-    
+    SURFACE_CHYRON.fill(constants.COLOR_GREY)
     pass
 
 def drawObjects() -> None:
@@ -438,9 +438,13 @@ class structAssets():
 
     @lru_cache(maxsize=256)
     def __getitem__(self, dictTuple: Tuple[namedtuple]) -> List[pygame.Surface]:
-        ''' The 'dictTuple' entries/spriteDicts are actually namedtuples, which 
-        are hashable with {'path', 'colIdx', 'rowIdx', 'numSprites=1'}.  
-        The output is an Animation (list of Surfaces).
+        '''
+        Key should be a tuple of namedtuples with {'path', 'colIdx', 'rowIdx', 'numSprites=1'}.
+        Output is an Animation (list of Surfaces).
+
+        the 'dictTuple' entries/spriteDicts are actually namedtuples, which are hashable.
+
+        Memoized
         '''
         if type(dictTuple) == namedtuple:
             dictTuple = (dictTuple,)
