@@ -243,6 +243,7 @@ def drawFogOfWar(viewer=None) -> None:
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
     mapHeight, mapWidth = np.array(level.map).shape
+    print(f'gfx.  x={viewer.x}, y={viewer.y}')
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
         if not GAME.camera.canSee(x, y):
@@ -253,7 +254,7 @@ def drawFogOfWar(viewer=None) -> None:
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
-
+        
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
             tileIsExplored = True

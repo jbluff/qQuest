@@ -4,57 +4,13 @@ import math
 
 import numpy as np
 
-from qQuest import constants
+from qQuest import constants, actions
 from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
 from qQuest.lib.monsterLib import MONSTERS
 
-class QueueEntry():
-    def __init__(self, duration: float, emoteName: str=None, **kwargs):
-        self.totalDuration = duration
-        self.remainingDuration = duration
-        self.started = False
-        self.emoteName = emoteName
 
-    def tick(self, dt: float=1) -> None:
-        self.remainingDuration -= dt
-        self.started = True
-
-    @property
-    def completed(self) -> bool:
-        return self.remainingDuration <= 0
-
-
-class QueuedMove(QueueEntry):
-    def __init__(self, remainingDuration: float, Dx: int, Dy: int, **kwargs):
-        self.Dx, self.Dy = Dx, Dy
-        super().__init__(remainingDuration, **kwargs)
-        # dx and dy are per time tick
-        self.dx, self.dy = Dx/self.totalDuration, Dy/self.totalDuration
-
-
-class QueuedAI(QueueEntry):
-    pass
-
-
-class QueuedWait(QueueEntry):
-    pass
-
-
-class QueuedAttack(QueueEntry):
-    ''' The action of attacking and its duration '''
-    def __init__(self, remainingDuration: float, target: Actor, dhp:-3, **kwargs):
-        self.target = target
-        self.dhp = dhp
-        super().__init__(remainingDuration, **kwargs)
-
-
-class QueuedDamage(QueueEntry):
-    ''' taking damage (interrupting), and its duration '''
-    def __init__(self, remainingDuration: float, dhp:-3, **kwargs):
-        self.dhp = dhp
-        super().__init__(remainingDuration, **kwargs)
 
 
 class Creature(Actor):
@@ -97,23 +53,7 @@ class Creature(Actor):
 
         queueEntry = self.actionQueue.pop()
         self.activeEmote = queueEntry.emoteName
-
-        if isinstance(queueEntry, QueuedMove):
-            success = self.executeMove(queueEntry)
-            if queueEntry.completed:
-                self.terminateMovement()
- 
-        elif isinstance(queueEntry, QueuedAI):
-            success = self.executeAI(queueEntry)
-
-        elif isinstance(queueEntry, QueuedAttack):
-            success = self.executeAttack(queueEntry)
-
-        elif isinstance(queueEntry, QueuedDamage):
-            success = self.executeDamage(queueEntry)
-
-        elif isinstance(queueEntry, QueuedWait):
-            success = self.executeWait(queueEntry)
+        success = queueEntry.execute()
 
         if not success:
             return #if it didn't work, don't continue
@@ -130,101 +70,33 @@ class Creature(Actor):
             return
 
         duration = int(math.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
-        queueEntry = QueuedMove(duration, dx, dy, **kwargs)
+        queueEntry = actions.QueuedMove(self, duration, dx, dy, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
     @property
     def movesInQueue(self) -> int:
         ''' How many moves have been scheduled?  Helpful for smooth movement. '''
-        return sum([isinstance(entry, QueuedMove) for entry in self.actionQueue])
-
-    def executeMove(self, queueEntry: QueuedMove) -> bool:
-        ''' Called each tick and returns success.
-        Non-success means stop this current queued movement, completed or not.
-        Checks are evaluated if this is the first tick of a QueuedMove.
-        '''
-        if not queueEntry.started:
-            nextX = self.x + queueEntry.Dx
-            nextY = self.y + queueEntry.Dy   
-
-            tileIsBlocking = self.level.map[nextY][nextX].blocking 
-            if tileIsBlocking:
-                return False
-
-            target = self.level.checkForCreature(nextX, nextY, excludeObject=self)
-            if target: #don't need first cond?
-                self.scheduleAttack(target)
-                return False
-
-        self.executeMoveTick(queueEntry)
-        return True 
-
-    def executeMoveTick(self, queueEntry: QueuedMove) -> None:
-        ''' Moves graphic one frame--not root tile position. 
-        dx & dy are in units of tile, but can be fractional. 
-        '''
-        self.graphicX += queueEntry.dx
-        self.graphicY += queueEntry.dy   
-        queueEntry.tick()
-
-    def terminateMovement(self) -> None:
-        ''' Called when movement ends.  Cleans up loose ends. 
-        Or it used to, anyways.'''
-        self.x = round(self.graphicX)
-        self.y = round(self.graphicY)
+        return sum([isinstance(entry, actions.QueuedMove) for entry in self.actionQueue])
 
     def scheduleAI(self, **kwargs) -> None:
-        queueEntry = QueuedAI(self.ai.thinkingDuration, **kwargs)
+        queueEntry = actions.QueuedAI(self, self.ai.thinkingDuration, **kwargs)
         self.actionQueue.appendleft(queueEntry)
-
-    def executeAI(self, queueEntry: QueuedAI) -> bool:
-        # think at the end of the duration.
-        queueEntry.tick()
-        if queueEntry.completed:
-            self.ai.think()
-        return True 
 
     def scheduleAttack(self, target: Actor, dhp=-3, **kwargs) -> None:
         attackDuration = 30 # inverse "attack speed"
-        queueEntry = QueuedAttack(attackDuration, target, dhp=dhp, **kwargs)
+        queueEntry = actions.QueuedAttack(self, attackDuration, target=target, dhp=dhp, **kwargs)
         self.actionQueue.appendleft(queueEntry)
-
-    def executeAttack(self, queueEntry: QueuedAttack) -> bool:
-        # attack at the start of the duration.
-        # do fun graphicsy things... or sound effects.  woah.
-        if not queueEntry.started:
-            if queueEntry.target.dead:
-                return False
-
-            GAME.addMessage(self.uniqueName + " attacks " + queueEntry.target.name)
-            queueEntry.target.scheduleDamage(dhp=queueEntry.dhp, emoteName='fireSmall')
-            #queueEntry.dhp
-            #queueEntry.target.takeDamage(3)           
-        queueEntry.tick()
-        return True 
 
     def scheduleDamage(self, dhp=-3, **kwargs) -> None:
         damageDuration = 5 # inverse "attack speed"
-        queueEntry = QueuedDamage(damageDuration, dhp=dhp, **kwargs)
+        queueEntry = actions.QueuedDamage(self, damageDuration, dhp=dhp, **kwargs)
 
         # note the backwards appending here-- this interrupts
         self.actionQueue.append(queueEntry)
 
-    def executeDamage(self, queueEntry: QueuedAttack) -> bool:
-        # damage at the start of the duration.
-        if not queueEntry.started:
-            #GAME.addMessage(self.uniqueName + " attacks " + queueEntry.target.name)
-            self.takeDamage(-1 * queueEntry.dhp)           
-        queueEntry.tick()
-        return True 
-
     def scheduleWait(self, duration=5, **kwargs) -> None:
-        queueEntry = QueuedWait(duration, **kwargs)
+        queueEntry = actions.QueuedWait(self, duration, **kwargs)
         self.actionQueue.appendleft(queueEntry)
-
-    def executeWait(self, queueEntry: QueuedWait) -> bool:
-        queueEntry.tick()
-        return True 
 
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''
@@ -260,7 +132,6 @@ class Creature(Actor):
         > also kwargs can have e.g. weight, useFunction
         not particularly completed.
         '''
-
         itemList = []
         corpse = Item((self.x, self.y),
                     name=self.uniqueName +"'s corpse",

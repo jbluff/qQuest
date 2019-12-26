@@ -12,12 +12,14 @@ class aiTemplate():
     def think(self):
         raise NotImplementedError('Filled in by child class.')
 
-
-class aiRandom(aiTemplate):
-    def think(self):
+    def wander(self):
         dx = random.randint(-1,1)
         dy = random.randint(-1,1)
         self.owner.scheduleMove(dx,dy)
+
+class aiRandom(aiTemplate):
+    def think(self):
+        self.wander()
 
 
 class aiDumbAggro(aiTemplate):
@@ -33,16 +35,19 @@ class aiDumbAggro(aiTemplate):
         
         ATTACK_RADIUS = 5
         if (dist < ATTACK_RADIUS):
-            emote = 'monsterEmote' if self.seenEnemy==0 else None
+            emote = 'monsterEmote' if self.seenEnemy==False else None
 
             dx = round(dx/dist)
             dy = round(dy/dist)
-            self.seenEnemy = 1
+            self.seenEnemy = True
             self.owner.scheduleMove(dx,dy,emoteName=emote)
         else:
-            emote = 'questionEmote' if self.seenEnemy==1 else None
-            self.seenEnemy = 0
-            self.owner.scheduleWait(emoteName=emote)
+            if self.seenEnemy is True:
+                self.owner.scheduleWait(emoteName='questionEmote')
+            else:
+                self.wander()
+            self.seenEnemy = False
+            
 
 
 class aiDumbCoward(aiTemplate):
@@ -59,7 +64,8 @@ class aiDumbCoward(aiTemplate):
         if (dist < ATTACK_RADIUS):
             dx = -1*round(dx/dist)
             dy = -1*round(dy/dist)
+            self.owner.scheduleMove(dx,dy)
         else:
-            dx, dy = 0, 0
-        self.owner.scheduleMove(dx,dy)
+            self.wander()
+        
 
