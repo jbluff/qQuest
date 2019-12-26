@@ -79,10 +79,9 @@ class QueuedMove(QueueEntry):
         Or it used to, anyways.'''
         self.actor.x = round(self.actor.graphicX)
         self.actor.y = round(self.actor.graphicY)
-        if self.actor.name == 'hero':
-            print(f'{self.actor.name} term move., x={self.actor.x}, y={self.actor.y}')
-        # print(f'{self.actor.name}, {self.actor.graphicX}, {self.actor.graphicY}')
-
+        if hasattr(self.actor,'recalculateFov'):
+            self.actor.recalculateFov()
+            
 class QueuedAI(QueueEntry):
     def execute(self) -> bool:
         self.tick()

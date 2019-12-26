@@ -18,6 +18,7 @@ SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                
 SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
 SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
 
+SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
 
 
 class Camera:
@@ -192,8 +193,6 @@ class Actor():
         SURFACE_MAP.blit(effectSprite, drawPos)
         
 
-
-
 def compileBackgroundTiles(level=None) -> pygame.Surface:
     ''' Blits together all of the images that make up the background of a given map.
     This only needs to be called roughly once, when a level is first instantiated.
@@ -242,7 +241,6 @@ def drawFogOfWar(viewer=None) -> None:
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
     mapHeight, mapWidth = np.array(level.map).shape
-    print(f'gfx.  x={viewer.x}, y={viewer.y}')
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
         if not GAME.camera.canSee(x, y):
@@ -253,8 +251,6 @@ def drawFogOfWar(viewer=None) -> None:
 
         tileIsVisibleToViewer = viewer.getTileIsVisible(x, y)
         tileIsExplored = viewer.getTileIsExplored(x, y)
-        if x==20 and y==17:
-            print(f'x={x}, y={y}, visible={tileIsVisibleToViewer}, explored={tileIsExplored}')
         if tileIsVisibleToViewer:
             viewer.setTileIsExplored(x, y)
             tileIsExplored = True

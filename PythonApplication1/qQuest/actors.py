@@ -195,12 +195,13 @@ class PlayerClass(Creature, Viewer):
     change once we use NPC AIs that care about FOV.   It'll be used for more 
     than just the player(s).  
     '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    pass
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
 
-    def terminateMovement(self) -> None:
-        super().terminateMovement()
-        self.recalculateFov()
+    # def terminateMovement(self) -> None:
+    #     super().terminateMovement()
+    #     self.recalculateFov()
 
 
 class Portal(Actor):
