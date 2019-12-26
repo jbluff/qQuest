@@ -21,6 +21,9 @@ class aiRandom(aiTemplate):
     def think(self):
         self.wander()
 
+class aiPassiveNPC(aiTemplate):
+    def think(self):
+        self.owner.scheduleWait(10)
 
 class aiDumbAggro(aiTemplate):
     def __init__(self):

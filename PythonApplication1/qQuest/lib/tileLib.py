@@ -22,3 +22,10 @@ TILES['grass'] = {'blocking' : False,
                                 colIdx=8,
                                 rowIdx=7,
                                 numSprites=1),)}
+
+TILES['greenPointy'] = {'blocking' : True,
+                  'seeThru' : False, 
+                  'spriteDict' : (SpriteDict('dawnlike/Objects/Wall.png',
+                                colIdx=15,
+                                rowIdx=28,
+                                numSprites=1),)}

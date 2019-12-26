@@ -10,7 +10,7 @@ import tcod as libtcod
 from qQuest import ai, constants
 
 from qQuest.constants import SpriteDict 
-from qQuest.actors import Creature, Portal, PlayerClass, Viewer
+from qQuest.characters import Creature, Combatant, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
 from qQuest.game import GAME
 from qQuest.graphics import ASSETS, Actor, compileBackgroundTiles
@@ -21,11 +21,31 @@ from qQuest.lib.portalLib import PORTALS
 from qQuest.lib.tileLib import TILES 
 
 
+class Portal(Actor):
+    ''' This class represents a location at which a creature can move rapidly
+    from one location and another.  These instances point at another instance
+    of the same type, generally (but not necessarily) in a different level.
+    '''
+    numPortals = 0
+
+    def __init__(self, *args, destinationPortal=None, **kwargs): #: Portal=
+        
+        self.uniqueID = f'portal{Portal.numPortals}'
+        Portal.numPortals += 1
+
+        super().__init__(*args, **kwargs)
+        self.destinationPortal = destinationPortal
+         
+    def pickup(self, actor: Actor) -> None:
+        return
+
+
 class Tile:
     def __init__(self, blocking=False, seeThru=True, spriteDict={}, **kwargs):
         self.blocking = blocking
         self.seeThru = seeThru
         self.spriteDict = spriteDict
+
 
 class Level:
     numLevels = 0
@@ -179,7 +199,11 @@ class Level:
         inventory = Container(**monsterDict)
         aiInst = getattr(ai,monsterDict['aiName'])() 
 
-        enemy = Creature((coordX, coordY), level=self, container=inventory, 
+        if monsterDict.get('combatant', True):
+            newClass = Combatant
+        else:
+            newClass = Creature
+        enemy = newClass((coordX, coordY), level=self, container=inventory, 
                          ai=aiInst, uniqueName=uniqueName, **monsterDict)  
  
         self.objects.append(enemy)
@@ -234,3 +258,5 @@ class Level:
         for gameObj in self.objects:
             if isinstance(gameObj, Creature):
                 gameObj.resolveQueueTick()
+
+

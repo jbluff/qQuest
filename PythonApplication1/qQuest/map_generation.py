@@ -105,7 +105,10 @@ class MapObject:
         self.y += vector[1]
 
 class Map:
-    def __init__(self, initWidth=10, initHeight=10, walker=None):
+    def __init__(self, initWidth=10, initHeight=10, walker=None,
+                    wallType='wall_dungeon_1', floorType='floor_dungeon_1'):
+        # the walltype and floortype should be room attributes, at the least,
+        # with decoderRing smartly expanding (and changing symbols as necessary!)
         self.mapArray = makeMapObject(initWidth, initHeight, symbol="#").roomArray
         self.mapObjects = [] 
         self.width, self.height = initWidth, initHeight
@@ -117,8 +120,8 @@ class Map:
 
         self.metaDict = {"level" : self.mapArray,
                          "decoderRing" : {
-                            "_" : "floor_dungeon_1",
-                            "#" : "wall_dungeon_1"}}
+                            "_" : floorType,
+                            "#" : wallType}}
 
     def checkOverlaps(self, newObj):
         overlapInfo = []
@@ -340,7 +343,7 @@ if __name__ == "__main__":
         newMap.plot()
         
 
-    if 1:
+    if 0:
         newMap.spawnMultipleWalkers(20)
         newMap.closeMapEdges()
         newMap.renderArray()
@@ -391,3 +394,13 @@ if __name__ == "__main__":
         newMap.renderArray()
         newMap.plot()
         newMap.saveMap("zportalTest2")
+
+    if 1:
+        newMap = Map(10,10, wallType='greenPointy', floorType='grass')
+        newRoom = makeMapObject(8,8)
+        newMap.placeMapObject(newRoom, x=1, y=1)
+        newMap.addEntity('s', 'stairs', rmIdx=0)
+        newMap.addEntity('m', 'townNPC', rmIdx=0)
+        newMap.renderArray()
+        newMap.plot()
+        newMap.saveMap("town")

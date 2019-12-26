@@ -14,20 +14,17 @@ from qQuest.lib.monsterLib import MONSTERS
 
 
 class Creature(Actor):
-    ''' Creatures are Actor children which can move, fight, die, etc. 
-    Their actions are handled in a queue (implemented as deque), which can 
+    ''' Creatures are Actor children can move about and, well, do things.
+    The handle actions in a queue (implemented as deque), which can 
     take varying amounts of time, but are ticked through once per game update.
     For Creatures with an ai property, the ai is consulted when the queue is 
     empty.
     '''
-    def __init__(self, *args, hp=10, deathFunction=None, ai=None, 
+    def __init__(self, *args,  ai=None, 
                               container=None, speed=0.07, **kwargs):
         super().__init__(*args, **kwargs)
-        self.hp = hp  
-        self.maxHp = hp
-        self.deathFunction = deathFunction
         self.dead = False
- 
+
         self.ai = ai
         if self.ai:
             self.ai.owner = self
@@ -82,18 +79,6 @@ class Creature(Actor):
         queueEntry = actions.QueuedAI(self, self.ai.thinkingDuration, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
-    def scheduleAttack(self, target: Actor, dhp=-3, **kwargs) -> None:
-        attackDuration = 30 # inverse "attack speed"
-        queueEntry = actions.QueuedAttack(self, attackDuration, target=target, dhp=dhp, **kwargs)
-        self.actionQueue.appendleft(queueEntry)
-
-    def scheduleDamage(self, dhp=-3, **kwargs) -> None:
-        damageDuration = 5 # inverse "attack speed"
-        queueEntry = actions.QueuedDamage(self, damageDuration, dhp=dhp, **kwargs)
-
-        # note the backwards appending here-- this interrupts
-        self.actionQueue.append(queueEntry)
-
     def scheduleWait(self, duration=5, **kwargs) -> None:
         queueEntry = actions.QueuedWait(self, duration, **kwargs)
         self.actionQueue.appendleft(queueEntry)
@@ -103,19 +88,6 @@ class Creature(Actor):
         objs = self.level.objectsAtCoords(self.x, self.y)
         [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
 
-    def takeDamage(self, damage: float) -> None:
-        self.hp -= damage
-        GAME.addMessage(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
-
-        if self.hp <= 0:
-            if self.deathFunction:
-                self.deathFunction(self)
-
-    def heal(self, deltaHp: float) -> None:
-        #TODO!
-        assert deltaHp >= 0
-        pass
-
     def isOnPortal(self): # -> Portal:
         ''' if Creatre standing on a portal, returns that Portal.  
         Otherwise returns None. '''
@@ -124,7 +96,6 @@ class Creature(Actor):
                 return portal
         return None
 
-    
     def creatureToItems(self, **kwargs):
         ''' Destroys a creature, turns it into a corpse and drops its inventory items.
         > inventory item feature unadded
@@ -147,6 +118,42 @@ class Creature(Actor):
 
         self.dead = True
         GAME.currentLevel.objects.remove(self)
+
+
+class Combatant(Creature):
+    ''' Combatant takes the Creature class and adds in health, attacking, etc.'''
+    def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.hp = hp  
+        self.maxHp = hp
+        self.deathFunction = deathFunction
+ 
+    def scheduleAttack(self, target: Actor, dhp=-3, **kwargs) -> None:
+        if not isinstance(target, Combatant):
+            return
+        attackDuration = 30 # inverse "attack speed"
+        queueEntry = actions.QueuedAttack(self, attackDuration, target=target, dhp=dhp, **kwargs)
+        self.actionQueue.appendleft(queueEntry)
+
+    def scheduleDamage(self, dhp=-3, **kwargs) -> None:
+        damageDuration = 5 # inverse "attack speed"
+        queueEntry = actions.QueuedDamage(self, damageDuration, dhp=dhp, **kwargs)
+
+        # note the backwards appending here-- this interrupts
+        self.actionQueue.append(queueEntry)
+
+    def takeDamage(self, damage: float) -> None:
+        self.hp -= damage
+        GAME.addMessage(self.name + "'s health is " + str(self.hp) + "/" + str(self.maxHp))
+
+        if self.hp <= 0:
+            if self.deathFunction:
+                self.deathFunction(self)
+
+    def heal(self, deltaHp: float) -> None:
+        #TODO!
+        assert deltaHp >= 0
+        pass
 
 
 class Viewer(Actor):
@@ -190,7 +197,7 @@ class Viewer(Actor):
         return self.explorationHistory[levelID][y][x]
 
 
-class PlayerClass(Creature, Viewer):
+class PlayerClass(Combatant, Viewer):
     ''' This class is a Creature, with a field of view -- this name needs to 
     change once we use NPC AIs that care about FOV.   It'll be used for more 
     than just the player(s).  
@@ -203,21 +210,3 @@ class PlayerClass(Creature, Viewer):
     #     super().terminateMovement()
     #     self.recalculateFov()
 
-
-class Portal(Actor):
-    ''' This class represents a location at which a creature can move rapidly
-    from one location and another.  These instances point at another instance
-    of the same type, generally (but not necessarily) in a different level.
-    '''
-    numPortals = 0
-
-    def __init__(self, *args, destinationPortal=None, **kwargs): #: Portal=
-        
-        self.uniqueID = f'portal{Portal.numPortals}'
-        Portal.numPortals += 1
-
-        super().__init__(*args, **kwargs)
-        self.destinationPortal = destinationPortal
-         
-    def pickup(self, actor: Actor) -> None:
-        return

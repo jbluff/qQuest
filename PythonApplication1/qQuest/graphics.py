@@ -375,7 +375,7 @@ def drawGame() -> None:
     SURFACE_MAIN.blit(SURFACE_MAP, (0,0))
 
     ''' off-map portions of the interface '''
-    #drawChyron()
+    drawChyron()
     SURFACE_MAIN.blit(SURFACE_CHYRON, (0,SURFACE_MAP.get_height()))
 
     pygame.display.flip()
@@ -400,9 +400,6 @@ def drawChyron() -> None:
             yPos += constants.CELL_HEIGHT
     
     SURFACE_CHYRON.blit(SURFACE_HEALTH, ( 8,8))
-
-    SURFACE_CHYRON.fill(constants.COLOR_GREY)
-    pass
 
 def drawObjects() -> None:
     for gameObj in GAME.currentLevel.objects:

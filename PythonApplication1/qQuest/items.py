@@ -1,7 +1,6 @@
 from qQuest import constants
 from qQuest.game import GAME
 from qQuest.graphics import Actor
-#from qQuest.lib.monsterLib import MONSTERS 
 
 """Items are an Actor child which 
 - don't move
@@ -13,6 +12,8 @@ numCharges : number of items item is used before..
 depleteFunction : called (passed self) when charges run out.
     defaults to delete self.  Allows for e.g. turning into an empty bottle
 """
+
+
 
 
 class Item(Actor):
