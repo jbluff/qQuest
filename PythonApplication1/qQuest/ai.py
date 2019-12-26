@@ -33,18 +33,16 @@ class aiDumbAggro(aiTemplate):
         
         ATTACK_RADIUS = 5
         if (dist < ATTACK_RADIUS):
+            emote = 'monsterEmote' if self.seenEnemy==0 else None
+
             dx = round(dx/dist)
             dy = round(dy/dist)
-            if self.seenEnemy == 0:
-                #seeing for the first time.
-                self.owner.scheduleMove(dx,dy,emoteName='monsterEmote')
-            else:
-                self.owner.scheduleMove(dx,dy,emoteName=None)
             self.seenEnemy = 1
+            self.owner.scheduleMove(dx,dy,emoteName=emote)
         else:
-            dx, dy = 0, 0
+            emote = 'questionEmote' if self.seenEnemy==1 else None
             self.seenEnemy = 0
-            self.owner.scheduleMove(dx,dy,emoteName=None)
+            self.owner.scheduleWait(emoteName=emote)
 
 
 class aiDumbCoward(aiTemplate):
