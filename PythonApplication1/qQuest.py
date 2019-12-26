@@ -35,25 +35,25 @@ TODO:
 - partial movement -- not just tile-by-tile.
 - smart walls--gfx depend on neightbors, like fow.
 
-- Clean up assets section.  Lots of unnecessary complexity there.  Be smarter about storage and separation of assets.
-
 - creatures need stats and such
+    - actual combat
 - add other types to menus
 - npcs text popups and interaction, scripting schema
 - add inventory and health graphics (expand gfx past map window.)
 
 - procedural level generation integrated to be on the fly
 - moar graphic assets
-
+- revisit items.py
+    - and make equipment a thing!
 - Image processing on procGen rooms for rounding etc.
 
 - Give Monsters a "properties" section.  Not quite sure how that should work, yet.
 
+- MAP EDITOR GUI
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
 - Fixed piece rooms
 - Directional facing of character, monsters?
-- Refine map loading (set pieces, named npcs, items.)
 - New monster AIs
 - Area effect spells
 

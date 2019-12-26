@@ -16,3 +16,10 @@ EFFECTS['fow_fourSide'] = {
 EFFECTS['fow_twoSideB'] = {
     'spriteDict' : (SpriteDict('16x16figs/fogOfWarPositiveB.png', 
                         colIdx=1, rowIdx=1, numSprites=1),)}
+
+EFFECTS['fullHeart'] = {
+    'spriteDict' : (SpriteDict('dawnlike/GUI/GUI0.png', 
+                        colIdx=0, rowIdx=1, numSprites=1),)}
+EFFECTS['emptyHeart'] = {
+    'spriteDict' : (SpriteDict('dawnlike/GUI/GUI0.png', 
+                        colIdx=4, rowIdx=1, numSprites=1),)}
