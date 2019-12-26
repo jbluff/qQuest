@@ -23,3 +23,7 @@ EFFECTS['fullHeart'] = {
 EFFECTS['emptyHeart'] = {
     'spriteDict' : (SpriteDict('dawnlike/GUI/GUI0.png', 
                         colIdx=4, rowIdx=1, numSprites=1),)}
+
+EFFECTS['monsterEmote'] = {
+    'spriteDict' : (SpriteDict('dawnlike/GUI/GUI0.png', 
+                        colIdx=11, rowIdx=3, numSprites=1),)}

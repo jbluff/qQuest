@@ -166,7 +166,33 @@ class Actor():
         drawX, drawY = GAME.camera.drawPosition(self.graphicX, self.graphicY)
         position = (round(drawX * constants.CELL_WIDTH), 
                     round(drawY * constants.CELL_HEIGHT)) 
+     
         SURFACE_MAP.blit(currentSprite, position)
+        self.addGraphicEffect(position)
+
+    # def emote(self, effectName:str, relPos: Tuple[int]=(0, 10),
+    #                 duration:int=10) -> None:
+    #     ''' Emotes things near an Actor.  This command starts them.'''
+    #     self.emoteEffectName = effectName
+    #     pass
+
+    def addGraphicEffect(self, pos, effectName: str=None, 
+                            relPos: Tuple[int]=(0, -16)):
+        #self.currentEffectsList
+        if getattr(self, 'activeEmote', None) is None: #self.activeEmote is None:
+            return
+        drawPos = pos[0]+relPos[0], pos[1]+relPos[1]
+
+        # if not isInViewerFov:
+        #     return 
+
+        # if not GAME.camera.canSee(self.x, self.y):
+        #     return
+
+        effectSprite = ASSETS[EFFECTS[self.activeEmote]['spriteDict']][0] #no animations here, now
+        SURFACE_MAP.blit(effectSprite, drawPos)
+        
+
 
 
 def compileBackgroundTiles(level=None) -> pygame.Surface:
@@ -361,18 +387,18 @@ def drawChyron() -> None:
     ''' the bit of the UI drawn below the map'''
     SURFACE_CHYRON.fill(constants.COLOR_GREY)
 
-    SURFACE_HEALTH.fill(constants.COLOR_WHITE)
+    SURFACE_HEALTH.fill(constants.COLOR_GREY)
     xPos = 0.5*constants.CELL_WIDTH
     yPos = 0.5*constants.CELL_HEIGHT
     fullHeartSprite = ASSETS[EFFECTS['fullHeart']['spriteDict']][0]
     emptyHeartSprite = ASSETS[EFFECTS['emptyHeart']['spriteDict']][0]
-    for idx in range(GAME.player.maxHp+1):
+    for idx in range(1,GAME.player.maxHp+1):
         if idx < GAME.player.hp:
             SURFACE_HEALTH.blit(fullHeartSprite, (xPos, yPos))
         else:
             SURFACE_HEALTH.blit(emptyHeartSprite, (xPos, yPos))
         xPos += constants.CELL_WIDTH
-        if idx > 10:
+        if idx % 10 == 0:
             xPos = 0.5*constants.CELL_WIDTH
             yPos += constants.CELL_HEIGHT
     

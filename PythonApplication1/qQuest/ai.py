@@ -23,6 +23,7 @@ class aiRandom(aiTemplate):
 class aiDumbAggro(aiTemplate):
     def __init__(self):
         self.thinkingDuration = 2 
+        self.seenEnemy = False
 
     def think(self):
         dx = GAME.player.graphicX - self.owner.graphicX
@@ -34,9 +35,16 @@ class aiDumbAggro(aiTemplate):
         if (dist < ATTACK_RADIUS):
             dx = round(dx/dist)
             dy = round(dy/dist)
+            if self.seenEnemy == 0:
+                #seeing for the first time.
+                self.owner.scheduleMove(dx,dy,emoteName='monsterEmote')
+            else:
+                self.owner.scheduleMove(dx,dy,emoteName=None)
+            self.seenEnemy = 1
         else:
             dx, dy = 0, 0
-        self.owner.scheduleMove(dx,dy)
+            self.seenEnemy = 0
+            self.owner.scheduleMove(dx,dy,emoteName=None)
 
 
 class aiDumbCoward(aiTemplate):
