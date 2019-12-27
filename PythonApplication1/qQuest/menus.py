@@ -332,3 +332,44 @@ def listSavedGames() -> List[str]:
         if name.endswith(".sav"):
             saveFiles.append(f)
     return saveFiles
+
+class NpcInteractionMenu(TextListMenu):
+    def __init__(self, subScript):
+        ''' subScript provides (optionally) header text to read, and
+        (optionally) options to follow.  This menu defines a .break attribute,
+        which is the result of the menu interaction, and tells where to go to
+        next in the npcs script.  A return value of 'break' ends the interaction.
+        '''
+        self.headerText = subScript.get('readText', None)
+        self.optionDict = subScript.get('options', None)
+        self.result = 'break'
+        super().__init__()
+
+    def initTextList(self) -> None:
+        self.menuList = []
+        if self.headerText  is not None:
+
+            self.addMenuItem(self.headerText, selectable=False, 
+                                    textColorUnsel=constants.COLOR_BLACK,
+                                    bgColorUnsel=constants.COLOR_GREY)
+        if self.optionDict is not None:
+            self.optionTexts = [option['optionText'] for option in self.optionDict.values()]
+            self.gotos = [option['goto'] for option in self.optionDict.values()]
+
+            for text, goto in zip(self.optionTexts, self.gotos):
+                self.addMenuItem(text, selectable=True, annotation=goto)
+ 
+
+    def parseEvent(self, event) -> None:
+        ''' event is PyGame event, unsure of typing.'''
+        ret = super().parseEvent(event)
+        if ret == 'continue':
+            return None
+
+        if event.key == pygame.K_RETURN:
+            self.breakLoop = True
+
+            if self.optionDict is not None:
+                self.result = self.menuList[self.selected].annotation
+            else:
+                self.result = 'break'

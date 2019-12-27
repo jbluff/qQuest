@@ -9,7 +9,7 @@ from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
 from qQuest.lib.characterLib import CHARACTERS
-
+from qQuest.menus import NpcInteractionMenu
 
 
 
@@ -203,17 +203,24 @@ class Conversationalist(Creature):
         
     def interact(self, otherParty):
         ''' for now, assume otherParty to be the player'''
-        subScript = self.script[self.scriptPosition]
 
-        readText = subScript.get('readText', None)
-        if readText is not None:
-            GAME.addMessage(readText)
-        optionDict = subScript.get('options', None)
-        if optionDict is not None:
-            print(optionDict.keys())
-            #optionTexts = [option['optionText'] for option in optionDict.items()]
-            #gotos = [option['goto'] for option in optionDict.items()]
-        pass
+        while self.scriptPosition != 'break':
+            subScript = self.script[self.scriptPosition]
+
+            ret = NpcInteractionMenu(subScript)
+            result = ret.result
+
+            print(result)
+            self.scriptPosition = result
+        # return
+        # readText = subScript.get('readText', None)
+        # if readText is not None:
+        #     GAME.addMessage(readText)
+        # optionDict = subScript.get('options', None)
+        # if optionDict is not None:
+        #     optionTexts = [option['optionText'] for option in optionDict.values()]
+        #     gotos = [option['goto'] for option in optionDict.values()]
+        # pass
 
 
 class Viewer(Actor):

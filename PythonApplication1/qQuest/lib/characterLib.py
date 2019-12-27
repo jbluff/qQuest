@@ -55,7 +55,7 @@ CHARACTERS['townNPC'] = {
        'conversationalist' : True,
        'script' : {
             'start' : {
-                'readText' : '%would you like to go to A or B?',
+                'readText' : 'Would you like to go to A or B?',
                 'options' : {
                     'optionA' : {
                         'optionText' : "doesn't A sound great?",
