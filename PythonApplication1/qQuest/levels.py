@@ -2,7 +2,7 @@ import json
 import os
 import itertools
 import random
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import tcod as libtcod
@@ -13,7 +13,7 @@ from qQuest.constants import SpriteDict
 from qQuest.characters import Creature, Combatant, Conversationalist, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
 from qQuest.game import GAME
-from qQuest.graphics import ASSETS, Actor, compileBackgroundTiles
+from qQuest.graphics import ASSETS, Actor #, compileBackgroundTiles
 
 from qQuest.lib.itemLib import ITEMS
 from qQuest.lib.characterLib import CHARACTERS, NAMES
@@ -40,11 +40,11 @@ class Portal(Actor):
         return
 
 
-class Tile:
-    def __init__(self, blocking=False, seeThru=True, spriteDict={}, **kwargs):
+class Tile(Actor):
+    def __init__(self, pos: Tuple[int], blocking=False, seeThru=True, **kwargs):
         self.blocking = blocking
         self.seeThru = seeThru
-        self.spriteDict = spriteDict
+        super().__init__(pos, **kwargs)
 
 
 class Level:
@@ -57,6 +57,7 @@ class Level:
         self.levelName = levelName
 
         self.objects = [] #should this be a set?   would it simplify deletion?
+        #self.tiles = []
         self.portals = []
 
         self.loadLevelFile()
@@ -65,12 +66,12 @@ class Level:
         self.uniqueID = f'level{Level.numLevels}'
         Level.numLevels += 1
 
-        self.compileMapGraphic()
+        #self.compileMapGraphic()
 
-    def compileMapGraphic(self, force=False) -> None:
-        if (self.uniqueID not in ASSETS.compiledLevelMaps) and (not force):
-            levelSurface = compileBackgroundTiles(self)
-            ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
+    # def compileMapGraphic(self, force=False) -> None:
+    #     if (self.uniqueID not in ASSETS.compiledLevelMaps) and (not force):
+    #         levelSurface = compileBackgroundTiles(self)
+    #         ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
 
     def loadLevelFile(self) -> None:
         ''' Loads self.levelDict dictionary from a saved .lvl file '''
@@ -100,7 +101,7 @@ class Level:
                 tileTypeKey = decoder[tileChar]
                 if tileTypeKey in TILES.keys():
                     tileDict = TILES[tileTypeKey]
-                    self.map[i][j] = Tile(**tileDict)
+                    self.map[i][j] = Tile((j,i),**tileDict)
                     continue
 
                 elif tileTypeKey == "player":

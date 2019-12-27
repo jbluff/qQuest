@@ -3,7 +3,6 @@ from qQuest.constants import SpriteDict
 TILES = {}
 TILES['wall_dungeon_1'] = {'blocking' : True,
                            'seeThru' : False, 
-                           'kwargs' : {},
                            'spriteDict' : (SpriteDict('16x16figs/wall.png',
                                            colIdx=0,
                                            rowIdx=0,

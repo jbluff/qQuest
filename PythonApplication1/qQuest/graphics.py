@@ -4,9 +4,9 @@ from typing import Tuple, List, Callable
 from functools import lru_cache
 from collections import namedtuple
 
+import numpy as np
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
-import numpy as np
 
 try:
     from qQuest import constants
@@ -18,21 +18,11 @@ except ImportError:
     from lib.visEffectsLib import EFFECTS   
 
 
-# SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
-#                                         FULLSCREEN | DOUBLEBUF)
-
-# SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
-# SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
-
-# SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
-
-
 class Camera:
-    def __init__(self, viewer=None):
+    def __init__(self, viewer: 'characters.Viewer'=None):
         self.viewer = viewer
         self.updatePositionFromViewer() # in cells
 
-    
     def updatePositionFromViewer(self) -> None:
         if self.viewer is not None:
             self.x = self.viewer.graphicX # x
@@ -114,11 +104,10 @@ class objSpriteSheet:
  
 
 class Actor():
-    '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
+    ''' All objects that are drawn.'''
 
     def __init__(self, pos: Tuple[int], name: str='defaultName', 
-        level=None, uniqueName='', spriteDict=None,
-        **kwargs):
+        level=None, uniqueName='', spriteDict=None, **kwargs):
         ''' level type is Level.  dur.'''
 
         self.x, self.y = pos
@@ -164,12 +153,17 @@ class Actor():
 
     def draw(self, surface: pygame.Surface,
                    viewer: 'creatures.Viewer'=None,
-                   camera: 'graphics.Camera'=None) -> None:
+                   camera: 'graphics.Camera'=None,
+                   drawHistory: bool=False) -> None:
         ''' Blits the Actor's current sprite in the appropriate location
-        on the relevant surface. '''
+        on the relevant surface.
+        drawHistory means rather than assessing if a viewer can see it now, we assess whether a viewer has ever seen it. '''
         if viewer is not None:
-            isInViewerFov = viewer.getTileIsVisible(self.x, self.y)
-            if not isInViewerFov:
+            if drawHistory:
+                doDraw = viewer.getTileIsExplored(self.x, self.y)
+            else:
+                doDraw = viewer.getTileIsVisible(self.x, self.y)
+            if not doDraw:
                 return 
         if camera is not None:
             if not camera.canSee(self.x, self.y):
@@ -194,38 +188,38 @@ class Actor():
         surface.blit(effectSprite, drawPos)
         
 
-def compileBackgroundTiles(level) -> pygame.Surface:
-    ''' Blits together all of the images that make up the background of a given map.
-    This only needs to be called roughly once, when a level is first instantiated.
-    level is Level instance.
-    '''
+# def compileBackgroundTiles(level) -> pygame.Surface:
+#     ''' Blits together all of the images that make up the background of a given map.
+#     This only needs to be called roughly once, when a level is first instantiated.
+#     level is Level instance.
+#     '''
 
-    mapHeight, mapWidth = np.array(level.map).shape
-    camWidth, camHeight = constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT
+#     mapHeight, mapWidth = np.array(level.map).shape
+#     camWidth, camHeight = constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT
 
-    # note the +/- camWidth and camHeight buffer regions.
-    level_surface = pygame.Surface(((mapWidth+2*camWidth)*constants.CELL_WIDTH,
-                                    (mapHeight+2*camHeight)*constants.CELL_HEIGHT))
+#     # note the +/- camWidth and camHeight buffer regions.
+#     level_surface = pygame.Surface(((mapWidth+2*camWidth)*constants.CELL_WIDTH,
+#                                     (mapHeight+2*camHeight)*constants.CELL_HEIGHT))
 
-    for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
-        tile = level.map[y][x]
+#     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
+#         tile = level.map[y][x]
 
-        tilePosition = ((x+camWidth)*constants.CELL_WIDTH, 
-                        (y+camHeight)*constants.CELL_HEIGHT)
-        tileSprite = ASSETS[tile.spriteDict][0] # no animations here
-        level_surface.blit(tileSprite, tilePosition)
+#         tilePosition = ((x+camWidth)*constants.CELL_WIDTH, 
+#                         (y+camHeight)*constants.CELL_HEIGHT)
+#         tileSprite = ASSETS[tile.spriteDict][0] # no animations here
+#         level_surface.blit(tileSprite, tilePosition)
 
-    return level_surface
+#     return level_surface
 
-def drawBackground(surface: pygame.Surface, level: 'levels.Level', 
-                  camera: 'graphics.Camera') -> None:    
-    ''' blits the pre-compiled background tiles (walls, floor, etc)'''
-    map_rect = camera.getViewingRect()
-    map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
-    map_subsurface = map_surface.subsurface(map_rect)
-    # I don't actually know where this offset comes from.
-    pos = (round(-0.5*constants.CELL_WIDTH),round(-0.5*constants.CELL_HEIGHT))
-    surface.blit(map_subsurface, pos)
+# def drawBackground(surface: pygame.Surface, level: 'levels.Level', 
+#                   camera: 'graphics.Camera') -> None:    
+#     ''' blits the pre-compiled background tiles (walls, floor, etc)'''
+#     map_rect = camera.getViewingRect()
+#     map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
+#     map_subsurface = map_surface.subsurface(map_rect)
+#     # I don't actually know where this offset comes from.
+#     pos = (round(-0.5*constants.CELL_WIDTH),round(-0.5*constants.CELL_HEIGHT))
+#     surface.blit(map_subsurface, pos)
 
 def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level', 
                  camera: 'graphics.Camera', viewer: 'creatures.Viewer',
@@ -257,7 +251,8 @@ def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level',
                 blankTile.set_alpha(200) # only darken
             surface.blit(blankTile, tilePosition)
             
-        # Now we add the ragged edges, if applicable. 
+        # If the cell has never been seen, we're done.  If not, we may need to
+        # add some ragged edges.
         if not tileIsExplored:
             continue
 
@@ -269,9 +264,10 @@ def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level',
         # Then the darkened edges around currently visible space
         if not tileIsVisibleToViewer:
             continue
-        fowSprite = getFowEdgeSprite(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsVisible)
+        fowSprite = getFowEdgeSprite(x, y, (mapWidth, mapHeight),                                                           viewer.getTileIsVisible)
         if fowSprite is not None:
             fowSprite.set_alpha(200)
+            #print('drawing transparent edge')
             surface.blit(fowSprite, tilePosition)
 
 def getFowEdgeSprite(x: int, y: int, limits: Tuple[int],
@@ -354,14 +350,23 @@ def drawFPS(surface: pygame.Surface) -> None:
     drawText(surface, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
+# @drawCommand to deal with camera/viewer
+
 def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:
+    camera = game.camera
+    viewer = game.viewer
+    level = game.currentLevel
 
     mainSurface.fill(constants.COLOR_BLACK)
     
     ''' draw the map and such '''
-    drawBackground(mapSurface, game.currentLevel, game.camera)
-    drawObjects(mapSurface, game.currentLevel, game.viewer, game.camera)
-    drawFogOfWar(mapSurface, game.currentLevel, game.camera, game.viewer)
+    bgTiles =  [item for sublist in level.map for item in sublist]
+    drawObjects(mapSurface, bgTiles, viewer, camera, drawHistory=True)
+
+    # drawBackground(mapSurface, game.currentLevel, game.camera)
+    drawObjects(mapSurface, level.objects, viewer, camera)
+    
+    drawFogOfWar(mapSurface, level, camera, viewer)
     
     drawGameMessages(mapSurface, game)
     drawDebug(mainSurface)
@@ -396,13 +401,13 @@ def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
     surface.blit(SURFACE_HEALTH, ( 8,8))
 
 def drawObjects(surface: pygame.Surface,
-                level: 'levels.Lever', 
+                objects: List[Actor], 
                 viewer: 'creatures.Viewer', 
-                camera: 'graphics.Camera') -> None:
-    for gameObj in level.objects:
+                camera: Camera, **kwargs) -> None:
+    for gameObj in objects:
         if getattr(gameObj, "deleted", False):
             return
-        gameObj.draw(surface, viewer, camera)
+        gameObj.draw(surface, viewer, camera,**kwargs), 
 
 def drawText(displaySurface: pygame.Surface, text: str, coords: Tuple[int], 
              textColor: Tuple[int], bgColor: Tuple[int]=None) -> None:
