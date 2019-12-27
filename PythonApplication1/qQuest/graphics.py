@@ -187,7 +187,7 @@ class Actor():
 
     def addGraphicEffect(self, surface, pos, effectName: str=None, 
                             relPos: Tuple[int]=(0, -16)):
-        if getattr(self, 'activeEmote', None) is None: #self.activeEmote is None:
+        if getattr(self, 'activeEmote', None) is None: 
             return
         drawPos = pos[0]+relPos[0], pos[1]+relPos[1]
         effectSprite = ASSETS[EFFECTS[self.activeEmote]['spriteDict']][0] #no animations here, now
@@ -262,19 +262,19 @@ def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level',
             continue
 
         # First the blacked ragged edges surrounding explored space.
-        fowSprite = drawFowEdges(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsExplored)
+        fowSprite = getFowEdgeSprite(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsExplored)
         if fowSprite is not None:
             surface.blit(fowSprite, tilePosition)
 
         # Then the darkened edges around currently visible space
         if not tileIsVisibleToViewer:
             continue
-        fowSprite = drawFowEdges(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsVisible)
+        fowSprite = getFowEdgeSprite(x, y, (mapWidth, mapHeight),                                                       viewer.getTileIsVisible)
         if fowSprite is not None:
             fowSprite.set_alpha(200)
             surface.blit(fowSprite, tilePosition)
 
-def drawFowEdges(x: int, y: int, limits: Tuple[int],
+def getFowEdgeSprite(x: int, y: int, limits: Tuple[int],
                  testFunction: Callable[[int,int], bool]) -> None:
     ''' On a visible tile, draw the overhanging FOW effect, if applicable.
     We could replace this (in fewer LOC) with just doing each side as needed
@@ -337,25 +337,24 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawGameMessages(surface, game) -> None:
+def drawGameMessages(surface: pygame.Surface, game: 'game.Game') -> None:
     numMessages = min(len(game.messageHistory), constants.NUM_GAME_MESSAGES)
-    if(numMessages==0):
+    if numMessages==0:
         return 0
     messages = game.messageHistory[-numMessages:]
 
     _, height = helperTextDims()
     startY = surface.get_height() - numMessages*height
-
     drawTextList(surface, messages, startX=0, startY=startY)
 
-def drawDebug(surface) -> None:
+def drawDebug(surface: pygame.Surface) -> None:
     drawFPS(surface)
 
-def drawFPS(surface) -> None:
+def drawFPS(surface: pygame.Surface) -> None:
     drawText(surface, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame(mainSurface, mapSurface, chyronSurface, game) -> None:
+def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:
 
     mainSurface.fill(constants.COLOR_BLACK)
     
@@ -374,7 +373,7 @@ def drawGame(mainSurface, mapSurface, chyronSurface, game) -> None:
 
     pygame.display.flip()#mainSurface)
 
-def drawChyron(surface, game) -> None:
+def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
     ''' the bit of the UI drawn below the map'''
     surface.fill(constants.COLOR_GREY)
 

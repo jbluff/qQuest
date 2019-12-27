@@ -48,6 +48,9 @@ class Tile:
 
 
 class Level:
+    # TODO:  roll back the graphic situation here and start treating
+    # tiles like every other object, so they can be animated.
+    #  the speed gains are trivial.
     numLevels = 0
 
     def __init__(self, levelName):#, surface=None):
