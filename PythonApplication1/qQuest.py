@@ -33,26 +33,26 @@ Basic Class & structure:
 TODO:  
 
 - partial movement -- not just tile-by-tile.
+- Directional facing of character, monsters?
 - smart walls--gfx depend on neightbors, like fow.
 
-- Clean up assets section.  Lots of unnecessary complexity there.  Be smarter about storage and separation of assets.
-
 - creatures need stats and such
-- add other types to menus
-- npcs text popups and interaction, scripting schema
-- add inventory and health graphics (expand gfx past map window.)
+- continue improving NPC scripting schema, particularly hooks
+
+- add inventory graphics
+    - and generally imrpove the chryon
 
 - procedural level generation integrated to be on the fly
 - moar graphic assets
 
-- Image processing on procGen rooms for rounding etc.
-
 - Give Monsters a "properties" section.  Not quite sure how that should work, yet.
 
+- MAP EDITOR
+- Image processing on procGen rooms for rounding etc.
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
 - Fixed piece rooms
-- Directional facing of character, monsters?
+
 - Refine map loading (set pieces, named npcs, items.)
 - New monster AIs
 - Area effect spells

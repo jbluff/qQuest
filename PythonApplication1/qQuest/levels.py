@@ -81,27 +81,7 @@ class Level:
         instances tiles.  Floors, walls, items, monsters, portals.  All as
         specified in the loaded dictionary.'''
 
-        '''
-        Refactor & entensions plan:
-        x 1)  entries in the levelArray should allow more than one type per entry
-            - that allows, for instance, multiple objects at the same place.
-            - looking ahead, that means we can specify both the floor tile and
-                the object on top of it.
-
-        x 2) tileLib gets renamed portalLib
-
-        x 3) we create floorLib, which points at various different types of 
-            floor tile sprites, so we can mix that up.
-
-        x 4) similarly we create wallLib.
-            - note that this DOESN'T allow for dynamic, neighbor-aware sprite
-                selection.  We'll have to work that out later.  Maybe handle in
-                generation?
-
-        5) I'd also like to make some decoratives that get rendered on top of 
-            the floors and walls, but don't actually create any sort of blocking
-            or opaque tile entry.  
-        '''
+        # todo:  add non-blocking decoratives
 
         self.levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
