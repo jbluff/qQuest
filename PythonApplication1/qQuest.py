@@ -1,6 +1,7 @@
 import pygame
+from pygame.locals import DOUBLEBUF, FULLSCREEN
 
-from qQuest import constants, graphics, menus 
+from qQuest import graphics, menus, constants
 from qQuest.levels import Level
 from qQuest.game import CLOCK, GAME
 
@@ -60,6 +61,15 @@ TODO:
 - multi character mechanics!
 '''
 
+SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
+                                        FULLSCREEN | DOUBLEBUF)
+
+SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
+SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
+
+menus.DEFAULT_SURFACE = SURFACE_MAIN
+
+
 def handleMovementInputs():
     pressedKeys = pygame.key.get_pressed()
     move = [0,0]
@@ -78,7 +88,6 @@ def handleMovementInputs():
     if move != [0,0]:
         GAME.player.scheduleMove(*move)
 
-
 def handleOtherGameInputs(event):
     if event.key == pygame.K_g:
         GAME.player.pickupObjects()
@@ -89,17 +98,15 @@ def handleOtherGameInputs(event):
             return
         GAME.transitPortal(entryPortal)
 
-
 def handleMenuInputs(event):
     if event.key == pygame.K_p:
-        menus.PauseMenu()
+        menus.PauseMenu(SURFACE_MAIN)
 
     if event.key == pygame.K_i:
-        menus.InventoryMenu(GAME.player)
+        menus.InventoryMenu(SURFACE_MAIN, GAME.player)
     
     if event.key == pygame.K_s:
-        menus.SaveLoadMenu()
-
+        menus.SaveLoadMenu(SURFACE_MAIN, GAME)
 
 def handleInputEvents():
     eventsList = pygame.event.get()
@@ -119,11 +126,9 @@ def handleInputEvents():
         handleMenuInputs(event)
     return "no-action"
 
-
 def exitGame():
     pygame.quit()
     quit()
-
 
 def mainGameLoop(debugMode=None):
     playerAction = ""
@@ -135,9 +140,9 @@ def mainGameLoop(debugMode=None):
         GAME.camera.updatePositionFromViewer()
 
         if debugMode is None:
-            graphics.drawGame()
+            graphics.drawGame(SURFACE_MAIN, SURFACE_MAIN, SURFACE_CHYRON, GAME)
         elif debugMode == 'spriteList':
-            graphics.spriteDebugger()
+            graphics.spriteDebugger(SURFACE_MAIN)
             
         CLOCK.tick(constants.GAME_FPS)
 

@@ -1,5 +1,9 @@
-from qQuest.constants import SpriteDict 
 
+try: 
+    from qQuest.constants import SpriteDict 
+except ImportError:
+    from constants import SpriteDict 
+    
 EFFECTS = {}
 EFFECTS['fow_oneSide'] = {
     'spriteDict' : (SpriteDict('16x16figs/fogOfWarPositiveB.png', 

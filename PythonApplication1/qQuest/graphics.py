@@ -8,17 +8,23 @@ import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
 import numpy as np
 
-from qQuest import constants
-from qQuest.game import CLOCK, GAME
-from qQuest.lib.visEffectsLib import EFFECTS
+try:
+    from qQuest import constants
+    from qQuest.game import CLOCK #, GAME
+    from qQuest.lib.visEffectsLib import EFFECTS
+except ImportError:
+    import constants
+    from game import CLOCK #, GAME
+    from lib.visEffectsLib import EFFECTS   
 
-SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
-                                        FULLSCREEN | DOUBLEBUF)
 
-SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
-SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
+# SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
+#                                         FULLSCREEN | DOUBLEBUF)
 
-SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
+# SURFACE_MAP = pygame.Surface((constants.CAMERA_WIDTH_P, constants.CAMERA_HEIGHT_P))
+# SURFACE_CHYRON = pygame.Surface((constants.TOTAL_WIDTH_P, constants.CHYRON_HEIGHT_P))
+
+# SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
 
 
 class Camera:
@@ -111,7 +117,8 @@ class Actor():
     '''Actors are all drawn things which are not floor ties.  May reflect player, NPCs, items'''
 
     def __init__(self, pos: Tuple[int], name: str='defaultName', 
-        level=None, uniqueName='', spriteDict=None, **kwargs):
+        level=None, uniqueName='', spriteDict=None,
+        **kwargs):
         ''' level type is Level.  dur.'''
 
         self.x, self.y = pos
@@ -125,6 +132,7 @@ class Actor():
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
+        # self.surface = surface
 
         self.level = level
 
@@ -154,53 +162,43 @@ class Actor():
                 self.spriteImageNum = 0
         return self.animation[self.spriteImageNum]
 
-    def draw(self) -> None:
-        isInViewerFov = GAME.viewer.getTileIsVisible(self.x, self.y)
-        if not isInViewerFov:
-            return 
+    def draw(self, surface: pygame.Surface,
+                   viewer: 'creatures.Viewer'=None,
+                   camera: 'graphics.Camera'=None) -> None:
+        ''' Blits the Actor's current sprite in the appropriate location
+        on the relevant surface. '''
+        if viewer is not None:
+            isInViewerFov = viewer.getTileIsVisible(self.x, self.y)
+            if not isInViewerFov:
+                return 
+        if camera is not None:
+            if not camera.canSee(self.x, self.y):
+                return        
+            drawX, drawY = camera.drawPosition(self.graphicX, self.graphicY)
+        else:
+            drawX, drawY = self.x, self.y
 
-        if not GAME.camera.canSee(self.x, self.y):
-            return
-
-        currentSprite = self.getCurrentSprite()
-        drawX, drawY = GAME.camera.drawPosition(self.graphicX, self.graphicY)
         position = (round(drawX * constants.CELL_WIDTH), 
                     round(drawY * constants.CELL_HEIGHT)) 
-     
-        SURFACE_MAP.blit(currentSprite, position)
-        self.addGraphicEffect(position)
+        
+        currentSprite = self.getCurrentSprite()
+        surface.blit(currentSprite, position)
+        self.addGraphicEffect(surface, position)
 
-    # def emote(self, effectName:str, relPos: Tuple[int]=(0, 10),
-    #                 duration:int=10) -> None:
-    #     ''' Emotes things near an Actor.  This command starts them.'''
-    #     self.emoteEffectName = effectName
-    #     pass
-
-    def addGraphicEffect(self, pos, effectName: str=None, 
+    def addGraphicEffect(self, surface, pos, effectName: str=None, 
                             relPos: Tuple[int]=(0, -16)):
-        #self.currentEffectsList
         if getattr(self, 'activeEmote', None) is None: #self.activeEmote is None:
             return
         drawPos = pos[0]+relPos[0], pos[1]+relPos[1]
-
-        # if not isInViewerFov:
-        #     return 
-
-        # if not GAME.camera.canSee(self.x, self.y):
-        #     return
-
         effectSprite = ASSETS[EFFECTS[self.activeEmote]['spriteDict']][0] #no animations here, now
-        SURFACE_MAP.blit(effectSprite, drawPos)
+        surface.blit(effectSprite, drawPos)
         
 
-def compileBackgroundTiles(level=None) -> pygame.Surface:
+def compileBackgroundTiles(level) -> pygame.Surface:
     ''' Blits together all of the images that make up the background of a given map.
     This only needs to be called roughly once, when a level is first instantiated.
     level is Level instance.
     '''
-
-    if level is None:
-        level = GAME.currentLevel
 
     mapHeight, mapWidth = np.array(level.map).shape
     camWidth, camHeight = constants.CAMERA_WIDTH, constants.CAMERA_HEIGHT
@@ -219,33 +217,29 @@ def compileBackgroundTiles(level=None) -> pygame.Surface:
 
     return level_surface
 
-def drawBackground():    
+def drawBackground(surface: pygame.Surface, level: 'levels.Level', 
+                  camera: 'graphics.Camera') -> None:    
     ''' blits the pre-compiled background tiles (walls, floor, etc)'''
-    level = GAME.currentLevel
-    surface = SURFACE_MAP
-
-    map_rect = GAME.camera.getViewingRect()
+    map_rect = camera.getViewingRect()
     map_surface = ASSETS.compiledLevelMaps[level.uniqueID]
     map_subsurface = map_surface.subsurface(map_rect)
     # I don't actually know where this offset comes from.
     pos = (round(-0.5*constants.CELL_WIDTH),round(-0.5*constants.CELL_HEIGHT))
     surface.blit(map_subsurface, pos)
 
-def drawFogOfWar(viewer=None) -> None:
-    ''' viewer is Viewer instance. '''
-    if viewer is None:
-        viewer = GAME.viewer
-    level = GAME.currentLevel
-    surface = SURFACE_MAP
+def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level', 
+                 camera: 'graphics.Camera', viewer: 'creatures.Viewer',
+                 ) -> None:
+    '''  '''
 
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
     mapHeight, mapWidth = np.array(level.map).shape
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
-        if not GAME.camera.canSee(x, y):
+        if not camera.canSee(x, y):
             continue
-        drawX, drawY = GAME.camera.drawPosition(x, y)
+        drawX, drawY = camera.drawPosition(x, y)
         tilePosition = (round(drawX*constants.CELL_WIDTH), 
                         round(drawY*constants.CELL_HEIGHT))
 
@@ -343,54 +337,55 @@ def helperTextObjects(text, textColor, bgColor=None):
     textSurface = constants.FONT_DEBUG.render(text, True, textColor, bgColor)
     return textSurface, textSurface.get_rect()
 
-def drawGameMessages() -> None:
-    numMessages = min(len(GAME.messageHistory), constants.NUM_GAME_MESSAGES)
+def drawGameMessages(surface, game) -> None:
+    numMessages = min(len(game.messageHistory), constants.NUM_GAME_MESSAGES)
     if(numMessages==0):
         return 0
-    messages = GAME.messageHistory[-numMessages:]
+    messages = game.messageHistory[-numMessages:]
 
     _, height = helperTextDims()
-    startY = SURFACE_MAP.get_height() - numMessages*height
+    startY = surface.get_height() - numMessages*height
 
-    drawTextList(SURFACE_MAP, messages, startX=0, startY=startY)
+    drawTextList(surface, messages, startX=0, startY=startY)
 
-def drawDebug() -> None:
-    drawFPS()
+def drawDebug(surface) -> None:
+    drawFPS(surface)
 
-def drawFPS() -> None:
-    drawText(SURFACE_MAP, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
+def drawFPS(surface) -> None:
+    drawText(surface, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawGame() -> None:
+def drawGame(mainSurface, mapSurface, chyronSurface, game) -> None:
 
-    SURFACE_MAIN.fill(constants.COLOR_BLACK)
+    mainSurface.fill(constants.COLOR_BLACK)
     
     ''' draw the map and such '''
-    drawBackground()
-    drawObjects()
-    drawFogOfWar()
+    drawBackground(mapSurface, game.currentLevel, game.camera)
+    drawObjects(mapSurface, game.currentLevel, game.viewer, game.camera)
+    drawFogOfWar(mapSurface, game.currentLevel, game.camera, game.viewer)
     
-    drawGameMessages()
-    drawDebug()
-    SURFACE_MAIN.blit(SURFACE_MAP, (0,0))
+    drawGameMessages(mapSurface, game)
+    drawDebug(mainSurface)
+    mainSurface.blit(mapSurface, (0,0))
 
     ''' off-map portions of the interface '''
-    drawChyron()
-    SURFACE_MAIN.blit(SURFACE_CHYRON, (0,SURFACE_MAP.get_height()))
+    drawChyron(chyronSurface, game)
+    mainSurface.blit(chyronSurface, (0,mapSurface.get_height()))
 
-    pygame.display.flip()
+    pygame.display.flip()#mainSurface)
 
-def drawChyron() -> None:
+def drawChyron(surface, game) -> None:
     ''' the bit of the UI drawn below the map'''
-    SURFACE_CHYRON.fill(constants.COLOR_GREY)
+    surface.fill(constants.COLOR_GREY)
 
+    SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
     SURFACE_HEALTH.fill(constants.COLOR_GREY)
     xPos = 0.5*constants.CELL_WIDTH
     yPos = 0.5*constants.CELL_HEIGHT
     fullHeartSprite = ASSETS[EFFECTS['fullHeart']['spriteDict']][0]
     emptyHeartSprite = ASSETS[EFFECTS['emptyHeart']['spriteDict']][0]
-    for idx in range(1,GAME.player.maxHp+1):
-        if idx < GAME.player.hp:
+    for idx in range(1,game.player.maxHp+1):
+        if idx < game.player.hp:
             SURFACE_HEALTH.blit(fullHeartSprite, (xPos, yPos))
         else:
             SURFACE_HEALTH.blit(emptyHeartSprite, (xPos, yPos))
@@ -399,13 +394,16 @@ def drawChyron() -> None:
             xPos = 0.5*constants.CELL_WIDTH
             yPos += constants.CELL_HEIGHT
     
-    SURFACE_CHYRON.blit(SURFACE_HEALTH, ( 8,8))
+    surface.blit(SURFACE_HEALTH, ( 8,8))
 
-def drawObjects() -> None:
-    for gameObj in GAME.currentLevel.objects:
+def drawObjects(surface: pygame.Surface,
+                level: 'levels.Lever', 
+                viewer: 'creatures.Viewer', 
+                camera: 'graphics.Camera') -> None:
+    for gameObj in level.objects:
         if getattr(gameObj, "deleted", False):
             return
-        gameObj.draw()
+        gameObj.draw(surface, viewer, camera)
 
 def drawText(displaySurface: pygame.Surface, text: str, coords: Tuple[int], 
              textColor: Tuple[int], bgColor: Tuple[int]=None) -> None:
@@ -460,9 +458,9 @@ def loadSpriteSheet(path: str) -> objSpriteSheet:
     return objSpriteSheet(path)
 
 
-def spriteDebugger() -> None:
+def spriteDebugger(surface) -> None:
     # show all the sprites in ASSETS, with their names
-    SURFACE_MAIN.fill(constants.COLOR_WHITE)
+    surface.fill(constants.COLOR_WHITE)
 
     attrs = ASSETS.__dict__.keys()
 
@@ -472,7 +470,7 @@ def spriteDebugger() -> None:
         if not (attr.startswith("s_") or attr.startswith("a_")):
             continue
         vertPos = vertIdx*LINE_HEIGHT
-        drawText(SURFACE_MAIN, attr, (20, vertPos), constants.COLOR_BLACK, bgColor=constants.COLOR_WHITE)
+        drawText(surface, attr, (20, vertPos), constants.COLOR_BLACK, bgColor=constants.COLOR_WHITE)
 
         attrVal = getattr(ASSETS, attr)
         if type(attrVal) is not list:
@@ -481,7 +479,7 @@ def spriteDebugger() -> None:
         horIdx = 0
         for sprite in attrVal:
             pos = (100+horIdx*20, vertPos)
-            SURFACE_MAIN.blit(sprite, pos)
+            surface.blit(sprite, pos)
             horIdx += 1
 
         vertIdx += 1

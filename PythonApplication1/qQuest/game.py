@@ -5,7 +5,10 @@ Covers the Game class, as well as the non-graphics global singletons.
 import pygame
 import numpy as np
 
-from qQuest import constants
+try:
+    from qQuest import constants
+except ImportError:
+    import constants
 
 
 CLOCK = pygame.time.Clock()

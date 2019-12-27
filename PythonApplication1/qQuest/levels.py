@@ -50,7 +50,7 @@ class Tile:
 class Level:
     numLevels = 0
 
-    def __init__(self, levelName):
+    def __init__(self, levelName):#, surface=None):
         self.levelName = levelName
 
         self.objects = [] #should this be a set?   would it simplify deletion?
@@ -66,7 +66,7 @@ class Level:
 
     def compileMapGraphic(self, force=False) -> None:
         if (self.uniqueID not in ASSETS.compiledLevelMaps) and (not force):
-            levelSurface = compileBackgroundTiles(level=self)
+            levelSurface = compileBackgroundTiles(self)
             ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
 
     def loadLevelFile(self) -> None:
@@ -186,7 +186,8 @@ class Level:
         else:
             newClass = Creature
         enemy = newClass((coordX, coordY), level=self, container=inventory, 
-                         ai=aiInst, uniqueName=uniqueName, **monsterDict)  
+                         ai=aiInst, uniqueName=uniqueName,
+                          **monsterDict)  
  
         self.objects.append(enemy)
 
@@ -221,9 +222,11 @@ class Level:
         itemDict = ITEMS[name]
 
         if 'equipment' in itemDict:
-            item = Equipment( (coordX, coordY), level=self, **itemDict)
+            item = Equipment( (coordX, coordY), level=self,
+                            **itemDict)
         else:
-            item = Item( (coordX, coordY), level=self, **itemDict)
+            item = Item( (coordX, coordY), level=self,
+                         **itemDict)
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:

@@ -8,11 +8,12 @@ import pygame
 
 from qQuest import constants
 from qQuest import graphics
-from qQuest.graphics import SURFACE_MAIN
-from qQuest.game import CLOCK, GAME 
+from qQuest.game import CLOCK #, GAME 
+#TODO:  move CLOCK back into constants
 
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
 SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")
+DEFAULT_SURFACE = None
 
 class MenuListItem():
     ''' Items which are elements in a Menu, both selectable and not.
@@ -72,14 +73,16 @@ class Menu:
             self.finishLoop()
 
             if self.redrawGame:
-                graphics.drawGame()#fovMap=GAME.viewer.fovMap)
+                #this was for showing when an item was dropped.
+                #currently non-functional
+                #graphics.drawGame()#fovMap=GAME.viewer.fovMap)
                 redrawGame = False
 
             self.redrawMenu()
 
     def redrawMenu(self) -> None:
         ''' Redraw the menu, respecting FPS limits.'''
-        #self.menuSurface.fill(constants.COLOR_BLACK)
+        self.menuSurface.fill(constants.COLOR_BLACK)
         self.redrawMenuBody()
         self.parentSurface.blit(self.menuSurface, (self.coordX, self.coordY))
         CLOCK.tick(constants.GAME_FPS)
@@ -105,8 +108,8 @@ class Menu:
 class PauseMenu(Menu):
     ''' This is a pointless thing at present, except as an example of a 
     theortically non-textList menu. '''
-    def __init__(self):
-        super().__init__(SURFACE_MAIN, menuSize=(200,50))
+    def __init__(self, *args):
+        super().__init__(*args, menuSize=(200,50))
 
     def restartLoop(self):
         pass
@@ -129,7 +132,7 @@ class TextListMenu(Menu):
     def __init__(self, *args, **kwargs):
         self.selected=None
         self.initTextList()
-        super().__init__(SURFACE_MAIN, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def initTextList(self):
         raise NotImplemented("sinitTextList must be overwritten by children")
@@ -214,6 +217,11 @@ class TextListMenu(Menu):
 
 
 class SaveLoadMenu(TextListMenu):
+    def __init__(self, surface, game):
+        self.game = game
+        self.doNext = None #this construction is bad.
+        super().__init__(surface, menuSize=(200,50))
+
     def initTextList(self):
         self.menuList = []
         self.addMenuItem('Save/Load', selectable=False, 
@@ -228,18 +236,22 @@ class SaveLoadMenu(TextListMenu):
             return None
 
         if event.key == pygame.K_RETURN:
+            self.breakLoop = True
             if self.selected == 1:
-                gameSave()
-
+                gameSave(self.game)
             elif self.selected == 2:
-                LoadMenu()
-                self.breakLoop = True
-
-
+                self.menuSurface.fill(constants.COLOR_BLACK)
+                LoadMenu(self.parentSurface, self.game)
+            
 class LoadMenu(TextListMenu):
+    def __init__(self, surface, game):
+        self.game = game
+        super().__init__(surface)
+
     def initTextList(self) -> None:
         self.menuList = []
         allFiles = listSavedGames()
+        print(allFiles)
         [self.addMenuItem(f, selectable=True) for f in allFiles]
 
     def parseEvent(self, event)-> None:
@@ -249,14 +261,14 @@ class LoadMenu(TextListMenu):
 
         if event.key == pygame.K_RETURN:
             fname = self.menuList[self.selected].text
-            loadGame(fname)
+            loadGame(fname, self.game)
             self.breakLoop = True
 
 
 class InventoryMenu(TextListMenu):
-    def __init__(self, actor):
+    def __init__(self, surface, actor):
         self.actor = actor
-        super().__init__()
+        super().__init__(surface)
 
     def initTextList(self) -> None:
         self.menuList = []
@@ -288,7 +300,7 @@ class InventoryMenu(TextListMenu):
 
             success = item.use(self.actor) #this won't always be at self.actor.
             if success:
-                GAME.addMessage(self.actor.name + " uses " + item.name)
+                #GAME.addMessage(self.actor.name + " uses " + item.name)
                 if item.deleted:
                     self.removeSelectedItemFromList()
 
@@ -299,31 +311,30 @@ class InventoryMenu(TextListMenu):
         self.redrawGame = True
 
 
-def gameSave(saveName: str='default') -> None:
+def gameSave(game, saveName: str='default') -> None:
     ''' dump the GAME object to a dill file. '''
     dt = datetime.datetime.now()
     dtString = dt.strftime(DATETIME_FORMAT)
 
     fileName = dtString + '_' + saveName + '.sav'
     filePath = os.path.join(SAVEPATH,fileName)
-    GAME.addMessage(f'Game saved to {fileName}')
+    game.addMessage(f'Game saved to {fileName}')
     with open(filePath, 'wb') as f:
-        dill.dump(GAME, f)
+        dill.dump(game, f)
     pass
 
-def loadGame(fname: str) -> None:
-    global GAME
+def loadGame(fname: str, game) -> None:
 
     filePath = os.path.join(SAVEPATH,fname)
     with open(filePath, 'rb') as f:
         newGame = dill.load(f)
     
-    GAME.levels = newGame.levels
-    GAME.currentLevel = newGame.currentLevel
-    GAME.player = newGame.player
-    GAME.messageHistory = newGame.messageHistory
-    GAME.viewer = newGame.viewer
-    GAME.camera = newGame.camera
+    game.levels = newGame.levels
+    game.currentLevel = newGame.currentLevel
+    game.player = newGame.player
+    game.messageHistory = newGame.messageHistory
+    game.viewer = newGame.viewer
+    game.camera = newGame.camera
 
 def listSavedGames() -> List[str]:
     saveFiles = []
@@ -354,7 +365,7 @@ class NpcInteractionMenu(TextListMenu):
         speakerSprite = speaker.getCurrentSprite()
         pygame.transform.scale(speakerSprite, iconSquare, self.iconSurface)
         
-        super().__init__(menuSize = (self.iconSize+200, 100))
+        super().__init__(DEFAULT_SURFACE, menuSize = (self.iconSize+200, 100))
         #
         
         #self.coordX, self.coordY
@@ -362,6 +373,7 @@ class NpcInteractionMenu(TextListMenu):
     def redrawMenuBody(self, surface=None) -> None:
         if surface is None:
             surface = self.menuSurface
+
         gfxTextList = []
         
         for entry in self.menuList:
