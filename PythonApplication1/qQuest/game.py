@@ -11,7 +11,7 @@ except ImportError:
     import constants
 
 
-CLOCK = pygame.time.Clock()
+
 
 class Game:
     def __init__(self):
@@ -30,7 +30,8 @@ class Game:
     def currentLevel(self, value):
         self._currentLevel = value
 
-        self.mapHeight, self.mapWidth = np.array(self.currentLevel.levelArray).shape
+        self.mapHeight, self.mapWidth = np.array(self.currentLevel.map).shape
+        # is this actually used anymore?
 
     '''
     Look at the entry portal, 

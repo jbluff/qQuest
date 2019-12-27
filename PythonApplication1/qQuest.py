@@ -3,7 +3,7 @@ from pygame.locals import DOUBLEBUF, FULLSCREEN
 
 from qQuest import graphics, menus, constants
 from qQuest.levels import Level
-from qQuest.game import CLOCK, GAME
+from qQuest.game import GAME
 
 
 '''
@@ -144,7 +144,7 @@ def mainGameLoop(debugMode=None):
         elif debugMode == 'spriteList':
             graphics.spriteDebugger(SURFACE_MAIN)
             
-        CLOCK.tick(constants.GAME_FPS)
+        constants.CLOCK.tick(constants.GAME_FPS)
 
     exitGame()
 

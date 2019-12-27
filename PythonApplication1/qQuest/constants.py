@@ -49,6 +49,7 @@ NUM_GAME_MESSAGES = 4
 
 GAME_FPS = 60
 
+CLOCK = pygame.time.Clock()
 
 
 from collections import namedtuple

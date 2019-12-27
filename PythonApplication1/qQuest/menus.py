@@ -6,10 +6,9 @@ from typing import List
 import dill
 import pygame
 
-from qQuest import constants
-from qQuest import graphics
-from qQuest.game import CLOCK #, GAME 
-#TODO:  move CLOCK back into constants
+from qQuest import constants, graphics
+from qQuest.constants import CLOCK 
+
 
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
 SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")

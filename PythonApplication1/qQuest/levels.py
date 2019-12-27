@@ -41,6 +41,11 @@ class Portal(Actor):
 
 
 class Tile(Actor):
+    ''' Tiles are Actor instances designed, principally, for walls and floors.
+    They are used to determine where a Creature and move and the influence of the
+    level on what a Viewer can see.  They are drawn beneath the other Actors,
+    and we expect one to be defined for every cell.'''
+
     def __init__(self, pos: Tuple[int], blocking=False, seeThru=True, **kwargs):
         self.blocking = blocking
         self.seeThru = seeThru
@@ -48,30 +53,20 @@ class Tile(Actor):
 
 
 class Level:
-    # TODO:  roll back the graphic situation here and start treating
-    # tiles like every other object, so they can be animated.
-    #  the speed gains are trivial.
     numLevels = 0
 
-    def __init__(self, levelName):#, surface=None):
-        self.levelName = levelName
+    def __init__(self, levelFileName: str, loadFromFile: bool=True):
+        self.levelName = levelFileName
 
         self.objects = [] #should this be a set?   would it simplify deletion?
-        #self.tiles = []
         self.portals = []
 
-        self.loadLevelFile()
-        self.parseLevelDict()
+        if loadFromFile:
+            self.loadLevelFile()
+            self.parseLevelDict()
 
         self.uniqueID = f'level{Level.numLevels}'
         Level.numLevels += 1
-
-        #self.compileMapGraphic()
-
-    # def compileMapGraphic(self, force=False) -> None:
-    #     if (self.uniqueID not in ASSETS.compiledLevelMaps) and (not force):
-    #         levelSurface = compileBackgroundTiles(self)
-    #         ASSETS.compiledLevelMaps[self.uniqueID] = levelSurface
 
     def loadLevelFile(self) -> None:
         ''' Loads self.levelDict dictionary from a saved .lvl file '''
@@ -87,16 +82,16 @@ class Level:
 
         # todo:  add non-blocking decoratives
 
-        self.levelArray = self.levelDict["level"]
+        levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
 
-        self.mapHeight, self.mapWidth = np.array(self.levelArray).shape
+        self.mapHeight, self.mapWidth = np.array(levelArray).shape
 
         floorTile = ""#Tile("s_floor", blocking=False, seeThru=True)
         self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
-            allTiles = self.levelArray[i][j]
+            allTiles = levelArray[i][j]
             for tileChar in allTiles:
                 tileTypeKey = decoder[tileChar]
                 if tileTypeKey in TILES.keys():
@@ -158,12 +153,8 @@ class Level:
         For the time being, that means Actors and (mostly) subclasses.
         The return type has the same constraints.
         '''
-        target = None
-        for obj in self.objects:
-            if (obj is not excludeObject and
-                    obj.x == x and #sub objectAtCoords into here
-                    obj.y == y and
-                    isinstance(obj, Creature)): #playerclsdd
+        for obj in self.objectsAtCoords(x, y):
+            if (obj is not excludeObject) and isinstance(obj, Creature): #Combatant
                 return obj
         return None
 
@@ -185,7 +176,7 @@ class Level:
 
         if monsterDict.get('combatant', True):
             newClass = Combatant
-        elif monsterDict.get('conversationalist', True):
+        elif monsterDict.get('conversationalist', False):
             newClass = Conversationalist
         else:
             newClass = Creature
@@ -224,13 +215,9 @@ class Level:
         cell (x,y).  
         '''
         itemDict = ITEMS[name]
-
-        if 'equipment' in itemDict:
-            item = Equipment( (coordX, coordY), level=self,
-                            **itemDict)
-        else:
-            item = Item( (coordX, coordY), level=self,
-                         **itemDict)
+        isEquipment = itemDict.get('equipment', False)
+        newClass = Equipment if isEquipment else Item
+        item = newClass((coordX, coordY), level=self, **itemDict)
         self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
