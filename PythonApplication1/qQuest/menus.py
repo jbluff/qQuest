@@ -79,7 +79,7 @@ class Menu:
 
     def redrawMenu(self) -> None:
         ''' Redraw the menu, respecting FPS limits.'''
-        self.menuSurface.fill(constants.COLOR_BLACK)
+        #self.menuSurface.fill(constants.COLOR_BLACK)
         self.redrawMenuBody()
         self.parentSurface.blit(self.menuSurface, (self.coordX, self.coordY))
         CLOCK.tick(constants.GAME_FPS)
@@ -126,10 +126,10 @@ class PauseMenu(Menu):
 
 
 class TextListMenu(Menu):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.selected=None
         self.initTextList()
-        super().__init__(SURFACE_MAIN)
+        super().__init__(SURFACE_MAIN, *args, **kwargs)
 
     def initTextList(self):
         raise NotImplemented("sinitTextList must be overwritten by children")
@@ -178,7 +178,9 @@ class TextListMenu(Menu):
                 self.selected = idx
                 break
 
-    def redrawMenuBody(self) -> None:
+    def redrawMenuBody(self, surface=None) -> None:
+        if surface is None:
+            surface = self.menuSurface
         gfxTextList = []
         
         for entry in self.menuList:
@@ -187,7 +189,7 @@ class TextListMenu(Menu):
             else:
                 gfxEntry = [entry.text, entry.textColorUnsel, entry.bgColorUnsel]
             gfxTextList.append(gfxEntry)
-        graphics.drawTextList(self.menuSurface, gfxTextList)
+        graphics.drawTextList(surface, gfxTextList)
 
     def finishLoop(self):
         pass
@@ -334,30 +336,52 @@ def listSavedGames() -> List[str]:
     return saveFiles
 
 class NpcInteractionMenu(TextListMenu):
-    def __init__(self, subScript):
+    def __init__(self, subScript, speaker):
         ''' subScript provides (optionally) header text to read, and
         (optionally) options to follow.  This menu defines a .break attribute,
         which is the result of the menu interaction, and tells where to go to
         next in the npcs script.  A return value of 'break' ends the interaction.
+
+        Speaker type is any Actor instance.
         '''
         self.headerText = subScript.get('readText', None)
-        self.optionDict = subScript.get('options', None)
+        self.optionList = subScript.get('options', [])
         self.result = 'break'
-        super().__init__()
+
+        self.iconSize = 64
+        iconSquare = (self.iconSize, self.iconSize)
+        self.iconSurface = pygame.Surface(iconSquare)
+        speakerSprite = speaker.getCurrentSprite()
+        pygame.transform.scale(speakerSprite, iconSquare, self.iconSurface)
+        
+        super().__init__(menuSize = (self.iconSize+200, 100))
+        #
+        
+        #self.coordX, self.coordY
+
+    def redrawMenuBody(self, surface=None) -> None:
+        if surface is None:
+            surface = self.menuSurface
+        gfxTextList = []
+        
+        for entry in self.menuList:
+            if entry.selected:
+                gfxEntry = [entry.text, entry.textColorSel, entry.bgColorSel]
+            else:
+                gfxEntry = [entry.text, entry.textColorUnsel, entry.bgColorUnsel]
+            gfxTextList.append(gfxEntry)
+        graphics.drawTextList(surface, gfxTextList, startX=self.iconSize)
+
+        surface.blit(self.iconSurface, (0,0))
 
     def initTextList(self) -> None:
         self.menuList = []
-        if self.headerText  is not None:
-
+        if self.headerText is not None:
             self.addMenuItem(self.headerText, selectable=False, 
                                     textColorUnsel=constants.COLOR_BLACK,
                                     bgColorUnsel=constants.COLOR_GREY)
-        if self.optionDict is not None:
-            self.optionTexts = [option['optionText'] for option in self.optionDict.values()]
-            self.gotos = [option['goto'] for option in self.optionDict.values()]
-
-            for text, goto in zip(self.optionTexts, self.gotos):
-                self.addMenuItem(text, selectable=True, annotation=goto)
+        for option in self.optionList:
+            self.addMenuItem(option.text, selectable=True, annotation=option.goto)
  
 
     def parseEvent(self, event) -> None:
@@ -369,7 +393,10 @@ class NpcInteractionMenu(TextListMenu):
         if event.key == pygame.K_RETURN:
             self.breakLoop = True
 
-            if self.optionDict is not None:
+            if self.optionList != []:
                 self.result = self.menuList[self.selected].annotation
             else:
                 self.result = 'break'
+
+    def finishLoop(self):
+        self.redrawGame = True

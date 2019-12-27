@@ -53,27 +53,7 @@ CHARACTERS['townNPC'] = {
                                            numSprites=1)),
        'combatant': False,
        'conversationalist' : True,
-       'script' : {
-            'start' : {
-                'readText' : 'Would you like to go to A or B?',
-                'options' : {
-                    'optionA' : {
-                        'optionText' : "doesn't A sound great?",
-                        'goto' : 'A'
-                    },
-                    'optionB' : {
-                        'optionText' : "doesn't B sound great?",
-                        'goto' : 'B'
-                    },
-                }, 
-            },
-            'A' : {
-                'readText' : 'Welcome to A!',
-            }, 
-            'B' : {
-                'readText' : 'Welcome to B!',
-            }              
-       }
+       'scriptName' : 'baseNPCscript'
        }
 
 NAMES = ['jonny', 'james', 'Mephisto, lord of terror',

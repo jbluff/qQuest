@@ -9,6 +9,7 @@ from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
 from qQuest.lib.characterLib import CHARACTERS
+from qQuest.lib.scriptLib import SCRIPTS
 from qQuest.menus import NpcInteractionMenu
 
 
@@ -113,7 +114,7 @@ class Creature(Actor):
         corpse = Item((self.x, self.y),
                     name=self.uniqueName +"'s corpse",
                     level=self.level,
-                    spriteDict=MONSTERS[self.name]["spriteDictDead"],
+                    spriteDict=CHARACTERS[self.name]["spriteDictDead"],
                     # ^^ that's gross and opaque.
                     monsterType=self.name,
                     **kwargs)
@@ -134,6 +135,8 @@ class Combatant(Creature):
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
+        
+        #self.stats = blaaa
  
     def scheduleAttack(self, target: 'Combatant', dhp=-3, **kwargs) -> None:
         if not isinstance(target, Combatant):
@@ -166,61 +169,25 @@ class Combatant(Creature):
 class Conversationalist(Creature):
     ''' These are NPC classes which can interact with the user in non-combat
     ways.'''
-    def __init__(self, *args, script: dict=None, scriptPosition: str='start', 
+    def __init__(self, *args, scriptName: dict=None, 
                        **kwargs):
         super().__init__(*args, **kwargs)
-        self.script = script 
-        self.scriptPosition = scriptPosition
+        self.scriptName = scriptName 
+        self.script = SCRIPTS[scriptName]
+        self.scriptPosition = 'start'
 
-        ''' TODO:  figure out how we're going to do this.
-        I think it'll go something like:
-
-        {
-            '%start' : {
-                'readText' : '%would you like to go to A or B?',
-                'options' : {
-                    '%A' :  {
-                        'optionText' : %'doesn't A sound great?',
-                        'goto' : %'A'
-                    },
-                    '%B' :  {
-                        'optionText' : %'doesn't B sound great?',
-                        'goto' : %'B'
-                    },
-                }, 
-            '%A' : {
-                'readText' : '%Welcome to A!',
-            }, 
-            '%B' : {
-                'readText' : '%Welcome to B!',
-            }
-        }
-
-        but we also need a general way to have interaction hooks.
-        e.g. opening a store menu or checking for possession of an item.  
-        - also resetting start position.  
-        '''
-        
     def interact(self, otherParty):
         ''' for now, assume otherParty to be the player'''
 
         while self.scriptPosition != 'break':
             subScript = self.script[self.scriptPosition]
 
-            ret = NpcInteractionMenu(subScript)
+            ret = NpcInteractionMenu(subScript, self)
             result = ret.result
 
-            print(result)
+            # if ret is check, do thing.  gotta figure that hook out.
             self.scriptPosition = result
-        # return
-        # readText = subScript.get('readText', None)
-        # if readText is not None:
-        #     GAME.addMessage(readText)
-        # optionDict = subScript.get('options', None)
-        # if optionDict is not None:
-        #     optionTexts = [option['optionText'] for option in optionDict.values()]
-        #     gotos = [option['goto'] for option in optionDict.values()]
-        # pass
+
 
 
 class Viewer(Actor):
@@ -269,11 +236,10 @@ class PlayerClass(Combatant, Viewer):
     change once we use NPC AIs that care about FOV.   It'll be used for more 
     than just the player(s).  
     '''
-    pass
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
 
-    # def terminateMovement(self) -> None:
-    #     super().terminateMovement()
-    #     self.recalculateFov()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.accomplishments = []
+
+
 
