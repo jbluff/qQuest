@@ -2,20 +2,22 @@ from qQuest import magic, items, ai
 from qQuest.constants import SpriteDict 
                            
 
-MONSTERS = {}
-MONSTERS['jelly'] = {
+CHARACTERS = {}
+CHARACTERS['jelly'] = {
        'name' : 'jelly',
        'aiName' : "aiRandom",
+       'speed' : 0.07,
        'deathFunction' : items.deathMonster,
        'spriteDict' : (SpriteDict('16x16figs/jellySheet.png',
                                    colIdx=0, rowIdx=0, numSprites=2),),
        'spriteDictDead' : (SpriteDict('16x16figs/jellySheet.png',
                                    colIdx=0, rowIdx=0, numSprites=1),)}
 
-MONSTERS['demon'] = {
+CHARACTERS['demon'] = {
        'name' : 'demon',
        'aiName' : 'aiDumbAggro', 
        'deathFunction' : items.deathMonster,
+       'speed' : 0.05,
        'spriteDict' : (SpriteDict('dawnlike/Characters/Demon0.png',
                                    colIdx=5, rowIdx=1, numSprites=1),
                       SpriteDict('dawnlike/Characters/Demon1.png',
@@ -25,10 +27,11 @@ MONSTERS['demon'] = {
                                    rowIdx=1,
                                    numSprites=1),)}
 
-MONSTERS['slime'] = {
+CHARACTERS['slime'] = {
        'name' : 'slime',
        'aiName' : "aiDumbCoward",
        'deathFunction' : items.deathMonster,
+       'speed' : 0.02,
        'spriteDict' : (SpriteDict('dawnlike/Characters/Slime0.png',
                                    colIdx=0, rowIdx=4,
                                    numSprites=1),
@@ -37,19 +40,41 @@ MONSTERS['slime'] = {
        'spriteDictDead' : (SpriteDict('dawnlike/Characters/Slime0.png',
                                    colIdx=0, rowIdx=4, numSprites=1),)}
 
-MONSTERS['townNPC'] = {
+CHARACTERS['townNPC'] = {
        'name' : 'townNPC',
        'aiName' : 'aiPassiveNPC',
        'spriteDict' : (SpriteDict('dawnlike/Characters/Dog0.png',
                                            colIdx=0,
                                            rowIdx=0,
                                            numSprites=1),
-                     SpriteDict('dawnlike/Characters/Dog1.png',
+                      SpriteDict('dawnlike/Characters/Dog1.png',
                                            colIdx=0,
                                            rowIdx=0,
                                            numSprites=1)),
        'combatant': False,
-       'interactable' : True}
+       'conversationalist' : True,
+       'script' : {
+            'start' : {
+                'readText' : '%would you like to go to A or B?',
+                'options' : {
+                    'optionA' : {
+                        'optionText' : "doesn't A sound great?",
+                        'goto' : 'A'
+                    },
+                    'optionB' : {
+                        'optionText' : "doesn't B sound great?",
+                        'goto' : 'B'
+                    },
+                }, 
+            },
+            'A' : {
+                'readText' : 'Welcome to A!',
+            }, 
+            'B' : {
+                'readText' : 'Welcome to B!',
+            }              
+       }
+       }
 
 NAMES = ['jonny', 'james', 'Mephisto, lord of terror',
          'janet', 'juliette', 'Andariel, queen of the succubi']

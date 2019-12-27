@@ -6,7 +6,9 @@ to the Creature class but it does make the Creature class a bit easier to parse
 through.'''
 
 from qQuest.graphics import Actor
+
 from qQuest.game import GAME
+from qQuest import characters 
 
 class QueueEntry():
     def __init__(self, actor: Actor, duration: float, emoteName: str=None, **kwargs):
@@ -58,6 +60,7 @@ class QueuedMove(QueueEntry):
             target = level.checkForCreature(nextX, nextY, excludeObject=self)
             if target: 
                 self.actor.scheduleAttack(target)
+                self.actor.scheduleInteraction(target)
                 return False
         
         self.executeMoveTick()
@@ -81,7 +84,7 @@ class QueuedMove(QueueEntry):
         self.actor.y = round(self.actor.graphicY)
         if hasattr(self.actor,'recalculateFov'):
             self.actor.recalculateFov()
-            
+
 class QueuedAI(QueueEntry):
     def execute(self) -> bool:
         self.tick()
@@ -90,8 +93,9 @@ class QueuedAI(QueueEntry):
         return True 
 
 class QueuedAttack(QueueEntry):
-    ''' The action of attacking and its duration '''
+    ''' The action of attacking and its duration. '''
     def __init__(self, *args, target: Actor=None, dhp: float=-3, **kwargs):
+        ''' Type  hint should actually be combatant.'''
         self.target = target
         self.dhp = dhp
         super().__init__(*args, **kwargs)
@@ -106,6 +110,17 @@ class QueuedAttack(QueueEntry):
             self.target.scheduleDamage(dhp=self.dhp, emoteName='fireSmall')        
         self.tick()
         return True 
+
+
+class QueuedInteraction(QueueEntry):
+    def __init__(self, *args, target: Actor=None, **kwargs):
+        ''' Type hint should actually be Conversationalist.'''
+        self.target = target
+        super().__init__(*args, **kwargs)
+
+    def execute(self) -> bool:
+        self.target.interact(self.actor)
+
 
 class QueuedDamage(QueueEntry):
     ''' taking damage (interrupting), and its duration '''

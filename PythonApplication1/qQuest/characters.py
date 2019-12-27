@@ -8,7 +8,7 @@ from qQuest import constants, actions
 from qQuest.game import GAME
 from qQuest.graphics import Actor
 from qQuest.items import Item
-from qQuest.lib.monsterLib import MONSTERS
+from qQuest.lib.characterLib import CHARACTERS
 
 
 
@@ -20,8 +20,7 @@ class Creature(Actor):
     For Creatures with an ai property, the ai is consulted when the queue is 
     empty.
     '''
-    def __init__(self, *args,  ai=None, 
-                              container=None, speed=0.07, **kwargs):
+    def __init__(self, *args, ai=None, container=None, speed=0.07, **kwargs):
         super().__init__(*args, **kwargs)
         self.dead = False
 
@@ -51,7 +50,7 @@ class Creature(Actor):
         queueEntry = self.actionQueue.pop()
         self.activeEmote = queueEntry.emoteName
         success = queueEntry.execute()
-
+        # print(type(queueEntry))
         if not success:
             return #if it didn't work, don't continue
         if not queueEntry.completed:
@@ -81,6 +80,13 @@ class Creature(Actor):
 
     def scheduleWait(self, duration=5, **kwargs) -> None:
         queueEntry = actions.QueuedWait(self, duration, **kwargs)
+        self.actionQueue.appendleft(queueEntry)
+
+    def scheduleInteraction(self, target: 'Conversationalist', **kwargs) -> None:
+        if not isinstance(target, Conversationalist):
+            return
+        duration = 10 #not really sure what this means, here.
+        queueEntry = actions.QueuedInteraction(self, duration, target=target, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
     def pickupObjects(self) -> None:
@@ -123,12 +129,13 @@ class Creature(Actor):
 class Combatant(Creature):
     ''' Combatant takes the Creature class and adds in health, attacking, etc.'''
     def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
+        # TODO:  DeathFunction will be by name and looked up in a lib, I think.
         super().__init__(*args, **kwargs)
         self.hp = hp  
         self.maxHp = hp
         self.deathFunction = deathFunction
  
-    def scheduleAttack(self, target: Actor, dhp=-3, **kwargs) -> None:
+    def scheduleAttack(self, target: 'Combatant', dhp=-3, **kwargs) -> None:
         if not isinstance(target, Combatant):
             return
         attackDuration = 30 # inverse "attack speed"
@@ -136,7 +143,7 @@ class Combatant(Creature):
         self.actionQueue.appendleft(queueEntry)
 
     def scheduleDamage(self, dhp=-3, **kwargs) -> None:
-        damageDuration = 5 # inverse "attack speed"
+        damageDuration = 5 # taking damage stuns for a time.
         queueEntry = actions.QueuedDamage(self, damageDuration, dhp=dhp, **kwargs)
 
         # note the backwards appending here-- this interrupts
@@ -153,6 +160,59 @@ class Combatant(Creature):
     def heal(self, deltaHp: float) -> None:
         #TODO!
         assert deltaHp >= 0
+        pass
+
+
+class Conversationalist(Creature):
+    ''' These are NPC classes which can interact with the user in non-combat
+    ways.'''
+    def __init__(self, *args, script: dict=None, scriptPosition: str='start', 
+                       **kwargs):
+        super().__init__(*args, **kwargs)
+        self.script = script 
+        self.scriptPosition = scriptPosition
+
+        ''' TODO:  figure out how we're going to do this.
+        I think it'll go something like:
+
+        {
+            '%start' : {
+                'readText' : '%would you like to go to A or B?',
+                'options' : {
+                    '%A' :  {
+                        'optionText' : %'doesn't A sound great?',
+                        'goto' : %'A'
+                    },
+                    '%B' :  {
+                        'optionText' : %'doesn't B sound great?',
+                        'goto' : %'B'
+                    },
+                }, 
+            '%A' : {
+                'readText' : '%Welcome to A!',
+            }, 
+            '%B' : {
+                'readText' : '%Welcome to B!',
+            }
+        }
+
+        but we also need a general way to have interaction hooks.
+        e.g. opening a store menu or checking for possession of an item.  
+        - also resetting start position.  
+        '''
+        
+    def interact(self, otherParty):
+        ''' for now, assume otherParty to be the player'''
+        subScript = self.script[self.scriptPosition]
+
+        readText = subScript.get('readText', None)
+        if readText is not None:
+            GAME.addMessage(readText)
+        optionDict = subScript.get('options', None)
+        if optionDict is not None:
+            print(optionDict.keys())
+            #optionTexts = [option['optionText'] for option in optionDict.items()]
+            #gotos = [option['goto'] for option in optionDict.items()]
         pass
 
 

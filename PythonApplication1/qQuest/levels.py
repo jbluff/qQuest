@@ -10,13 +10,13 @@ import tcod as libtcod
 from qQuest import ai, constants
 
 from qQuest.constants import SpriteDict 
-from qQuest.characters import Creature, Combatant, PlayerClass, Viewer
+from qQuest.characters import Creature, Combatant, Conversationalist, PlayerClass, Viewer
 from qQuest.items import Item, Equipment, Container
 from qQuest.game import GAME
 from qQuest.graphics import ASSETS, Actor, compileBackgroundTiles
 
 from qQuest.lib.itemLib import ITEMS
-from qQuest.lib.monsterLib import MONSTERS, NAMES
+from qQuest.lib.characterLib import CHARACTERS, NAMES
 from qQuest.lib.portalLib import PORTALS 
 from qQuest.lib.tileLib import TILES 
 
@@ -128,8 +128,8 @@ class Level:
                     self.addItem(j, i, tileTypeKey)
                     continue
 
-                elif tileTypeKey in MONSTERS.keys():
-                    self.addEnemy(j, i, tileTypeKey)
+                elif tileTypeKey in CHARACTERS.keys():
+                    self.addCharacter(j, i, tileTypeKey)
                     continue
 
                 elif tileTypeKey in PORTALS.keys():
@@ -187,12 +187,12 @@ class Level:
         '''Returns all objects at cell (x,y)?'''
         return [obj for obj in self.objects if obj.x == x and obj.y == y]
 
-    def addEnemy(self, coordX: int, coordY: int, 
+    def addCharacter(self, coordX: int, coordY: int, 
                        name: str, uniqueName: str =None) -> None:
         ''' Place an enemy of type name (looked up in monsterLib) at coordinate
         cell (x,y).  Unique name is instance name of that particular monster.
         '''
-        monsterDict = MONSTERS[name]
+        monsterDict = CHARACTERS[name]
 
         if uniqueName is None:
             uniqueName = random.choice(NAMES) + " the " + name
@@ -201,6 +201,8 @@ class Level:
 
         if monsterDict.get('combatant', True):
             newClass = Combatant
+        elif monsterDict.get('conversationalist', True):
+            newClass = Conversationalist
         else:
             newClass = Creature
         enemy = newClass((coordX, coordY), level=self, container=inventory, 

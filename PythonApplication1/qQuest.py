@@ -157,7 +157,7 @@ def initializeGame():
         level1 = Level("mapwPIES4")
         GAME.levels.append(level1)
         level0.portals[0].destinationPortal = level1.portals[0]
-        
+        level1.portals[0].destinationPortal = level0.portals[0]
     if 0:
         level0 = Level("mapwPIES4")
         GAME.levels.append(level0)
