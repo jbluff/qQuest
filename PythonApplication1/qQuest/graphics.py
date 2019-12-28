@@ -318,6 +318,8 @@ def drawObjects(surface: pygame.Surface,
                 objects: List[Actor], 
                 **kwargs) -> None:
     for gameObj in objects:
+        if gameObj is None:
+            continue
         if getattr(gameObj, "deleted", False):
             return
         gameObj.draw(surface, **kwargs), 
@@ -332,12 +334,13 @@ def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:
     level = game.currentLevel
 
     mainSurface.fill(constants.COLOR_BLACK)
+    mapSurface.fill(constants.COLOR_BLACK)
     
     ''' draw the map and such '''
     #bgTiles =  [item for sublist in level.map for item in sublist]
     #drawObjects(mapSurface, bgTiles, drawHistory=True, **vcKwargs)
     drawLevelBackground(mapSurface, level, **vcKwargs)
-    
+
     drawObjects(mapSurface, level.objects, **vcKwargs)
     
     drawFogOfWar(mapSurface, level, **vcKwargs)

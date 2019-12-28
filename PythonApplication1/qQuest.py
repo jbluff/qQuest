@@ -140,7 +140,7 @@ def mainGameLoop(debugMode=None):
         GAME.camera.updatePositionFromViewer()
 
         if debugMode is None:
-            graphics.drawGame(SURFACE_MAIN, SURFACE_MAIN, SURFACE_CHYRON, GAME)
+            graphics.drawGame(SURFACE_MAIN, SURFACE_MAP, SURFACE_CHYRON, GAME)
         elif debugMode == 'spriteList':
             graphics.spriteDebugger(SURFACE_MAIN)
             
