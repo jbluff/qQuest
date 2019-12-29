@@ -14,33 +14,33 @@ except ImportError:
 
 
 class Game:
+    ''' This class primarily only exists for saving and loading, which necessitates
+    collections of multiple levels.  We also use it to keep track of portals for
+    inter-level travel.  It did more, in the past.'''
     def __init__(self):
         self.messageHistory = []
+
         self.levels = []
+        self.currentLevel = None
+
         self.player = None
+        self.camera = None
+        self.viewer = None
 
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color, constants.COLOR_BLACK))
 
-    @property
-    def currentLevel(self):
-        return self._currentLevel
+    # @property
+    # def currentLevel(self):
+    #     return self._currentLevel
 
-    @currentLevel.setter
-    def currentLevel(self, value):
-        self._currentLevel = value
+    # @currentLevel.setter
+    # def currentLevel(self, value):
+    #     self._currentLevel = value
 
-        self.mapHeight, self.mapWidth = np.array(self.currentLevel.map).shape
+        #self.mapHeight, self.mapWidth = np.array(self.currentLevel.map).shape
         # is this actually used anymore?
 
-    '''
-    Look at the entry portal, 
-    see what level it points to, 
-    switch the current level to that level, 
-        - this triggers resizing the main surface
-    place the player in the new level at the new portal. 
-        - this also triggers recalculating the fovMap 
-    '''
     def transitPortal(self, entryPortal):
         destinationPortal = entryPortal.destinationPortal
         newLevel = destinationPortal.level

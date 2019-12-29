@@ -53,8 +53,8 @@ class QueuedMove(QueueEntry):
             nextY = self.actor.y + self.Dy   
 
             level = self.actor.level
-            tileIsBlocking = level.map[nextY][nextX].blocking 
-            if tileIsBlocking:
+            # tileIsBlocking = level.map[nextY][nextX].blocking 
+            if level.tileIsBlocking(nextX, nextY):
                 return False
 
             target = level.checkForCreature(nextX, nextY, excludeObject=self)

@@ -2,7 +2,7 @@ import itertools
 import collections
 import math
 
-import numpy as np
+#import numpy as np
 
 from qQuest import constants, actions
 from qQuest.game import GAME
@@ -51,7 +51,6 @@ class Creature(Actor):
         queueEntry = self.actionQueue.pop()
         self.activeEmote = queueEntry.emoteName
         success = queueEntry.execute()
-        # print(type(queueEntry))
         if not success:
             return #if it didn't work, don't continue
         if not queueEntry.completed:
@@ -66,7 +65,7 @@ class Creature(Actor):
         if dx==0 and dy==0:
             return
 
-        duration = int(math.ceil(self.ticksPerMove * np.sqrt(dx**2+dy**2)))
+        duration = int(math.ceil(self.ticksPerMove * math.sqrt(dx**2+dy**2)))
         queueEntry = actions.QueuedMove(self, duration, dx, dy, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
@@ -189,15 +188,19 @@ class Conversationalist(Creature):
             self.scriptPosition = result
 
 
-
-class Viewer(Actor):
-    '''As an Actor instance, it has reference to a level and a position.
-    Viewers introduce the functionality of having a field of view, and we can 
+class Viewer():
+    ''' Viewers introduce the functionality of having a field of view, and we can 
     calculate what they can see. They also keep a history of what they have seen 
-    (think fog of war.) for each level they've interacted with
+    (think fog of war.) for each level they've interacted with.  
 
-    Note:  Viewers are not Cameras.  We might care about what an NPC 
-    can see, but we often won't use it to reflect what's drawn in the game. 
+    Note:  Viewers are not Cameras, which similarly bound what is visible but
+    do so in a simpler manner and also instruct HOW to draw things on the screen.
+
+    TODO:  do these belong in graphics, characters, or levels?
+    These inherently expect .level, .x, and .y atttributes, like an actor, but 
+    don't have a graphical representation.
+        - At some point we might make an even more base object which both
+          Viewer and Actor can inherit.
     '''
     
     def __init__(self, *args, **kwargs):
@@ -218,7 +221,7 @@ class Viewer(Actor):
         what the Viewer has seen.  Needed for fog of war '''
         levelID = self.level.uniqueID
         if levelID not in self.explorationHistory.keys(): #first time visiting a level
-            self.explorationHistory[levelID] = np.zeros_like(self.level.map, dtype=np.bool).tolist()
+            self.explorationHistory[levelID] = [[False for el in row] for row in self.level.map]
 
     def setTileIsExplored(self, x: int, y: int):
         ''' Mark that the tile at (x,y) for this level has been seen by Viewer'''
@@ -231,7 +234,7 @@ class Viewer(Actor):
         return self.explorationHistory[levelID][y][x]
 
 
-class PlayerClass(Combatant, Viewer):
+class PlayerClass(Viewer, Combatant):
     ''' This class is a Creature, with a field of view -- this name needs to 
     change once we use NPC AIs that care about FOV.   It'll be used for more 
     than just the player(s).  

@@ -4,7 +4,6 @@ from typing import Tuple, List, Callable
 from functools import lru_cache
 from collections import namedtuple
 
-import numpy as np
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
 
@@ -62,6 +61,8 @@ class Camera:
         return (x - self.x + w/2 - 0.5, y - self.y + h/2 - 0.5)
         
 
+
+
 class objSpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations. '''
     def __init__(self, fileName: str, 
@@ -106,7 +107,7 @@ class objSpriteSheet:
 class Actor():
     ''' All objects that are drawn.'''
 
-    def __init__(self, pos: Tuple[int], name: str='defaultName', level=None, 
+    def __init__(self, pos: Tuple[int], name: str='defaultName', level='levels.Level', 
                  uniqueName='', spriteDict=None, animationSpeed=0.5, **kwargs):
         ''' level type is Level.  dur.'''
 
@@ -190,7 +191,8 @@ def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level',
 
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
-    mapHeight, mapWidth = np.array(level.map).shape
+    mapHeight = len(level.map)
+    mapWidth = len(level.map[0])
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
 
         if not camera.canSee(x, y):
@@ -325,7 +327,10 @@ def drawObjects(surface: pygame.Surface,
         gameObj.draw(surface, **kwargs), 
 
 def drawLevelBackground(surface, level, **kwargs):
-    bgTiles =  [item for sublist in level.map for item in sublist]
+    bgTiles = []
+    for row in level.map:
+        for position in row:
+            bgTiles.extend(position)
     drawObjects(surface, bgTiles, drawHistory=True, **kwargs)
 
 def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:

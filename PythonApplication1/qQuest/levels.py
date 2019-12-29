@@ -85,10 +85,11 @@ class Level:
         levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
 
-        self.mapHeight, self.mapWidth = np.array(levelArray).shape
+        self.mapHeight = len(levelArray)
+        self.mapWidth = len(levelArray[0])
 
         floorTile = ""#Tile("s_floor", blocking=False, seeThru=True)
-        self.map = [[floorTile for x in range(self.mapWidth )] for y in range(self.mapHeight)]
+        self.map = [[[] for x in range(self.mapWidth )] for y in range(self.mapHeight)]
 
         for (i, j) in itertools.product(range(self.mapHeight), range(self.mapWidth)):
             allTiles = levelArray[i][j]
@@ -96,7 +97,7 @@ class Level:
                 tileTypeKey = decoder[tileChar]
                 if tileTypeKey in TILES.keys():
                     tileDict = TILES[tileTypeKey]
-                    self.map[i][j] = Tile((j,i),**tileDict)
+                    self.map[i][j].append(Tile((j,i),**tileDict))
                     continue
 
                 elif tileTypeKey == "player":
@@ -119,16 +120,22 @@ class Level:
 
         self.initializeVisibilityMap()
 
+    def tileIsBlocking(self, x:int, y:int) -> bool:
+        ''' Can we (not) walk through cell (x,y)?'''
+        return any([tile.blocking for tile in self.map[y][x]])
+
     def initializeVisibilityMap(self) -> None:
         ''' The visibilityMap is a libtcod object for calculating the field of 
         view from any position.  This is a property of the Level.  computeFov() 
         uses this map to generate a Viewer-specific fov from its location.
         '''
-        mapHeight, mapWidth = np.array(self.map).shape
+        mapHeight = len(self.map)
+        mapWidth = len(self.map[0])
 
         self.visibilityMap = libtcod.map.Map(width=mapWidth, height=mapHeight)
         for (y, x) in itertools.product(range(mapHeight), range(mapWidth)):
-            self.visibilityMap.transparent[y][x] = self.map[y][x].seeThru
+            seeThru = all([tile.seeThru for tile in self.map[y][x]])
+            self.visibilityMap.transparent[y][x] = seeThru
         self.recalculateViewerFovs()
 
     def recalculateViewerFovs(self) -> None:
