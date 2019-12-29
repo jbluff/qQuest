@@ -114,6 +114,9 @@ def handleMenuInputs(event):
     if event.key == pygame.K_s:
         menus.SaveLoadMenu(SURFACE_MAIN, GAME)
 
+    if event.key == pygame.K_h:
+        menus.HelpMenu(SURFACE_MAIN)
+
 def handleInputEvents():
     eventsList = pygame.event.get()
 

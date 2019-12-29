@@ -353,6 +353,8 @@ class NpcInteractionMenu(TextListMenu):
         next in the npcs script.  A return value of 'break' ends the interaction.
 
         Speaker type is any Actor instance.
+
+        this class is kind of a mess.  it doesn't have to be this bad.
         '''
         self.headerText = subScript.get('readText', None)
         self.optionList = subScript.get('options', [])
@@ -411,3 +413,37 @@ class NpcInteractionMenu(TextListMenu):
 
     def finishLoop(self):
         self.redrawGame = True
+
+
+class HelpMenu(TextListMenu):
+    def __init__(self, surface):
+        super().__init__(surface, menuSize=(200,100))
+
+    def initTextList(self):
+        self.menuList = []
+        self.addMenuItem('Help!', selectable=False, 
+                                  textColorUnsel=constants.COLOR_BLACK,
+                                  bgColorUnsel=constants.COLOR_GREY)
+        self.addMenuItem('q   Quits the game or menu', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('i   Inventory menu', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('s   Save/Load', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('g   Pick up item', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('u   Use item', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('d   Drop item', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+        self.addMenuItem('y   Go through portal', selectable=False, 
+                                  textColorUnsel=constants.COLOR_WHITE,
+                                  bgColorUnsel=constants.COLOR_BLACK)
+
+
