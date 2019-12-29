@@ -30,18 +30,7 @@ class Game:
     def addMessage(self, messageText, color=constants.COLOR_WHITE):
         self.messageHistory.append((messageText, color, constants.COLOR_BLACK))
 
-    # @property
-    # def currentLevel(self):
-    #     return self._currentLevel
-
-    # @currentLevel.setter
-    # def currentLevel(self, value):
-    #     self._currentLevel = value
-
-        #self.mapHeight, self.mapWidth = np.array(self.currentLevel.map).shape
-        # is this actually used anymore?
-
-    def transitPortal(self, entryPortal):
+    def transitPortal(self, entryPortal: 'level.Portal') -> None:
         destinationPortal = entryPortal.destinationPortal
         newLevel = destinationPortal.level
 
@@ -50,6 +39,15 @@ class Game:
         
         self.viewer.recalculateFov()
         self.camera.updatePositionFromViewer()
+
+    @staticmethod
+    def couplePortals(portal0: 'level.Portal', portal1: 'level.Portal')->None:
+        ''' Symmetrically configure two portals. '''
+        assert portal0.destinationPortal is None
+        assert portal1.destinationPortal is None
+        
+        portal0.destinationPortal = portal1
+        portal1.destinationPortal = portal0    
 
 GAME = Game()
 

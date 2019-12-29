@@ -29,34 +29,21 @@ uses the mouse.
 cw = constants.CELL_WIDTH
 ch = constants.CELL_HEIGHT
 
-MAP_HEIGHT = 8#20
-MAP_WIDTH = 8# 19
-SIDEBAR_WIDTH = 10
+MAP_HEIGHT = 20
+MAP_WIDTH = 19
+SIDEBAR_WIDTH = 15
 TOTAL_WIDTH = MAP_WIDTH+SIDEBAR_WIDTH
 
 pygame.init()
 SURFACE_MAIN = pygame.display.set_mode((TOTAL_WIDTH*cw, MAP_HEIGHT*ch))
-#SURFACE_LEVEL = pygame.Surface((MAP_WIDTH*cw, MAP_HEIGHT*ch))
-#SURFACE_SIDEBAR = pygame.Surface((SIDEBAR_WIDTH*cw, MAP_HEIGHT*ch))
+
 MOUSE_OVER_BUTTON = None
 PALETTE_SELECTION = None
 
 class Button(Actor):
     def __init__(self, *args, palette=False, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.selected = False
         self.palette = palette
-        
-    def updatePosition(self):
-        self.abs_pos = [self.x*cw, self.y*ch]
-
-    def translate(self, dx, dy):
-        self.abs_pos[0] += dx
-        self.abs_pos[1] += dy
-
-    # def toggleSelect(self):
-    #     self.selected += 1
-    #     self.selected %= 2
 
     def isMouseOver(self):
 
@@ -217,7 +204,7 @@ if __name__ == '__main__':
 
     mapButtons = []
     for (i, j) in itertools.product(range(MAP_HEIGHT), range(MAP_WIDTH)):
-        name = 'floor_dungeon_1'
+        name = 'grass'
         newTile = Button((j,i), name=name, spriteDict=TILES[name]['spriteDict'])       
         mapButtons.append(newTile)  
 

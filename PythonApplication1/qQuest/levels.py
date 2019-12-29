@@ -25,6 +25,8 @@ class Portal(Actor):
     ''' This class represents a location at which a creature can move rapidly
     from one location and another.  These instances point at another instance
     of the same type, generally (but not necessarily) in a different level.
+
+    Should this actually subclass Tile?  They might be see-thru or not.
     '''
     numPortals = 0
 

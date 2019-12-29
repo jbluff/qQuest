@@ -48,7 +48,13 @@ TODO:
 
 - Give Monsters a "properties" section.  Not quite sure how that should work, yet.
 
-- MAP EDITOR
+- map editor needs some work:
+    - click and drag would be huge.
+    - commenting
+    - loading existing levels.
+
+- help menu
+
 - Image processing on procGen rooms for rounding etc.
 - Support for non-square roomes 
     - this is required for reasonable use of set pieces
@@ -154,44 +160,22 @@ def initializeGame():
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
     if 1:
-        level0 = Level("test")
+        level0 = Level("town2")
         GAME.levels.append(level0)
         GAME.currentLevel = level0
-        level0.placePlayerAtPortal(level0.portals[0])
-
-
-    if 0:
-        level0 = Level("town")
-        GAME.levels.append(level0)
-        GAME.currentLevel = level0
-        level0.placePlayerAtPortal(level0.portals[0])
+        level0.placePlayerAtPortal(level0.portals[1])
 
         level1 = Level("mapwPIES4")
         GAME.levels.append(level1)
-        level0.portals[0].destinationPortal = level1.portals[0]
-        level1.portals[0].destinationPortal = level0.portals[0]
-    if 0:
-        level0 = Level("mapwPIES4")
-        GAME.levels.append(level0)
-        GAME.currentLevel = level0
-        level0.placePlayerAtPortal(level0.portals[0])
+        GAME.couplePortals(level0.portals[0], level1.portals[0])
 
-        level1 = Level("mapwPIES3")
-        GAME.levels.append(level1)
+        level2 = Level("mapwPIES3")
+        GAME.levels.append(level2)
+        GAME.couplePortals(level1.portals[1], level2.portals[0])
 
-        level2 = Level("mapwPIES2")
-        GAME.levels.append(level1)
-
-        level0.portals[0].destinationPortal = level1.portals[0]
-        level1.portals[0].destinationPortal = level0.portals[0]
-
-        level0.portals[1].destinationPortal = level2.portals[0]
-        level2.portals[0].destinationPortal = level0.portals[1]
-
-    GAME.viewer = GAME.player # can see other Creature FOV, mostly for degbugging purposes
-    #GAME.viewer.recalculateFov(force=True)
-
+    GAME.viewer = GAME.player 
     GAME.camera = graphics.Camera(viewer=GAME.player)
+
 
 if __name__ == "__main__":
     initializeGame()
