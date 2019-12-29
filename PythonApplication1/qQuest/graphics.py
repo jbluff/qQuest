@@ -1,8 +1,12 @@
-import itertools
+''' This module contains all tools needed for drawing the game.
+
+'''
+
 import copy
-from typing import Tuple, List, Callable
-from functools import lru_cache
+import itertools
 from collections import namedtuple
+from functools import lru_cache
+from typing import Tuple, List, Callable
 
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
@@ -10,25 +14,33 @@ from pygame.locals import DOUBLEBUF, FULLSCREEN
 try:
     from qQuest import constants
     from qQuest.constants import CLOCK #, GAME
+    from qQuest.game import GameObject
     from qQuest.lib.visEffectsLib import EFFECTS
 except ImportError:
     import constants
     from constants import CLOCK #, GAME
+    from game import GameObject
     from lib.visEffectsLib import EFFECTS   
 
 
 class Camera:
+    ''' This class has two related purposes:  
+        1.   Deciding what fits into the screen at a given time.
+        2.   Deciding where on the screen something should be drawn.
+    '''
     def __init__(self, viewer: 'characters.Viewer'=None):
         self.viewer = viewer
-        self.updatePositionFromViewer() # in cells
+        self.updatePositionFromViewer() 
 
     def updatePositionFromViewer(self) -> None:
+        ''' Recenter the camera on a Viewer instance.  The position here is
+        stored in units of cells, not pixels, and can be a float.'''
         if self.viewer is not None:
-            self.x = self.viewer.graphicX # x
-            self.y = self.viewer.graphicY # y
+            self.x = self.viewer.graphicX 
+            self.y = self.viewer.graphicY 
 
     def canSee(self, x: int, y: int) -> bool:
-        ''' is the specified cell within the range of the camera?'''
+        ''' Is coordinate (x,y), in cells, in sight of the camera?'''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
 
@@ -36,34 +48,32 @@ class Camera:
         yVisible = (y < self.y+h) and (y > self.y-h)
         return xVisible and yVisible
 
-    def getUpperLeftCorner(self) -> Tuple[float]:
-        ''' Returned in pixels '''
-        w = constants.CAMERA_WIDTH
-        h = constants.CAMERA_HEIGHT 
-
-        xDrawingPos = (self.x-w/2+w)*constants.CELL_WIDTH
-        yDrawingPos = (self.y-h/2+h)*constants.CELL_HEIGHT
-        return (xDrawingPos, yDrawingPos)
-
-    def getViewingRect(self) -> pygame.Rect:
-        w = constants.CAMERA_WIDTH
-        h = constants.CAMERA_HEIGHT
-        map_rect = pygame.Rect(*self.getUpperLeftCorner(),
-                               w*constants.CELL_WIDTH,
-                               h*constants.CELL_HEIGHT)
-        return map_rect
-
     def drawPosition(self, x: int, y: int) -> Tuple[int]:
         '''Converts a game map position to a draw position, both still in units 
         of cells.'''
         w = constants.CAMERA_WIDTH
         h = constants.CAMERA_HEIGHT
         return (x - self.x + w/2 - 0.5, y - self.y + h/2 - 0.5)
-        
+ 
+    # def getUpperLeftCorner(self) -> Tuple[float]:
+    #     ''' Returned in pixels '''
+    #     w = constants.CAMERA_WIDTH
+    #     h = constants.CAMERA_HEIGHT 
+
+    #     xDrawingPos = (self.x-w/2+w)*constants.CELL_WIDTH
+    #     yDrawingPos = (self.y-h/2+h)*constants.CELL_HEIGHT
+    #     return (xDrawingPos, yDrawingPos)
+
+    # def getViewingRect(self) -> pygame.Rect:
+    #     w = constants.CAMERA_WIDTH
+    #     h = constants.CAMERA_HEIGHT
+    #     map_rect = pygame.Rect(*self.getUpperLeftCorner(),
+    #                            w*constants.CELL_WIDTH,
+    #                            h*constants.CELL_HEIGHT)
+    #     return map_rect      
 
 
-
-class objSpriteSheet:
+class SpriteSheet:
     ''' loads a sprite sheet, allows pulling out animations. '''
     def __init__(self, fileName: str, 
                        imageUnitX: int=constants.CELL_WIDTH, 
@@ -104,26 +114,18 @@ class objSpriteSheet:
         return imageList
  
 
-class Actor():
-    ''' All objects that are drawn.'''
-
-    def __init__(self, pos: Tuple[int], name: str='defaultName', level='levels.Level', 
-                 uniqueName='', spriteDict=None, animationSpeed=0.5, **kwargs):
-        ''' level type is Level.  dur.'''
-
-        self.x, self.y = pos
+class Actor(GameObject):
+    ''' This base class is used for everything that will be drawn on the screen.
+    '''
+    def __init__(self, *args, spriteDict=None, animationSpeed=0.5, **kwargs):
+        super().__init__(*args, **kwargs)
         self.resyncGraphicPosition()
-
-        self.name = name
-        self.uniqueName = uniqueName if uniqueName != '' else name
 
         self.spriteDict = spriteDict
         self.animationSpeed = animationSpeed # in seconds 
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
-
-        self.level = level
 
     def resyncGraphicPosition(self) -> None:
         # X and Y are ints and represent grid locations for most logic purposes
@@ -163,6 +165,7 @@ class Actor():
                 doDraw = viewer.getTileIsVisible(self.x, self.y)
             if not doDraw:
                 return 
+
         if camera is not None:
             if not camera.canSee(self.x, self.y):
                 return        
@@ -185,12 +188,20 @@ class Actor():
         effectSprite = ASSETS[EFFECTS[self.activeEmote]['spriteDict']][0] #no animations here, now
         surface.blit(effectSprite, drawPos)
         
+
 def drawFogOfWar(surface: pygame.Surface, level: 'levels.Level', 
                  camera: 'graphics.Camera', viewer: 'creatures.Viewer') -> None:
-    '''  '''
+    ''' Draws the fog of war.  Importantly-- also updates the Viewer's
+    seen status. '''
 
     # this looping is dumb, we should be looping over the camera range instead of
     # the whole map.
+        #     w = constants.CAMERA_WIDTH
+        # h = constants.CAMERA_HEIGHT
+
+        # xVisible = (x < self.x+w) and (x > self.x-w) 
+        # yVisible = (y < self.y+h) and (y > self.y-h)
+
     mapHeight = len(level.map)
     mapWidth = len(level.map[0])
     for (x, y) in itertools.product(range(mapWidth), range(mapHeight)):
@@ -314,11 +325,7 @@ def drawFPS(surface: pygame.Surface) -> None:
     drawText(surface, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-# @drawCommand to deal with camera/viewer
-
-def drawObjects(surface: pygame.Surface,
-                objects: List[Actor], 
-                **kwargs) -> None:
+def drawObjects(surface: pygame.Surface, objects: List[Actor], **kwargs) -> None:
     for gameObj in objects:
         if gameObj is None:
             continue
@@ -326,39 +333,27 @@ def drawObjects(surface: pygame.Surface,
             return
         gameObj.draw(surface, **kwargs), 
 
-def drawLevelBackground(surface, level, **kwargs):
-    bgTiles = []
-    for row in level.map:
-        for position in row:
-            bgTiles.extend(position)
-    drawObjects(surface, bgTiles, drawHistory=True, **kwargs)
-
 def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:
 
     vcKwargs = {'viewer': game.viewer, 'camera': game.camera, }
     level = game.currentLevel
 
     mainSurface.fill(constants.COLOR_BLACK)
+    
+    # the map and such.
     mapSurface.fill(constants.COLOR_BLACK)
-    
-    ''' draw the map and such '''
-    #bgTiles =  [item for sublist in level.map for item in sublist]
-    #drawObjects(mapSurface, bgTiles, drawHistory=True, **vcKwargs)
-    drawLevelBackground(mapSurface, level, **vcKwargs)
-
+    drawObjects(mapSurface, level.tilesFlattened, drawHistory=True, **vcKwargs)
     drawObjects(mapSurface, level.objects, **vcKwargs)
-    
     drawFogOfWar(mapSurface, level, **vcKwargs)
-    
     drawGameMessages(mapSurface, game)
-    drawDebug(mainSurface)
     mainSurface.blit(mapSurface, (0,0))
 
-    ''' off-map portions of the interface '''
+    # off-map portions of the interface 
     drawChyron(chyronSurface, game)
     mainSurface.blit(chyronSurface, (0,mapSurface.get_height()))
 
-    pygame.display.flip()#mainSurface)
+    drawDebug(mainSurface)
+    pygame.display.flip()
 
 def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
     ''' the bit of the UI drawn below the map'''
@@ -431,10 +426,10 @@ class structAssets():
 
 
 @lru_cache(maxsize=256)
-def loadSpriteSheet(path: str) -> objSpriteSheet:
+def loadSpriteSheet(path: str) -> SpriteSheet:
     ''' load a sprite sheet, but memoized. 
     Probably unnecessary for the amount of data we're dealing with.'''
-    return objSpriteSheet(path)
+    return SpriteSheet(path)
 
 
 def spriteDebugger(surface) -> None:

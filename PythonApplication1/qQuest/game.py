@@ -1,16 +1,10 @@
-'''
-Covers the Game class, as well as the non-graphics global singletons.
-'''
+''' Contains Game and GameObject classes. '''
 
-import pygame
-import numpy as np
-
+from typing import Tuple
 try:
     from qQuest import constants
 except ImportError:
     import constants
-
-
 
 
 class Game:
@@ -32,6 +26,8 @@ class Game:
 
     def transitPortal(self, entryPortal: 'level.Portal') -> None:
         destinationPortal = entryPortal.destinationPortal
+        if destinationPortal is None:
+            return
         newLevel = destinationPortal.level
 
         self.currentLevel = newLevel
@@ -45,9 +41,20 @@ class Game:
         ''' Symmetrically configure two portals. '''
         assert portal0.destinationPortal is None
         assert portal1.destinationPortal is None
-        
+
         portal0.destinationPortal = portal1
         portal1.destinationPortal = portal0    
+
+
+class GameObject():
+    def __init__(self, pos: Tuple[int], level: 'levels.Level'=None, 
+                 name: str='defaultName', uniqueName: str='', **kwargs):
+        self.x, self.y = pos
+
+        self.name = name
+        self.uniqueName = uniqueName if uniqueName != '' else name
+
+        self.level = level
 
 GAME = Game()
 

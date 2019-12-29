@@ -1,17 +1,35 @@
-import itertools
+
+''' This module contains the classes which represent things in the game that
+do things which take time, like moving.  
+
+The Creature is an Actor  (so it has a sprite) that has an action queueing 
+system.  Actions (as defined  in actions.py) can involve moving, thinking, etc.
+
+The Combatant is a subclass of Creatures which have health and can 
+fight or die.
+
+The Conversationalist is a subclass of Creatures which allow interaction
+through a script (NPCs).
+
+The Viewer is NOT an actor, but represents a set of tools used to 
+calculate the field of view from a given location on the map, as well as 
+record a history of what has been seen.
+
+The Player is both a Combatant and a Viewer.
+'''
+
+
 import collections
+import itertools
 import math
 
-#import numpy as np
-
 from qQuest import constants, actions
-from qQuest.game import GAME
+from qQuest.game import GAME, GameObject
 from qQuest.graphics import Actor
 from qQuest.items import Item
 from qQuest.lib.characterLib import CHARACTERS
 from qQuest.lib.scriptLib import SCRIPTS
 from qQuest.menus import NpcInteractionMenu
-
 
 
 class Creature(Actor):
@@ -82,12 +100,8 @@ class Creature(Actor):
         queueEntry = actions.QueuedWait(self, duration, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
-    def scheduleInteraction(self, target: 'Conversationalist', **kwargs) -> None:
-        if not isinstance(target, Conversationalist):
-            return
-        duration = 10 #not really sure what this means, here.
-        queueEntry = actions.QueuedInteraction(self, duration, target=target, **kwargs)
-        self.actionQueue.appendleft(queueEntry)
+    def scheduleInteraction(self, target):
+        pass
 
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''
@@ -95,7 +109,7 @@ class Creature(Actor):
         [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
 
     def isOnPortal(self): # -> Portal:
-        ''' if Creatre standing on a portal, returns that Portal.  
+        ''' if Creature standing on a portal, returns that Portal.  
         Otherwise returns None. '''
         for portal in self.level.portals:
             if self.x == portal.x and self.y == portal.y:
@@ -188,7 +202,7 @@ class Conversationalist(Creature):
             self.scriptPosition = result
 
 
-class Viewer():
+class Viewer(GameObject):
     ''' Viewers introduce the functionality of having a field of view, and we can 
     calculate what they can see. They also keep a history of what they have seen 
     (think fog of war.) for each level they've interacted with.  
@@ -244,5 +258,13 @@ class PlayerClass(Viewer, Combatant):
         super().__init__(*args, **kwargs)
         self.accomplishments = []
 
+    def scheduleInteraction(self, target: 'Conversationalist', **kwargs) -> None:
+        ''' This schedules an interaction of this creature instance WITH
+        a Conversationalist.'''
+        if not isinstance(target, Conversationalist):
+            return
+        duration = 10 #not really sure what this means, here.
+        queueEntry = actions.QueuedInteraction(self, duration, target=target, **kwargs)
+        self.actionQueue.appendleft(queueEntry)
 
 

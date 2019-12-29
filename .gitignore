@@ -347,3 +347,4 @@ healthchecksdb
 *.xcf
 out/linecounter.json
 out/linecounter.txt
+PythonApplication1/levels/test.lvl

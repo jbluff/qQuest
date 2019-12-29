@@ -38,15 +38,17 @@ class aiDumbAggro(aiTemplate):
         
         ATTACK_RADIUS = 5
         if (dist < ATTACK_RADIUS):
-            emote = 'monsterEmote' if self.seenEnemy==False else None
+            if self.seenEnemy is False:
+                self.owner.scheduleWait(emoteName='monsterEmote', duration=20)
+            self.seenEnemy = True
 
             dx = round(dx/dist)
             dy = round(dy/dist)
-            self.seenEnemy = True
-            self.owner.scheduleMove(dx,dy,emoteName=emote)
+            self.owner.scheduleMove(dx,dy,emoteName=None)
+
         else:
             if self.seenEnemy is True:
-                self.owner.scheduleWait(emoteName='questionEmote')
+                self.owner.scheduleWait(emoteName='questionEmote', duration=20)
             else:
                 self.wander()
             self.seenEnemy = False

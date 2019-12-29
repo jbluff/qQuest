@@ -82,8 +82,6 @@ class Level:
         instances tiles.  Floors, walls, items, monsters, portals.  All as
         specified in the loaded dictionary.'''
 
-        # todo:  add non-blocking decoratives
-
         levelArray = self.levelDict["level"]
         decoder = self.levelDict["decoderRing"]
 
@@ -121,6 +119,16 @@ class Level:
                 raise Exception(f"Failed at adding item during level parsing. {tileTypeKey}")
 
         self.initializeVisibilityMap()
+
+    @property
+    def tilesFlattened(self) -> List[Tile]:
+        ''' Returns all of the 'background' tiles, in self.map, in a flattened
+        list for drawing.'''
+        bgTiles = []
+        for row in self.map:
+            for position in row:
+                bgTiles.extend(position)
+        return bgTiles
 
     def tileIsBlocking(self, x:int, y:int) -> bool:
         ''' Can we (not) walk through cell (x,y)?'''
