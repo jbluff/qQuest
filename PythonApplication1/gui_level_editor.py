@@ -37,11 +37,13 @@ SURFACE_MAIN = pygame.display.set_mode((TOTAL_WIDTH*cw, MAP_HEIGHT*ch))
 #SURFACE_LEVEL = pygame.Surface((MAP_WIDTH*cw, MAP_HEIGHT*ch))
 #SURFACE_SIDEBAR = pygame.Surface((SIDEBAR_WIDTH*cw, MAP_HEIGHT*ch))
 MOUSE_OVER_BUTTON = None
+PALETTE_SELECTION = None
 
 class Button(Actor):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, palette=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.selected = False
+        # self.selected = False
+        self.palette = palette
         
     def updatePosition(self):
         self.abs_pos = [self.x*cw, self.y*ch]
@@ -50,9 +52,9 @@ class Button(Actor):
         self.abs_pos[0] += dx
         self.abs_pos[1] += dy
 
-    def toggleSelect(self):
-        self.selected += 1
-        self.selected %= 2
+    # def toggleSelect(self):
+    #     self.selected += 1
+    #     self.selected %= 2
 
     def isMouseOver(self):
 
@@ -78,6 +80,12 @@ class Button(Actor):
             global MOUSE_OVER_BUTTON
             MOUSE_OVER_BUTTON = self
 
+        if self == PALETTE_SELECTION:
+            coverSprite = pygame.Surface((cw, ch))
+            coverSprite.fill(constants.COLOR_RED)
+            coverSprite.set_alpha(200)
+            sprite.blit(coverSprite, (0,0))            
+
         surface.blit(sprite, pos)
 
     def colorSelected(self):
@@ -87,13 +95,17 @@ class Button(Actor):
         pass
 
 
-def mainloop(buttons):
+def mainloop(mapButtons, paletteButtons):
     doBreak = False
     while not doBreak:
         
-        doBreak = handleInput()
-
-        drawAll(buttons)
+        doBreak, newButton = handleInput(mapButtons)
+        if newButton is not None:
+            mapButtons.append(newButton)
+            
+        SURFACE_MAIN.fill(constants.COLOR_WHITE)
+        drawAll(mapButtons)
+        drawAll(paletteButtons)
 
         pygame.display.flip()
 
@@ -105,7 +117,8 @@ def exitEditor():
     pygame.quit()
     quit()
 
-def handleInput():
+def handleInput(mapButtons):
+    global PALETTE_SELECTION
     eventsList = pygame.event.get()
 
     for event in eventsList:
@@ -117,14 +130,26 @@ def handleInput():
                 return True
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            print(f'x={MOUSE_OVER_BUTTON.x}, y={MOUSE_OVER_BUTTON.y}') 
+            print(f'x={MOUSE_OVER_BUTTON.x}, y={MOUSE_OVER_BUTTON.y}, name={MOUSE_OVER_BUTTON.name}') 
+            if MOUSE_OVER_BUTTON.palette :
+                if not MOUSE_OVER_BUTTON == PALETTE_SELECTION:
+                    PALETTE_SELECTION = MOUSE_OVER_BUTTON
+                else:
+                    PALETTE_SELECTION = None
+                continue
+            
+            else:
+                if PALETTE_SELECTION is None:
+                    continue
+                newButton = copy.deepcopy(PALETTE_SELECTION)
+                newButton.x = MOUSE_OVER_BUTTON.x
+                newButton.y = MOUSE_OVER_BUTTON.y
+                return False, newButton
 
-    return False
+    return False, None
 
 
 def drawAll(buttons):
-    SURFACE_MAIN.fill(constants.COLOR_WHITE)
-
     for button in buttons:
         button.draw(SURFACE_MAIN)
         
@@ -132,14 +157,21 @@ def drawAll(buttons):
 if __name__ == '__main__':
     #newLevel = populateMapLevel()
 
-    buttons = []
+    mapButtons = []
     for (i, j) in itertools.product(range(MAP_HEIGHT), range(MAP_WIDTH)):
         name = 'fireSmall'
         newTile = Button((j,i), name=name,
                               spriteDict=EFFECTS[name]['spriteDict'], level='mapMain')       
-        buttons.append(newTile)  
+        mapButtons.append(newTile)  
 
-    # buttonsFlattened = []
-    # [[buttonsFlattened.append(button) for button in row] for row in allTheThings]
+    paletteButtons = []
 
-    mainloop(buttons)
+    keys = ITEMS.keys()
+    for key, (i, j) in zip(ITEMS, itertools.product(range(MAP_HEIGHT), range(SIDEBAR_WIDTH))):
+        j += MAP_WIDTH+1
+
+        newTile = Button((j,i), name=key,
+                              spriteDict=ITEMS[key]['spriteDict'], level='mapMain', palette=True)       
+        paletteButtons.append(newTile)  
+
+    mainloop(mapButtons, paletteButtons)
