@@ -178,17 +178,13 @@ def exportLevel(mapButtons):
             symbol = allStrings.pop()
             backwardsDecoderRing[name] = symbol
         array[button.y][button.x] += symbol
-
-    print(array)
-    print(backwardsDecoderRing)   
-
     # cleanup()         
 
     decoderRing = {v:k for k,v in backwardsDecoderRing.items()}
     levelDict = {'level': array, 'decoderRing':decoderRing}
 
     saveMapFile(levelDict, 'test')
-    pass
+    
 
 def saveMapFile(levelDict, fname):
     filePath = os.path.join(os.path.dirname(__file__),"levels",fname+".lvl")
@@ -199,21 +195,52 @@ def saveMapFile(levelDict, fname):
         json.dump(levelDict, data_file)
     data_file.close()
 
+def loadMapFile(fname):
+    filePath = os.path.join(os.path.dirname(__file__),"levels",fname+".lvl")
+    with open(filePath, 'rb') as f:
+        mapDict = json.load(f)
+    return mapDict
+
+def importLevel(mapDict):
+    levelArray = mapDict['level']
+    decoderRing = mapDict['decoderRing']
+
+    mapHeight = len(levelArray)
+    mapWidth = len(levelArray[0]) 
+    array = [['' for x in range(mapWidth)] for x in range(mapHeight)]
+    # do some size-checking here.
+    mapButtons = []
+    for (i, j) in itertools.product(range(mapHeight), range(mapWidth)):
+        for subStr in levelArray[i][j]:
+            name = decoderRing[subStr]
+
+            if name in TILES: lib = TILES
+            if name in ITEMS: lib = ITEMS
+            if name in EFFECTS: lib = EFFECTS
+            if name in CHARACTERS: lib = CHARACTERS
+            if name in PORTALS: lib = PORTALS
+            newTile = Button((j,i), name=name, spriteDict=lib[name]['spriteDict'])       
+            mapButtons.append(newTile)  
+
+    return mapButtons      
+
+
+
 if __name__ == '__main__':
     #newLevel = populateMapLevel()
 
-    mapButtons = []
-    for (i, j) in itertools.product(range(MAP_HEIGHT), range(MAP_WIDTH)):
-        name = 'grass'
-        newTile = Button((j,i), name=name, spriteDict=TILES[name]['spriteDict'])       
-        mapButtons.append(newTile)  
+    # mapButtons = []
+    # for (i, j) in itertools.product(range(MAP_HEIGHT), range(MAP_WIDTH)):
+    #     name = 'grass'
+    #     newTile = Button((j,i), name=name, spriteDict=TILES[name]['spriteDict'])       
+    #     mapButtons.append(newTile)  
 
+    levelDict = loadMapFile('town2')
+    mapButtons = importLevel(levelDict)
     paletteButtons = []
-
-    paletteButtons.extend(addLibDict(ITEMS, (MAP_WIDTH+1,0)))
-    paletteButtons.extend(addLibDict(TILES, (MAP_WIDTH+1,3)))
-    paletteButtons.extend(addLibDict(PORTALS, (MAP_WIDTH+1,5)))
-    paletteButtons.extend(addLibDict(CHARACTERS, (MAP_WIDTH+1,7)))
-
-
+    if 1:
+        paletteButtons.extend(addLibDict(ITEMS, (MAP_WIDTH+1,0)))
+        paletteButtons.extend(addLibDict(TILES, (MAP_WIDTH+1,3)))
+        paletteButtons.extend(addLibDict(PORTALS, (MAP_WIDTH+1,5)))
+        paletteButtons.extend(addLibDict(CHARACTERS, (MAP_WIDTH+1,7)))
     mainloop(mapButtons, paletteButtons)

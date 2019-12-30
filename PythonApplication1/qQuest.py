@@ -163,7 +163,7 @@ def initializeGame():
     pygame.key.set_repeat(200, 200) # Makes holding down keys work.  
 
     if 1:
-        level0 = Level("town2")
+        level0 = Level("town3")
         GAME.levels.append(level0)
         GAME.currentLevel = level0
         level0.placePlayerAtPortal(level0.portals[1])
