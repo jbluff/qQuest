@@ -140,22 +140,38 @@ class Creature(Actor):
         GAME.currentLevel.objects.remove(self)
 
 
+
 class Combatant(Creature):
     ''' Combatant takes the Creature class and adds in health, attacking, etc.'''
-    def __init__(self, *args, hp=10, deathFunction=None, **kwargs):
+    def __init__(self, *args, deathFunction=None, 
+                 hp=10, baseStrength=1, baseDexterity=1, baseDefense=1, **kwargs):
         # TODO:  DeathFunction will be by name and looked up in a lib, I think.
         super().__init__(*args, **kwargs)
+        self.deathFunction = deathFunction
         self.hp = hp  
         self.maxHp = hp
-        self.deathFunction = deathFunction
+        self.baseStrength=baseStrength
+        self.baseDexterity=baseDexterity
+        self.baseDefense=baseDefense
         
-        #self.stats = blaaa
+        
+    @property
+    def dexterity(self):
+        return self.baseDexterity
  
-    def scheduleAttack(self, target: 'Combatant', dhp=-3, **kwargs) -> None:
+    @property
+    def strength(self):
+        return self.baseStrength
+
+    @property
+    def defense(self):
+        return self.baseDefense
+
+    def scheduleAttack(self, target: 'Combatant', **kwargs) -> None:
         if not isinstance(target, Combatant):
             return
         attackDuration = 30 # inverse "attack speed"
-        queueEntry = actions.QueuedAttack(self, attackDuration, target=target, dhp=dhp, **kwargs)
+        queueEntry = actions.QueuedAttack(self, attackDuration, target=target, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 
     def scheduleDamage(self, dhp=-3, **kwargs) -> None:
@@ -263,7 +279,7 @@ class PlayerClass(Viewer, Combatant):
         a Conversationalist.'''
         if not isinstance(target, Conversationalist):
             return
-        duration = 10 #not really sure what this means, here.
+        duration = 10 
         queueEntry = actions.QueuedInteraction(self, duration, target=target, **kwargs)
         self.actionQueue.appendleft(queueEntry)
 

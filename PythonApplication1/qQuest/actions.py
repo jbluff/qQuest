@@ -5,13 +5,13 @@ I'm not entirely sure I love this construction because its so tightly coupled
 to the Creature class but it does make the Creature class a bit easier to parse 
 through.'''
 
-from qQuest.graphics import Actor
+from numpy.random import normal
 
-from qQuest.game import GAME
 from qQuest import characters 
+from qQuest.game import GAME
 
 class QueueEntry():
-    def __init__(self, actor: Actor, duration: float, emoteName: str=None, **kwargs):
+    def __init__(self, actor: 'graphics.Creture', duration: float, emoteName: str=None, **kwargs):
         self.actor = actor
         self.totalDuration = duration
         self.remainingDuration = duration
@@ -37,7 +37,7 @@ class QueuedWait(QueueEntry):
         return True 
 
 class QueuedMove(QueueEntry):
-    def __init__(self, actor: Actor, remainingDuration: float, Dx: int, Dy: int, **kwargs):
+    def __init__(self, actor: 'characters.Creature', remainingDuration: float, Dx: int, Dy: int, **kwargs):
         self.Dx, self.Dy = Dx, Dy
         super().__init__(actor, remainingDuration, **kwargs)
         # dx and dy are per time tick
@@ -94,10 +94,10 @@ class QueuedAI(QueueEntry):
 
 class QueuedAttack(QueueEntry):
     ''' The action of attacking and its duration. '''
-    def __init__(self, *args, target: Actor=None, dhp: float=-3, **kwargs):
+    def __init__(self, *args, target: 'characters.Combatant'=None, 
+                    **kwargs):
         ''' Type  hint should actually be combatant.'''
         self.target = target
-        self.dhp = dhp
         super().__init__(*args, **kwargs)
 
     def execute(self) -> bool:
@@ -106,14 +106,40 @@ class QueuedAttack(QueueEntry):
             if self.target.dead:
                 return False
 
-            GAME.addMessage(self.actor.uniqueName + " attacks " + self.target.uniqueName)
-            self.target.scheduleDamage(dhp=self.dhp, emoteName='fireSmall')        
+            GAME.addMessage(f'{self.actor.uniqueName} attacks {self.target.uniqueName}')
+
+            if not dexterityFunction(self.actor, self.target):
+                GAME.addMessage(f'{self.actor.uniqueName} misses!')
+                # add stunned time
+                return False
+
+            damage = damageFunction(self.actor, self.target)
+            GAME.addMessage(f'{self.actor.uniqueName} hits {self.target.uniqueName} for {damage}')
+
+            self.target.scheduleDamage(dhp=damage, emoteName='fireSmall')        
         self.tick()
         return True 
 
+def dexterityFunction(attacker, target):
+    ''' When creature0 attacks creature1, does it succeed? '''
+    attackerDex = attacker.dexterity
+    targetDex = target.dexterity
+    return attackerDex * normal(loc=1.0, scale=0.3) > targetDex
+
+def damageFunction(attacker, target):
+    ''' When creature0 attacks creature1, does it succeed? '''
+    # attack type..
+
+    attackerStr = attacker.strength
+    targetDef = target.defense
+
+    dhp = 2*(attackerStr * normal(loc=1.0, scale=0.3) - targetDef)
+    dhp = round(dhp)
+    return min(-1, -1*dhp)
+
 
 class QueuedInteraction(QueueEntry):
-    def __init__(self, *args, target: Actor=None, **kwargs):
+    def __init__(self, *args, target: 'characters.Conversationalist'=None, **kwargs):
         ''' Type hint should actually be Conversationalist.'''
         self.target = target
         super().__init__(*args, **kwargs)

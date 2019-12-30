@@ -359,6 +359,7 @@ def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
     ''' the bit of the UI drawn below the map'''
     surface.fill(constants.COLOR_GREY)
 
+    # health
     SURFACE_HEALTH = pygame.Surface((11 * constants.CELL_WIDTH, 3*constants.CELL_HEIGHT))
     SURFACE_HEALTH.fill(constants.COLOR_GREY)
     xPos = 0.5*constants.CELL_WIDTH
@@ -366,7 +367,7 @@ def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
     fullHeartSprite = ASSETS[EFFECTS['fullHeart']['spriteDict']][0]
     emptyHeartSprite = ASSETS[EFFECTS['emptyHeart']['spriteDict']][0]
     for idx in range(1,game.player.maxHp+1):
-        if idx < game.player.hp:
+        if idx <= game.player.hp:
             SURFACE_HEALTH.blit(fullHeartSprite, (xPos, yPos))
         else:
             SURFACE_HEALTH.blit(emptyHeartSprite, (xPos, yPos))
@@ -374,6 +375,16 @@ def drawChyron(surface: pygame.Surface, game: 'game.Game') -> None:
         if idx % 10 == 0:
             xPos = 0.5*constants.CELL_WIDTH
             yPos += constants.CELL_HEIGHT
+
+
+    # stats
+    pos = [15*constants.CELL_WIDTH, 2*constants.CELL_WIDTH]
+    statColorArgs = [constants.COLOR_DARKERGREY, constants.COLOR_GREY]
+    statStr = [[f'dex: {game.player.dexterity}({game.player.baseDexterity})',*statColorArgs],
+               [f'str: {game.player.strength}({game.player.baseStrength})',*statColorArgs],
+               [f'def: {game.player.defense}({game.player.baseDefense})',*statColorArgs]]
+    drawTextList(surface, statStr, *pos)
+
     
     surface.blit(SURFACE_HEALTH, ( 8,8))
 

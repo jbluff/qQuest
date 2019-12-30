@@ -1,28 +1,25 @@
-from qQuest import constants
-from qQuest.game import GAME
-from qQuest.graphics import Actor
-
-"""Items are an Actor child which 
+'''Items are an Actor child which 
 - don't move
 - can be picked up
 - may have perform some function when 'used'
 
-useFunction : called when the item is used, passed self
-numCharges : number of items item is used before..
-depleteFunction : called (passed self) when charges run out.
-    defaults to delete self.  Allows for e.g. turning into an empty bottle
-"""
+'''
 
+from qQuest import constants
+from qQuest.game import GAME
+from qQuest.graphics import Actor
 
 
 
 class Item(Actor):
     numItems = 0
 
-    def __init__(self, *args, weight=0.0, volume=0.0, 
+    def __init__(self, *args, volume=1.0, 
                  useFunction=None, numCharges=1, depleteFunction=None, **kwargs):
+        '''Items are an Actor child which don't move, can be picked up, may 
+        perform some function when 'used', ...'''
+
         super().__init__(*args, **kwargs)
-        self.weight = weight
         self.volume = volume 
         self.useFunction = useFunction
         self.numCharges = numCharges
@@ -41,8 +38,9 @@ class Item(Actor):
         
     def pickup(self, actor):
         if actor.container:
-            if actor.container.volume + self.volume > actor.container.max_volume:
-                GAME.addMessage(actor.name + "doesn't have enough room")
+            if actor.container.volume_used + self.volume > actor.container.max_volume:
+                
+                GAME.addMessage(actor.name + " doesn't have enough room")
             else:
                 GAME.addMessage(actor.name + " picked up " + self.name)
                 actor.container.inventory.append(self)
@@ -76,32 +74,49 @@ class Item(Actor):
             #self.depleteFunction(self)
             return True
 
+    @property
+    def invString(self) -> str:
+        ''' inventory representation. '''
+        return self.uniqueName
 
 class Equipment(Item):
 
     def __init__(self, *args, slot=None, attackBonus=0, 
-                 defenseBonus=0, **kwargs):
+                 defenseBonus=0, dexterityBonus=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.slot = slot
         self.attackBonus = attackBonus
         self.defenseBonus = defenseBonus
+        self.dexterityBonus = dexterityBonus
         self.equipped = False
         self.equipment = True
 
-    def toggleEquip(self):
-        if self.eqipped:
+
+    def toggleEquip(self) -> None:
+        if self.equipped:
             self.unequip()
         else:
-            self.eqipp()
+            self.equip()
 
-    def unequip(self):
+    def unequip(self) -> None:
         #slot stuff
-        GAME.addMessage("item unequipped")
+        self.equipped = False
+        GAME.addMessage(f'{self.name} unequipped')
         
-    def equip(self):
+    def equip(self) -> None:
+        #self.canBeEquipped(owner)
+        #self.owner.unequipElseInSlot(self)
         #slot stuff
-        GAME.addMessage("item equipped")
+        self.equipped = True
+        GAME.addMessage(f'{self.name} equipped')
         
+    @property
+    def invString(self) -> str:
+        ''' inventory representation. '''
+        if not self.equipped:
+            return f'o  {self.uniqueName}'
+        else:
+            return f'x  {self.uniqueName}'
 
 
 class Container:
@@ -111,13 +126,11 @@ class Container:
     def __init__(self, volume=10.0, inventory=[], **kwargs):
         self.max_volume = volume
         self.inventory = inventory
-        #todo:   subtract volume of initialy added items
 
     @property
-    def volume(self):
-        ''' free volume '''
+    def volume_used(self) -> float:
         #todo:  subtract stufff
-        return self.max_volume 
+        return sum([item.volume for item in self.inventory])
     ## TODO: get names of things in inventory
     ## TODO: get weight?
 

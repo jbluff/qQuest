@@ -9,7 +9,6 @@ import pygame
 from qQuest import constants, graphics
 from qQuest.constants import CLOCK 
 
-
 DATETIME_FORMAT = '%Y%m%d%H%M%S'
 SAVEPATH = os.path.join(os.path.dirname(__file__),"..","saves")
 DEFAULT_SURFACE = None
@@ -134,7 +133,7 @@ class TextListMenu(Menu):
         super().__init__(*args, **kwargs)
 
     def initTextList(self):
-        raise NotImplemented("sinitTextList must be overwritten by children")
+        raise NotImplemented("initTextList must be overwritten by children")
 
     def restartLoop(self):
         pass
@@ -278,7 +277,7 @@ class InventoryMenu(TextListMenu):
         for obj in self.actor.container.inventory:
             if obj.deleted:
                  continue
-            self.addMenuItem(obj.name, selectable=True, annotation=obj)
+            self.addMenuItem(obj.invString, selectable=True, annotation=obj)
 
     def parseEvent(self, event) -> None:
         ''' event is PyGame event, unsure of typing '''
@@ -289,19 +288,24 @@ class InventoryMenu(TextListMenu):
         if len(self.menuList) == 1: #empty inventory
             return 
 
-        elif event.key == pygame.K_d:
-            item = self.menuList[self.selected].annotation
+        item = self.menuList[self.selected].annotation
+
+        if event.key == pygame.K_d:
             item.drop()
             self.removeSelectedItemFromList()
 
         elif event.key == pygame.K_u:
-            item = self.menuList[self.selected].annotation
-
             success = item.use(self.actor) #this won't always be at self.actor.
             if success:
                 #GAME.addMessage(self.actor.name + " uses " + item.name)
                 if item.deleted:
                     self.removeSelectedItemFromList()
+
+        elif event.key == pygame.K_e:
+            if hasattr(item, 'toggleEquip'):
+                item.toggleEquip()
+
+            
 
     def removeSelectedItemFromList(self) -> None:
         selectedCopy = copy.deepcopy(self.selected)
