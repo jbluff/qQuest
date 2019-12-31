@@ -35,6 +35,9 @@ class Item(Actor):
         Item.numItems += 1
 
         self.deleted = False
+
+    def __str__(self):
+        return f'Item: {self.uniqueName:<0},  uID: {self.uniqueID:<30}'
         
     def pickup(self, actor):
         if actor.container:
@@ -44,12 +47,14 @@ class Item(Actor):
             else:
                 GAME.addMessage(actor.name + " picked up " + self.name)
                 actor.container.inventory.append(self)
-                GAME.currentLevel.objects.remove(self)
+                GAME.currentLevel.removeObject(self)
+                # GAME.currentLevel.objects.remove(self)
                 self.currentContainer = actor.container
 
     def drop(self):
         actor = self.currentContainer.owner
-        GAME.currentLevel.objects.append(self) #clunky AF
+        GAME.currentLevel.addObject(self) #clunky AF
+        # GAME.currentLevel.objects.append(self) #clunky AF
         self.currentContainer.inventory.remove(self)
         #self.currentContainer = None
         self.x = actor.x  
@@ -81,11 +86,11 @@ class Item(Actor):
 
 class Equipment(Item):
 
-    def __init__(self, *args, slot=None, attackBonus=0, 
+    def __init__(self, *args, slot=None, strengthBonus=0, 
                  defenseBonus=0, dexterityBonus=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.slot = slot
-        self.attackBonus = attackBonus
+        self.strengthBonus = strengthBonus
         self.defenseBonus = defenseBonus
         self.dexterityBonus = dexterityBonus
         self.equipped = False
@@ -127,6 +132,16 @@ class Container:
         self.max_volume = volume
         self.inventory = inventory
 
+    def __getitem__(self, val):
+        return self.inventory[val]
+        # should Container just inherit list?  maybe.
+
+    def __str__(self):
+        repStr= f'Container (owned by {self.owner.uniqueName}):, '
+        for item in self.inventory:
+            repStr+= f'{str(item)}, '
+        return repStr
+
     @property
     def volume_used(self) -> float:
         #todo:  subtract stufff
@@ -134,6 +149,12 @@ class Container:
     ## TODO: get names of things in inventory
     ## TODO: get weight?
 
+    def statBonus(self, bonusName:str) -> float:
+        bonus = 0
+        for item in self:
+            if getattr(item, 'equipped', False):
+                bonus += getattr(item, bonusName, 0)
+        return bonus
             
 def deathMonster(monster):
     '''

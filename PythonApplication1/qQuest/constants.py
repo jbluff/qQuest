@@ -57,3 +57,7 @@ from collections import namedtuple
 # yes, I know it's not a dict.  Deal with it.
 # this construction is used for hashability & memoization.
 SpriteDict = namedtuple('SpriteDict',['path', 'colIdx', 'rowIdx', 'numSprites'])
+
+# first thing is rendered first (on the bottom)
+DEPTHS = ['floorDepth', 'wallDepth', 'underEffectDepth', 'itemDepth', 
+                'charDepth','playerDepth', 'overEffectDepth', None]

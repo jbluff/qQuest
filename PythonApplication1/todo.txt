@@ -1,34 +1,57 @@
 
-TODO:
+TODO:  
 
-Deleting, done via an Item attribute
-    This is fine-- we'll overwrite game.currentObjects at each level
+- fix inventory thing!
 
-Add a bunch of items and stuff.
+- render depth
+    - treat tiles as a last-depth object.
 
-Create directions for player
+- refactor "emotes", sort or, into a new, limited-lifetime Actor type.
+    - think blood on the ground, or burn marks
+    - fade away!  changing alpha.
 
-Directional spells/casts, etc.
+- better Dex and Damage functions
 
-Game 
-- saving
-- loading
-- menu
+- inventory graphic
+    - make chyron prettier..
 
-Unify image reference stuff, get rid of Assets structure
+- press M to view more messages (as a menu?)
+    - make message text prettier
 
-Add new AIs
+- procedural level generation integrated to be on the fly
 
-Add level generation (lol, huge task)
-- both procedural and from file
+- moar graphic assets, items, random names and stuff
 
-Replace "seen but not visible" w/ transparent overlay
+- Directional facing of character, monsters?
+    - rework how attacking works
 
-Make fancier unseen fog of war
+- Area effect spells
 
+- continue improving NPC scripting schema, particularly hooks
 
+- refactor menu drawing entirely.
+    - also make menus prettier
 
+- accomplishments!
 
+- New monster AIs
+
+- Give Monsters a "properties" section.  Not quite sure how that should work, yet.
+
+- map editor needs some work:
+    - click and drag would be huge.
+- Image processing on procGen rooms for rounding etc.
+- Support for non-square roomes 
+    - this is required for reasonable use of set pieces
+- Fixed piece rooms
+
+- Refine map loading (set pieces, named npcs, items.)
+
+- partial movement -- not just tile-by-tile.
+
+- smart walls--gfx depend on neightbors, like fow.
+
+- multi character mechanics!
 
 
 

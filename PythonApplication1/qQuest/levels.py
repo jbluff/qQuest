@@ -60,7 +60,8 @@ class Level:
     def __init__(self, levelFileName: str, loadFromFile: bool=True):
         self.levelName = levelFileName
 
-        self.objects = [] #should this be a set?   would it simplify deletion?
+        # self.objects = [] #should this be a set?   would it simplify deletion?
+        self.objects = {key:[] for key in constants.DEPTHS}
         self.portals = []
 
         if loadFromFile:
@@ -69,6 +70,23 @@ class Level:
 
         self.uniqueID = f'level{Level.numLevels}'
         Level.numLevels += 1
+
+    def addObject(self, newItem: Actor):
+        '''
+        DEPTHS = ['floorDepth', 'wallDepth', 'underEffectDepth', 'itemDepth', 
+                'charDepth','playerDepth', 'overEffectDepth', None]'''
+        self.objects[newItem.depth].append(newItem)
+
+    def removeObject(self, item: Actor):
+        for depth in constants.DEPTHS:
+            if item in self.objects[depth]:
+                self.objects[depth].remove(item)
+
+    @property
+    def allObjects(self):
+        allObj = []
+        [allObj.extend(self.objects[depth]) for depth in constants.DEPTHS]
+        return allObj
 
     def loadLevelFile(self) -> None:
         ''' Loads self.levelDict dictionary from a saved .lvl file '''
@@ -124,10 +142,11 @@ class Level:
     def tilesFlattened(self) -> List[Tile]:
         ''' Returns all of the 'background' tiles, in self.map, in a flattened
         list for drawing.'''
-        bgTiles = []
+        bgTiles = {key:[] for key in constants.DEPTHS}
         for row in self.map:
             for position in row:
-                bgTiles.extend(position)
+                for tile in position:
+                    bgTiles[tile.depth].append(tile)
         return bgTiles
 
     def tileIsBlocking(self, x:int, y:int) -> bool:
@@ -149,9 +168,11 @@ class Level:
         self.recalculateViewerFovs()
 
     def recalculateViewerFovs(self) -> None:
-        for obj in self.objects:
-            if isinstance(obj, Viewer):  
-                obj.recalculateFov()
+        # raise Exception
+        [obj.recalculateFov() for obj in self.allObjects if isinstance(obj, Viewer)]
+        # for obj in self.allObjects:
+        #     if isinstance(obj, Viewer):  
+        #         obj.recalculateFov()
   
     def computeFov(self, x: int, y: int) -> np.ndarray:
         ''' Using the boolean visibility map of the level, return the boolean 
@@ -177,7 +198,7 @@ class Level:
 
     def objectsAtCoords(self,x: int,y: int) -> List[Actor]:
         '''Returns all objects at cell (x,y)?'''
-        return [obj for obj in self.objects if obj.x == x and obj.y == y]
+        return [obj for obj in self.allObjects if obj.x == x and obj.y == y]
 
     def addCharacter(self, coordX: int, coordY: int, 
                        name: str, uniqueName: str =None) -> None:
@@ -201,7 +222,8 @@ class Level:
                          ai=aiInst, uniqueName=uniqueName,
                           **monsterDict)  
  
-        self.objects.append(enemy)
+        # self.objects.append(enemy)
+        self.addObject(enemy)
 
     def addPlayer(self, x: int, y: int) -> None:
         ''' place player at (x,y).  This can mean creating a Player instance or
@@ -222,7 +244,8 @@ class Level:
             GAME.player.resyncGraphicPosition()
        
         if GAME.player not in self.objects:
-            self.objects.append(GAME.player)
+            self.addObject(GAME.player)
+            # self.objects.append(GAME.player)
 
         GAME.player.initLevelExplorationHistory()
         self.recalculateViewerFovs()
@@ -235,20 +258,22 @@ class Level:
         isEquipment = itemDict.get('equipment', False)
         newClass = Equipment if isEquipment else Item
         item = newClass((coordX, coordY), level=self, **itemDict)
-        self.objects.append(item)
+        self.addObject(item)
+        # self.objects.append(item)
 
     def addPortal(self, coordX: int, coordY: int, name: str) -> None:
         itemDict = PORTALS[name]
         item = Portal( (coordX, coordY), level=self, 
                         destinationPortal=None, **itemDict)
-        self.objects.append(item)
+        # self.objects.append(item)
+        self.addObject(item)
         self.portals.append(item)
 
     def placePlayerAtPortal(self, portal: Portal) -> None:
         self.addPlayer(portal.x, portal.y)
 
     def takeCreatureTurns(self) -> None:
-        for gameObj in self.objects:
+        for gameObj in self.allObjects:
             if isinstance(gameObj, Creature):
                 gameObj.resolveQueueTick()
 

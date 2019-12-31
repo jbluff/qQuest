@@ -11,7 +11,7 @@ from qQuest import characters
 from qQuest.game import GAME
 
 class QueueEntry():
-    def __init__(self, actor: 'graphics.Creture', duration: float, emoteName: str=None, **kwargs):
+    def __init__(self, actor: 'characters.Creature', duration: float, emoteName: str=None, **kwargs):
         self.actor = actor
         self.totalDuration = duration
         self.remainingDuration = duration
@@ -109,12 +109,12 @@ class QueuedAttack(QueueEntry):
             GAME.addMessage(f'{self.actor.uniqueName} attacks {self.target.uniqueName}')
 
             if not dexterityFunction(self.actor, self.target):
-                GAME.addMessage(f'{self.actor.uniqueName} misses!')
+                GAME.addMessage(f'... and misses!')
                 # add stunned time
                 return False
 
             damage = damageFunction(self.actor, self.target)
-            GAME.addMessage(f'{self.actor.uniqueName} hits {self.target.uniqueName} for {damage}')
+            GAME.addMessage(f'... and hits for {damage} hp!')
 
             self.target.scheduleDamage(dhp=damage, emoteName='fireSmall')        
         self.tick()
@@ -126,26 +126,25 @@ def dexterityFunction(attacker, target):
     targetDex = target.dexterity
     return attackerDex * normal(loc=1.0, scale=0.3) > targetDex
 
-def damageFunction(attacker, target):
-    ''' When creature0 attacks creature1, does it succeed? '''
+def damageFunction(attacker: 'Combatant', target: 'Combatant'):
+    ''' '''
     # attack type..
 
     attackerStr = attacker.strength
     targetDef = target.defense
-
+    print('in damage function')
+    print(f'{attacker.name} has str={attackerStr} during attack')
+    print(id(attacker))
+    print(id(attacker.container))
+    print(attacker.container)
+    print("")
+    print(id(target))
+    print(id(target.container))
+    print(target.container)
     dhp = 2*(attackerStr * normal(loc=1.0, scale=0.3) - targetDef)
     dhp = round(dhp)
     return min(-1, -1*dhp)
 
-
-class QueuedInteraction(QueueEntry):
-    def __init__(self, *args, target: 'characters.Conversationalist'=None, **kwargs):
-        ''' Type hint should actually be Conversationalist.'''
-        self.target = target
-        super().__init__(*args, **kwargs)
-
-    def execute(self) -> bool:
-        self.target.interact(self.actor)
 
 
 class QueuedDamage(QueueEntry):
@@ -156,8 +155,18 @@ class QueuedDamage(QueueEntry):
 
     def execute(self) -> bool:
         # damage at the start of the duration.
+        # damage type, on fire, stunned etc.
         if not self.started:
             self.actor.takeDamage(-1 * self.dhp)           
         self.tick()
         # if dead return false?
         return True 
+
+class QueuedInteraction(QueueEntry):
+    def __init__(self, *args, target: 'characters.Conversationalist'=None, **kwargs):
+        ''' Type hint should actually be Conversationalist.'''
+        self.target = target
+        super().__init__(*args, **kwargs)
+
+    def execute(self) -> bool:
+        self.target.interact(self.actor)

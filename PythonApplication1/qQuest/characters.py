@@ -106,7 +106,11 @@ class Creature(Actor):
     def pickupObjects(self) -> None:
         ''' Creature picks up all objects at current coords '''
         objs = self.level.objectsAtCoords(self.x, self.y)
-        [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
+        # [obj.pickup(self) for obj in objs if isinstance(obj, (Item,))]
+        for obj in objs:
+            if isinstance(obj, (Item,)):
+                obj.pickup(self)
+                print(f'picking up {obj.name}')
 
     def isOnPortal(self): # -> Portal:
         ''' if Creature standing on a portal, returns that Portal.  
@@ -157,24 +161,29 @@ class Combatant(Creature):
         
     @property
     def dexterity(self):
-        return self.baseDexterity
+        return self.baseDexterity + self.container.statBonus('dexterityBonus')
  
     @property
     def strength(self):
-        return self.baseStrength
+        return self.baseStrength + self.container.statBonus('strengthBonus')
 
     @property
     def defense(self):
-        return self.baseDefense
+        return self.baseDexterity + self.container.statBonus('defenseBonus')
 
     def scheduleAttack(self, target: 'Combatant', **kwargs) -> None:
+        ''' attacking target '''
         if not isinstance(target, Combatant):
             return
         attackDuration = 30 # inverse "attack speed"
         queueEntry = actions.QueuedAttack(self, attackDuration, target=target, **kwargs)
+        print(f'{self.name} has str={self.strength}')
+        print(f'{self.name} has baseStr={self.baseStrength}')
+
         self.actionQueue.appendleft(queueEntry)
 
     def scheduleDamage(self, dhp=-3, **kwargs) -> None:
+        ''' Damage happening to self'''
         damageDuration = 5 # taking damage stuns for a time.
         queueEntry = actions.QueuedDamage(self, damageDuration, dhp=dhp, **kwargs)
 

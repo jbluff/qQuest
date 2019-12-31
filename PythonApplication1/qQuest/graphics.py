@@ -6,7 +6,7 @@ import copy
 import itertools
 from collections import namedtuple
 from functools import lru_cache
-from typing import Tuple, List, Callable
+from typing import Callable, Dict, List, Tuple
 
 import pygame
 from pygame.locals import DOUBLEBUF, FULLSCREEN
@@ -117,7 +117,7 @@ class SpriteSheet:
 class Actor(GameObject):
     ''' This base class is used for everything that will be drawn on the screen.
     '''
-    def __init__(self, *args, spriteDict=None, animationSpeed=0.5, **kwargs):
+    def __init__(self, *args, spriteDict=None, animationSpeed=0.5, depth=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.resyncGraphicPosition()
 
@@ -126,6 +126,8 @@ class Actor(GameObject):
         self.flickerSpeed = self.animationSpeed / len(self.animation)
         self.flickerTimer = 0
         self.spriteImageNum = 0
+
+        self.depth = depth
 
     def resyncGraphicPosition(self) -> None:
         # X and Y are ints and represent grid locations for most logic purposes
@@ -325,13 +327,18 @@ def drawFPS(surface: pygame.Surface) -> None:
     drawText(surface, "fps: " + str(int(CLOCK.get_fps())), (0,0), constants.COLOR_WHITE, 
              bgColor=constants.COLOR_BLACK)
 
-def drawObjects(surface: pygame.Surface, objects: List[Actor], **kwargs) -> None:
-    for gameObj in objects:
-        if gameObj is None:
-            continue
-        if getattr(gameObj, "deleted", False):
-            return
-        gameObj.draw(surface, **kwargs), 
+def drawObjects(surface: pygame.Surface, objects: Dict[str, List[Actor]], **kwargs) -> None:
+    ''' objects[depth] = [Actor1, Actor2, ...]'''
+    for depth in constants.DEPTHS:
+        for gameObj in objects[depth]:
+            if gameObj is None:
+                continue
+            if gameObj.depth != depth:
+                continue
+            if getattr(gameObj, "deleted", False):
+                continue
+
+            gameObj.draw(surface, **kwargs), 
 
 def drawGame(mainSurface, mapSurface, chyronSurface, game: 'game.Game') -> None:
 

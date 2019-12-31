@@ -136,6 +136,7 @@ class TextListMenu(Menu):
         raise NotImplemented("initTextList must be overwritten by children")
 
     def restartLoop(self):
+        #self.initTextList()
         pass
     
     @property
@@ -278,6 +279,15 @@ class InventoryMenu(TextListMenu):
             if obj.deleted:
                  continue
             self.addMenuItem(obj.invString, selectable=True, annotation=obj)
+
+    def updateStrings(self):
+        for item in self.menuList:
+            if item.annotation is None:
+                continue
+            item.text = item.annotation.invString
+
+    def finishLoop(self):
+        self.updateStrings()
 
     def parseEvent(self, event) -> None:
         ''' event is PyGame event, unsure of typing '''

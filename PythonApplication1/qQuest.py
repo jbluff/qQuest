@@ -1,12 +1,9 @@
-import pygame
-from pygame.locals import DOUBLEBUF, FULLSCREEN
 
-from qQuest import graphics, menus, constants
-from qQuest.levels import Level
-from qQuest.game import GAME
+''' This module is the place where the game starts.  It makes a bunch of large
+singletons (GAME and the graphics surfaces, namely).  It parses player input. 
+It starts the main game loop.
 
 
-'''
 Basic Class & structure:
     - Game type contains
         - Levels
@@ -29,43 +26,14 @@ Basic Class & structure:
     - Items (and subclass Equipment), can contain Magic
 '''
 
+import pygame
+from pygame.locals import DOUBLEBUF, FULLSCREEN
 
-'''
-TODO:  
+from qQuest import graphics, menus, constants
+from qQuest.levels import Level
+from qQuest.game import GAME
 
-- partial movement -- not just tile-by-tile.
-- Directional facing of character, monsters?
-- smart walls--gfx depend on neightbors, like fow.
 
-- creatures need stats and such
-- continue improving NPC scripting schema, particularly hooks
-
-- add inventory graphics
-    - and generally imrpove the chryon
-
-- procedural level generation integrated to be on the fly
-- moar graphic assets
-
-- Give Monsters a "properties" section.  Not quite sure how that should work, yet.
-
-- map editor needs some work:
-    - click and drag would be huge.
-    - commenting
-    - loading existing levels.
-
-- help menu
-
-- Image processing on procGen rooms for rounding etc.
-- Support for non-square roomes 
-    - this is required for reasonable use of set pieces
-- Fixed piece rooms
-
-- Refine map loading (set pieces, named npcs, items.)
-- New monster AIs
-- Area effect spells
-
-- multi character mechanics!
-'''
 
 SURFACE_MAIN = pygame.display.set_mode((constants.TOTAL_WIDTH_P,                                                            constants.TOTAL_HEIGHT_P ),
                                         FULLSCREEN | DOUBLEBUF)
