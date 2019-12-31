@@ -132,15 +132,6 @@ def damageFunction(attacker: 'Combatant', target: 'Combatant'):
 
     attackerStr = attacker.strength
     targetDef = target.defense
-    print('in damage function')
-    print(f'{attacker.name} has str={attackerStr} during attack')
-    print(id(attacker))
-    print(id(attacker.container))
-    print(attacker.container)
-    print("")
-    print(id(target))
-    print(id(target.container))
-    print(target.container)
     dhp = 2*(attackerStr * normal(loc=1.0, scale=0.3) - targetDef)
     dhp = round(dhp)
     return min(-1, -1*dhp)

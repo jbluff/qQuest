@@ -110,7 +110,6 @@ class Creature(Actor):
         for obj in objs:
             if isinstance(obj, (Item,)):
                 obj.pickup(self)
-                print(f'picking up {obj.name}')
 
     def isOnPortal(self): # -> Portal:
         ''' if Creature standing on a portal, returns that Portal.  
@@ -177,9 +176,6 @@ class Combatant(Creature):
             return
         attackDuration = 30 # inverse "attack speed"
         queueEntry = actions.QueuedAttack(self, attackDuration, target=target, **kwargs)
-        print(f'{self.name} has str={self.strength}')
-        print(f'{self.name} has baseStr={self.baseStrength}')
-
         self.actionQueue.appendleft(queueEntry)
 
     def scheduleDamage(self, dhp=-3, **kwargs) -> None:

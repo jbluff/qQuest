@@ -127,9 +127,14 @@ class Equipment(Item):
 class Container:
     ''' Containers represent actor attributes which can contain in game items
     e.g. player inventory is a container.  Chest items have containers.  etc.
+
+    There's a bit of cruft here 
     '''
-    def __init__(self, volume=10.0, inventory=[], **kwargs):
+    def __init__(self, volume=10.0, inventory=None, **kwargs):
         self.max_volume = volume
+        
+        if inventory is None:
+            inventory = []
         self.inventory = inventory
 
     def __getitem__(self, val):

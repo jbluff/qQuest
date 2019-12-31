@@ -1,8 +1,6 @@
 
 TODO:  
 
-- fix inventory thing!
-
 - render depth
     - treat tiles as a last-depth object.
 

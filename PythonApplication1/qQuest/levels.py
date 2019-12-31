@@ -53,6 +53,8 @@ class Tile(Actor):
         self.seeThru = seeThru
         super().__init__(pos, **kwargs)
 
+        self.depth = 'wallDepth' if blocking else 'floorDepth'
+
 
 class Level:
     numLevels = 0
@@ -72,7 +74,10 @@ class Level:
         Level.numLevels += 1
 
     def addObject(self, newItem: Actor):
-        '''
+        ''' Objects (more properly, Actors) are kept by the Level instance
+        in lists which are organized in a dictionary by depth, which is an 
+        actor attr.  These depths are used later to set up the render order.
+
         DEPTHS = ['floorDepth', 'wallDepth', 'underEffectDepth', 'itemDepth', 
                 'charDepth','playerDepth', 'overEffectDepth', None]'''
         self.objects[newItem.depth].append(newItem)
@@ -84,6 +89,7 @@ class Level:
 
     @property
     def allObjects(self):
+        ''' Return all objects, disregarding previous sorting by depth.'''
         allObj = []
         [allObj.extend(self.objects[depth]) for depth in constants.DEPTHS]
         return allObj
